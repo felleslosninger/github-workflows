@@ -39,5 +39,5 @@ jobs:
             GIT_PACKAGE_TOKEN=${{env.GIT_PACKAGE_TOKEN}}
           file: ${{ inputs.image-name }}
           labels: dev
-          tags: ${{env.CONTAINER-REGISTERY}}/${{ORG-NAME}}/${{env.REPOSITORY-NAME}}:latest
+          tags: ${{env.CONTAINER-REGISTERY}}/${{env.ORG-NAME}}/${{env.REPOSITORY-NAME}}:latest
           
