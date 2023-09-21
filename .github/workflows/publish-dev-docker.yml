@@ -37,7 +37,7 @@ jobs:
           build-args: |
             GIT_PACKAGE_USERNAME=${{env.GIT_PACKAGE_USERNAME}}
             GIT_PACKAGE_TOKEN=${{env.GIT_PACKAGE_TOKEN}}
-          file: ${{ inputs.image-name }}
+          file: ${{ inputs.docker-file }}
           labels: dev
           tags: ${{env.CONTAINER-REGISTERY}}/${{env.ORG-NAME}}/${{env.REPOSITORY-NAME}}:latest
           
