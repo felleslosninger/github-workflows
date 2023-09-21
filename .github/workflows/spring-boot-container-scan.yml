@@ -26,17 +26,6 @@ on:
         description: Container-scan is default download updated CVE definitions via Trivy, enable offline on download problems
         default: false
         type: boolean
-    secrets:
-      eid-build-token:
-        description: Token from eid-build
-        required: false
-      maven-user:
-        description: Maven user
-        required: true
-      maven-password:
-        description: Maven password
-        required: true
-
 
 jobs:
   build-and-scan-image:
@@ -69,13 +58,13 @@ jobs:
             servers: |
               [{
                   "id": "github-oidc-sdk",
-                  "username": "${{ secrets.maven-user }}",
-                  "password": "${{ secrets.maven-password }}"
+                  "username": "${{ secrets.MAVEN_USER }}",
+                  "password": "${{ secrets.MAVEN_PASSWORD }}"
               },
               {
                 "id": "github",
-                "username": "${{ secrets.maven-user }}",
-                "password": "${{ secrets.maven-password }}"
+                "username": "${{ secrets.MAVEN_USER }}",
+                "password": "${{ secrets.MAVEN_PASSWORD }}"
               }]
         - name: Build image with Maven/Spring Boot (skipTests)
           run: mvn -DskipTests -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}

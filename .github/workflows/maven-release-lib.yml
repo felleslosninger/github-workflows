@@ -44,8 +44,8 @@ jobs:
           servers: |
             [{
             "id": "github",
-            "username": "${{ secrets.maven-user }}",
-            "password": "${{ secrets.maven-password }}"
+            "username": "${{ secrets.MAVEN_USER }}",
+            "password": "${{ secrets.MAVEN_PASSWORD }}"
             }]
       - name: Deploy to Github Package Registry
         run: |

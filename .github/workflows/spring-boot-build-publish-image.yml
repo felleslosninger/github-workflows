@@ -17,11 +17,6 @@ on:
         default: '11'
         required: false
         type: string
-      allure-enabled:
-        description: Allure reports is default enabled
-        default: false
-        required: false
-        type: boolean
       container-scan-offline-mode:
         description: Container-scan is default download updated CVE definitions via Trivy, enable offline on download problems
         default: false
@@ -31,31 +26,6 @@ on:
         default: ''
         required: false
         type: string
-    secrets:
-      eid-build-token:
-        description: Token from eid-build
-        required: false
-      maven-user:
-        description: Maven user
-        required: true
-      maven-password:
-        description: Maven password
-        required: true
-      registry-url:
-        description: Image/Container Registery URL
-        required: true
-      registry-username:
-        description: Image/Container Registery username
-        required: true
-      registry-password:
-        description: Image/Container Registery password
-        required: true
-      allure-user:
-        description: Allure user for reporting results of unit tests
-        required: false
-      allure-password:
-        description: Allure password for reporting results of unit tests
-        required: false
     outputs:
       image-version:
         description: "Docker image version"
@@ -79,7 +49,7 @@ jobs:
           run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
         - name: Set IMAGE-NAME env variable
           run: |
-             echo "IMAGE-NAME=${{ secrets.registry-url }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
+             echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
         - uses: actions/checkout@v3
         - name: yaml-lint
           uses: ibiqlik/action-yamllint@v3
@@ -108,13 +78,13 @@ jobs:
             servers: |
               [{
                   "id": "github-oidc-sdk",
-                  "username": "${{ secrets.maven-user }}",
-                  "password": "${{ secrets.maven-password }}"
+                  "username": "${{ secrets.MAVEN_USER }}",
+                  "password": "${{ secrets.MAVEN_PASSWORD }}"
               },
               {
                 "id": "github",
-                "username": "${{ secrets.maven-user }}",
-                "password": "${{ secrets.maven-password }}"
+                "username": "${{ secrets.MAVEN_USER }}",
+                "password": "${{ secrets.MAVEN_PASSWORD }}"
               }]
         - name: Maven update version used in application.yaml
           run: mvn versions:set -B -DnewVersion="$IMAGETAG"
@@ -138,9 +108,9 @@ jobs:
         - name: 'Login Azure docker container registery'
           uses: azure/docker-login@v1
           with:
-            login-server: ${{ secrets.registry-url }}
-            username: ${{ secrets.registry-username }}
-            password: ${{ secrets.registry-password }}
+            login-server: ${{ secrets.REGISTRY_URL }}
+            username: ${{ secrets.REGISTRY_USERNAME }}
+            password: ${{ secrets.REGISTRY_PASSWORD }}
         - name: 'Push image'
           run:
             docker push ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
