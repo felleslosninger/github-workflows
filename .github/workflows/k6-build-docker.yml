@@ -35,7 +35,7 @@ jobs:
       - name: Copy k6-tests to docker temp
         run: |
           cp -R ${{ inputs.k6-folder }}/* docker/k6-tests/
-          mkdir docker/libs
+          mkdir docker/${{ inputs.k6-libs-folder }}
           cp -R ${{ inputs.k6-libs-folder }}/* docker/${{ inputs.k6-libs-folder }}/
       - name: Build the tagged Docker image
         run: docker build --tag ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} docker/
