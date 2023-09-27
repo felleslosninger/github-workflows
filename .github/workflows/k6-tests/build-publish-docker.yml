@@ -12,6 +12,16 @@ on:
         default: ''
         required: false
         type: string
+      k6-folder:
+        description: Folder with k6-tests
+        default: 'k6-load-tests'
+        required: false
+        type: string
+      k6-libs-folder:
+        description: Folder with k6-tests
+        default: 'libs'
+        required: false
+        type: string        
     outputs:
       image-version:
         description: "Docker image version"
@@ -45,8 +55,8 @@ jobs:
             regex: false
         - name: Copy k6-tests to docker temp
           run: |
-            cp -R k6-load-tests/* docker/k6-tests/
-            cp -R libs/* docker/libs/
+            cp -R ${{ inputs.k6-folder }}/* docker/k6-tests/
+            cp -R ${{ inputs.k6-libs-folder }}/* docker/${{ inputs.k6-libs-folder }}/
         - name: Build the tagged Docker image
           run: docker build --tag ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} docker/
         - name: Run Trivy vulnerability scanner
