@@ -31,6 +31,9 @@ jobs:
       steps:
         - name: Set imagetag as env variable
           run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
+        - name: Set IMAGE-NAME env variable
+          run: |
+             echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
         - uses: actions/checkout@v3
         - name: Find and replace image version for ${{ env.IMAGETAG }} in version endpoint
           uses: jacobtomlinson/gha-find-replace@v3
@@ -45,11 +48,11 @@ jobs:
             cp -R k6-load-tests/* docker/k6-tests/
             cp -R libs/* docker/libs/
         - name: Build the tagged Docker image
-          run: docker build --tag ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:${{env.IMAGETAG}} docker/
+          run: docker build --tag ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} docker/
         - name: Run Trivy vulnerability scanner
           uses: aquasecurity/trivy-action@41f05d9ecffa2ed3f1580af306000f734b733e54 # pin@v0.11.2
           with:
-            image-ref: ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:${{env.IMAGETAG}}
+            image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
             exit-code: '1'
             severity: 'CRITICAL,HIGH'
         - name: 'Login to Azure Container registery'
@@ -59,9 +62,9 @@ jobs:
             username: ${{ secrets.REGISTRY_USERNAME }}
             password: ${{ secrets.REGISTRY_PASSWORD }}
         - run:
-            docker push ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:${{env.IMAGETAG}}
+            docker push ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
         - run:
-            echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
+            echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
         - id: output-image-tag
           run: echo "imagetag=${{env.IMAGETAG}}" >> "$GITHUB_OUTPUT"
         - id: output-image-digest
