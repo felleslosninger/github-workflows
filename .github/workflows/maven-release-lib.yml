@@ -18,6 +18,9 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - uses: actions/checkout@v3
@@ -26,21 +29,16 @@ jobs:
         with:
           distribution: 'liberica'
           java-version: ${{ inputs.java-version }}
-      - uses: s4u/maven-settings-action@v2.8.0
-        with:
-          servers: |
-            [{
-            "id": "github",
-            "username": "${{ secrets.MAVEN_USER }}",
-            "password": "${{ secrets.MAVEN_PASSWORD }}"
-            }]
+
       - name: Deploy to Github Package Registry
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           mkdir -p ~/.m2
-          echo "<settings><servers><server><id>github</id><username>${{ secrets.CREATE_PACKAGES_USER }}</username><password>${{ secrets.CREATE_PACKAGES_TOKEN }}</password></server></servers></settings>" > ~/.m2/settings.xml
-          REPO="github::default::https://maven.pkg.github.com/${GITHUB_REPOSITORY}"
-          mvn versions:set -B -DnewVersion="${{ github.event.release.tag_name }}"
+          echo "<settings><servers><server><id>github</id><username>${GITHUB_ACTOR}</username><password>\${env.GITHUB_TOKEN}</password></server></servers></settings>" > ~/.m2/settings.xml
+          REPO="github::default::https://maven.pkg.github.com/${GITHUB_REPOSITORY}"          
           mvn -B deploy -DaltDeploymentRepository="${REPO}"
+
       - uses: anchore/sbom-action@v0
         with:
           path: ${{ inputs.sbom-path }}
