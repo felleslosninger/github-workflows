@@ -91,8 +91,8 @@ jobs:
                 "username": "${{ secrets.MAVEN_USER }}",
                 "password": "${{ secrets.MAVEN_PASSWORD }}"
               }]
-        - name: Maven update version used in application.yaml
-          run: mvn versions:set -B -DnewVersion="$IMAGETAG"
+#        - name: Maven update version used in application.yaml
+#          run: mvn versions:set -B -DnewVersion="$IMAGETAG"
         - name: Build image with Maven/Spring Boot
           run: mvn -B -pl virksert-server spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
           #run: mvn -B spring-boot:build-image --file ${{ inputs.application-root }}pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
