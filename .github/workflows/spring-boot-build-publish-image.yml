@@ -26,8 +26,13 @@ on:
         default: ''
         required: false
         type: string
-      application-root:
-        description: The root folder of your application, overwrite in multi module projects
+      multi-module-path:
+        description: The path to the module folder in themulti module project, only set if project is multi module
+        default: ''
+        required: false
+        type: string
+      module-to-build:
+        description: The module in the multi module project to build, only set if using multi module project
         default: ''
         required: false
         type: string
@@ -59,7 +64,7 @@ jobs:
         - name: yaml-lint
           uses: ibiqlik/action-yamllint@v3
           with:
-            file_or_dir: ${{ inputs.application-root }}src/main/resources/application*.y*ml
+            file_or_dir: ${{ inputs.multi-module-path }}src/main/resources/application*.y*ml
             config_data: |
               extends: default
               rules:
@@ -94,7 +99,7 @@ jobs:
 #        - name: Maven update version used in application.yaml
 #          run: mvn versions:set -B -DnewVersion="$IMAGETAG"
         - name: Build image with Maven/Spring Boot
-          run: mvn -B -pl virksert-server spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
+          run: mvn -B -pl ${{inputs.module-to-build}} spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
           #run: mvn -B spring-boot:build-image --file ${{ inputs.application-root }}pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
         - name: Run Trivy vulnerability scanner
           uses: aquasecurity/trivy-action@41f05d9ecffa2ed3f1580af306000f734b733e54 # pin@v0.11.2
