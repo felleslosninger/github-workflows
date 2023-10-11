@@ -26,8 +26,8 @@ on:
         default: ''
         required: false
         type: string
-      multi-module-path:
-        description: The path to the module folder in themulti module project, only set if project is multi module
+      multi-module-project-path:
+        description: Set to true if project is multi module
         default: ''
         required: false
         type: string
@@ -64,7 +64,7 @@ jobs:
         - name: yaml-lint
           uses: ibiqlik/action-yamllint@v3
           with:
-            file_or_dir: ${{ inputs.multi-module-path }}src/main/resources/application*.y*ml
+            file_or_dir: ${{ inputs.multi-module-project-path || '' }}src/main/resources/application*.y*ml
             config_data: |
               extends: default
               rules:
