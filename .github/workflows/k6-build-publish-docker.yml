@@ -74,6 +74,7 @@ jobs:
             password: ${{ secrets.REGISTRY_PASSWORD }}
         - run:
             docker push ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
+            docker image tag ${{env.IMAGE-NAME}}:latest && docker push ${{env.IMAGE-NAME}}:latest
         - run:
             echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
         - id: output-image-tag
