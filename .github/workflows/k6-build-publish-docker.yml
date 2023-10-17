@@ -72,7 +72,7 @@ jobs:
             login-server: ${{ secrets.REGISTRY_URL }}
             username: ${{ secrets.REGISTRY_USERNAME }}
             password: ${{ secrets.REGISTRY_PASSWORD }}
-        - run:
+        - run:  |
             docker push ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
             docker image tag ${{env.IMAGE-NAME}}:latest && docker push ${{env.IMAGE-NAME}}:latest
         - run:
