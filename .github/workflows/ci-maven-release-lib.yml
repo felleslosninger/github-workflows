@@ -13,19 +13,6 @@ on:
         default: ./target/
         required: false
         type: string
-    secrets:
-      packages-user:
-        description: Github packages user
-        required: true
-      packages-token:
-        description: Github packages user token
-        required: true
-      maven-user:
-        description: Maven user
-        required: true
-      maven-password:
-        description: Maven password
-        required: true
 
 jobs:
   build:
