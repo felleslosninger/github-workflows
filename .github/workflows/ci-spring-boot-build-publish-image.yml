@@ -123,7 +123,7 @@ jobs:
   notify-on-errors:
     needs: [ build-publish-image ]
     if: ${{ always() && contains(needs.*.result, 'failure') }}
-    uses: ./.github/workflows/send-notification-on-workflow-errors.yml
+    uses: ./.github/workflows/ci-send-notification-on-workflow-errors.yml
     with:
       slack-channel-id: ${{ inputs.slack-channel-id }}
     secrets: inherit
