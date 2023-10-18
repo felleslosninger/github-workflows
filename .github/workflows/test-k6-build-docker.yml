@@ -40,7 +40,7 @@ jobs:
       - name: Build the tagged Docker image
         run: docker build --tag ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} docker/
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@41f05d9ecffa2ed3f1580af306000f734b733e54 # pin@v0.11.2
+        uses: aquasecurity/trivy-action@fbd16365eb88e12433951383f5e99bd901fc618f # pin@v0.12.0
         with:
           image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
           exit-code: '1'
