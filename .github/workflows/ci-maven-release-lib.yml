@@ -30,12 +30,42 @@ jobs:
           distribution: 'liberica'
           java-version: ${{ inputs.java-version }}
 
-      - name: Deploy to Github Package Registry
+      - uses: s4u/maven-settings-action@v2.8.0
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p ~/.m2
-          echo "<settings><servers><server><id>github</id><username>${GITHUB_ACTOR}</username><password>\${env.GITHUB_TOKEN}</password></server></servers></settings>" > ~/.m2/settings.xml          
+        with:
+          servers: |
+            [{
+            "id": "github",
+            "username": "${GITHUB_ACTOR}",
+            "password": "${env.GITHUB_TOKEN}"
+            }]
+          settings: |
+            <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                                          http://maven.apache.org/xsd/settings-1.0.0.xsd">
+              <activeProfiles>
+                <activeProfile>github</activeProfile>
+              </activeProfiles>
+              <profiles>
+                <profile>
+                  <id>github</id>
+                  <repositories>
+                    <repository>
+                      <id>github</id>
+                      <url>https://maven.pkg.github.com/felleslosninger/*</url>
+                      <snapshots>
+                        <enabled>true</enabled>
+                      </snapshots>
+                    </repository>
+                  </repositories>
+                </profile>
+              </profiles>
+            </settings>
+
+      - name: Deploy to Github Package Registry
+        run: |                  
           REPO="github::default::https://maven.pkg.github.com/felleslosninger"
           mvn -B deploy -DaltDeploymentRepository="${REPO}"
 
