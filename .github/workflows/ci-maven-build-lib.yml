@@ -112,7 +112,7 @@ jobs:
               </profiles>
             </settings>
       - name: Build with Maven
-        run: mvn -B install
+        run: mvn -B clean install --update-snapshots
       - uses: anchore/sbom-action@v0
         with:
           path: ${{ inputs.sbom-path }}
