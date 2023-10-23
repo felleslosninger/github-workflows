@@ -88,29 +88,17 @@ jobs:
             "username": "${{ secrets.MAVEN_USER }}",
             "password": "${{ secrets.MAVEN_PASSWORD }}"
             }]
-          settings: |
-            <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                      xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
-                                          http://maven.apache.org/xsd/settings-1.0.0.xsd">
-              <activeProfiles>
-                <activeProfile>github</activeProfile>
-              </activeProfiles>
-              <profiles>
-                <profile>
-                  <id>github</id>
-                  <repositories>
-                    <repository>
-                      <id>github</id>
-                      <url>https://maven.pkg.github.com/felleslosninger/*</url>
-                      <snapshots>
-                        <enabled>true</enabled>
-                      </snapshots>
-                    </repository>
-                  </repositories>
-                </profile>
-              </profiles>
-            </settings>
+            repositories: |
+            [{
+            "id": "github",
+            "url": "https://maven.pkg.github.com/felleslosninger/*",
+            "releases": {
+              "enabled": true
+            },
+            "snapshots": {
+              "enabled": true
+            }
+            }]
       - name: Build with Maven
         run: mvn -B clean install --update-snapshots
       - uses: anchore/sbom-action@v0
