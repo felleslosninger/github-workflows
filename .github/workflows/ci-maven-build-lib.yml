@@ -88,19 +88,13 @@ jobs:
             "username": "${{ secrets.MAVEN_USER }}",
             "password": "${{ secrets.MAVEN_PASSWORD }}"
             }]
-          repositories: |
-            [{
-            "id": "github",
-            "url": "https://maven.pkg.github.com/felleslosninger/*",
-            "releases": {
-              "enabled": true
-            },
-            "snapshots": {
-              "enabled": true
-            }
-            }]
       - name: Build with Maven
-        run: mvn -B clean install --update-snapshots
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p ~/.m2
+          echo '<settings><servers><server><id>github</id><username>${GITHUB_ACTOR}</username><password>${{ env.GITHUB_TOKEN }}</password></server></servers><repositories><repository><id>github</id><url>https://maven.pkg.github.com/felleslosninger</url><snapshots><enabled>true</enabled></snapshots></repository></repositories></settings>' > ~/.m2/settings.xml
+          mvn -B clean install --update-snapshots
       - uses: anchore/sbom-action@v0
         with:
           path: ${{ inputs.sbom-path }}
