@@ -102,7 +102,7 @@ jobs:
                   <repositories>
                     <repository>
                       <id>github</id>
-                      <url>https://maven.pkg.github.com/OWNER/REPOSITORY</url>
+                      <url>https://maven.pkg.github.com/felleslosninger/*</url>
                       <snapshots>
                         <enabled>true</enabled>
                       </snapshots>
