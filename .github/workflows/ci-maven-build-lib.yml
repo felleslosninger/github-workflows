@@ -92,14 +92,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          mvn -B clean install --update-snapshots
-        continue-on-error: true  # This will ensure the job continues even if a step fails
-
-      - name: Build with Maven one extra time due to Bug
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          mvn -B clean install --update-snapshots
+          mvn -B clean install --update-snapshots       
 
       - uses: anchore/sbom-action@v0
         with:
