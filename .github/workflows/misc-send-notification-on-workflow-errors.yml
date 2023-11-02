@@ -3,7 +3,6 @@
 
 # Using hardcoded plattform slack channel id: 'C05G4B8R2GG'
 
-
 name: Notify on workflow errors
 
 on:
@@ -12,7 +11,7 @@ on:
       slack-channel-id:
         type: string
         required: false
-        default: ''
+        default: ""
 env:
   SLACK_BOT_TOKEN: ${{ secrets.SLACK_CICD_NOTIFICATION_TOKEN }}
 
@@ -21,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        channel: ['${{ inputs.slack-channel-id }}', 'C05G4B8R2GG']
+        channel: ["${{ inputs.slack-channel-id }}", "C05G4B8R2GG"]
     steps:
       - name: Checkout JS Tools
         uses: actions/checkout@v3
@@ -33,7 +32,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const Utils = require('./tools/.github/js/github-context-utils.js');
+            const Utils = require('.github/js/github-context-utils.js');
             const message = Utils.getHeadCommitMessage(${{ toJson(github) }}); 
             return message;
       - name: Notify
@@ -86,4 +85,4 @@ jobs:
                   "type": "divider"
                 }
               ]
-            }              
+            }
