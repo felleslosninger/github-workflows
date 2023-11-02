@@ -122,8 +122,8 @@ jobs:
           servers: |
             [{
             "id": "github",
-            "username": "${{ secrets.MAVEN_USER }}",
-            "password": "${{ secrets.MAVEN_PASSWORD }}"
+            "username": "${{ secrets.MAVEN_TEMP_WORKAROUND_USER }}",
+            "password": "${{ secrets.MAVEN_TEMP_WORKAROUND_PASSWORD }}"
             }]
       - name: Build with Maven
 #        env:
