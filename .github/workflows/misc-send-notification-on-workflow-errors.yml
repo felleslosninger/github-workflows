@@ -33,7 +33,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const Utils = require('./tools/.github/js/github-context-utils.js');
+            const Utils = require('.github/js/github-context-utils.js');
             const message = Utils.getHeadCommitMessage(${{ toJson(github) }}); 
             return message;
       - name: Notify
