@@ -80,17 +80,17 @@ jobs:
 #          path: ~/.m2
 #          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
 #          restore-keys: ${{ runner.os }}-m2
-      - uses: s4u/maven-settings-action@v2.8.0
-        with:
-          servers: |
-            [{
-            "id": "github",
-            "username": "${{ secrets.MAVEN_USER }}",
-            "password": "${{ secrets.MAVEN_PASSWORD }}"
-            }]
+#      - uses: s4u/maven-settings-action@v2.8.0
+#        with:
+#          servers: |
+#            [{
+#            "id": "github",
+#            "username": "${{ secrets.MAVEN_USER }}",
+#            "password": "${{ secrets.MAVEN_PASSWORD }}"
+#            }]
       - name: Build with Maven
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mvn -B clean install --update-snapshots       
 
