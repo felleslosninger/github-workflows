@@ -8,18 +8,11 @@ on:
         default: '11'
         required: false
         type: string
-    secrets:
-      github-user:
-        description: User for github
-        required: true
-      github-token:
-        description: Token for github
-        required: true
-      sbom-path:
-        description: Target directory for SBOM generation
-        default: ./target/
-        required: false
-        type: string
+    sbom-path:
+      description: Target directory for SBOM generation
+      default: ./target/
+      required: false
+      type: string
 
 jobs:
   build:
@@ -42,9 +35,15 @@ jobs:
           servers: |
             [{
             "id": "github",
-            "username": "${{ secrets.github-user }}",
-            "password": "${{ secrets.github-token }}"
+            "username": "${{ secrets.CREATE_PACKAGES_USER }}",
+            "password": "${{ secrets.CREATE_PACKAGES_TOKEN }}"
             }]
+
+      - name: Deploy to Github Package Registry
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          mvn -B deploy
 
       - uses: anchore/sbom-action@v0
         with:
