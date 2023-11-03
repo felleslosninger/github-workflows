@@ -45,4 +45,4 @@ jobs:
           package-type: 'container'
           min-versions-to-keep: 2
           delete-only-untagged-versions: 'false'
-          token: ${{ secrets.CREATE_PACKAGES_TOKEN }}
+          token: ${{ secrets.DELETE_PACKAGES_TOKEN }}
