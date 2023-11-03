@@ -38,4 +38,11 @@ jobs:
           file: ${{ inputs.docker-file }}
           labels: dev
           tags: ${{env.CONTAINER-REGISTERY}}/${{env.ORG-NAME}}/${{env.REPOSITORY-NAME}}:latest
-          
+      - name: Delete old versions of dev.docker images
+        uses: actions/delete-package-versions@v4
+        with:
+          package-name: ${{env.REPOSITORY-NAME}}
+          package-type: 'container'
+          min-versions-to-keep: 2
+          delete-only-untagged-versions: 'false'
+          token: ${{ secrets.CREATE_PACKAGES_TOKEN }}
