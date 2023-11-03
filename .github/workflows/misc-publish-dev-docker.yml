@@ -39,14 +39,19 @@ jobs:
           labels: dev
           tags: ${{env.CONTAINER-REGISTERY}}/${{env.ORG-NAME}}/${{env.REPOSITORY-NAME}}:latest
       - name: Delete old versions of dev.docker images, keep latest
-        uses: snok/container-retention-policy@v2
+        uses: camargo/delete-untagged-action@v1
         with:
-          image-names: ${{env.REPOSITORY-NAME}}
-          cut-off: 10 min ago UTC+1
-          timestamp-to-use: updated_at
-          untagged-only: true
-          account-type: org
-          org-name: ${{env.ORG-NAME}}
-          skip-tags: latest
+          repository: ${{env.ORG-NAME}}/${{env.REPOSITORY-NAME}}
           token: ${{ secrets.DELETE_PACKAGES_TOKEN }}
+#      - name: Delete old versions of dev.docker images, keep latest
+#        uses: snok/container-retention-policy@v2
+#        with:
+#          image-names: ${{env.REPOSITORY-NAME}}
+#          cut-off: 10 min ago UTC+1
+#          timestamp-to-use: updated_at
+#          untagged-only: true
+#          account-type: org
+#          org-name: ${{env.ORG-NAME}}
+#          skip-tags: latest
+#          token: ${{ secrets.DELETE_PACKAGES_TOKEN }}
 
