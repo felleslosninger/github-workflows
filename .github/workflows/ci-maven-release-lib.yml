@@ -35,8 +35,8 @@ jobs:
           servers: |
             [{
             "id": "github",
-            "username": "${{ secrets.CREATE_PACKAGES_USER }}",
-            "password": "${{ secrets.CREATE_PACKAGES_TOKEN }}"
+            "username": "${{ secrets.EFORMIDLING_MAVEN_USER }}",
+            "password": "${{ secrets.EFORMIDLING_MAVEN_PASSWORD }}"
             }]
 
       - name: Deploy to Github Package Registry
