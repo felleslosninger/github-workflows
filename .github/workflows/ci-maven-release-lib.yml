@@ -8,6 +8,13 @@ on:
         default: '11'
         required: false
         type: string
+    secrets:
+      github-user:
+        description: User for github
+        required: true
+      github-token:
+        description: Token for github
+        required: true
       sbom-path:
         description: Target directory for SBOM generation
         default: ./target/
@@ -30,25 +37,16 @@ jobs:
           distribution: 'liberica'
           java-version: ${{ inputs.java-version }}
 
-#      - uses: s4u/maven-settings-action@v2.8.0
-#        with:
-#          servers: |
-#            [{
-#            "id": "github",
-#            "username": "${{ secrets.MAVEN_USER }}",
-#            "password": "${{ secrets.MAVEN_PASSWORD }}"
-#            }]
-
-      - name: Deploy to Github Package Registry
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          mvn -B deploy
-#          mkdir -p ~/.m2
-#          echo "<settings><servers><server><id>github</id><username>${{ secrets.CREATE_PACKAGES_USER }}</username><password>${{ secrets.CREATE_PACKAGES_TOKEN }}</password></server></servers></settings>" > ~/.m2/settings.xml
-#          mvn -B deploy
+      - uses: s4u/maven-settings-action@v2.8.0
+        with:
+          servers: |
+            [{
+            "id": "github",
+            "username": "${{ secrets.github-user }}",
+            "password": "${{ secrets.github-token }}"
+            }]
 
       - uses: anchore/sbom-action@v0
         with:
           path: ${{ inputs.sbom-path }}
+        
