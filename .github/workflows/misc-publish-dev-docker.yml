@@ -38,11 +38,15 @@ jobs:
           file: ${{ inputs.docker-file }}
           labels: dev
           tags: ${{env.CONTAINER-REGISTERY}}/${{env.ORG-NAME}}/${{env.REPOSITORY-NAME}}:latest
-      - name: Delete old versions of dev.docker images
-        uses: actions/delete-package-versions@v4
+      - name: Delete old versions of dev.docker images, keep latest
+        uses: snok/container-retention-policy@v2
         with:
-          package-name: ${{env.REPOSITORY-NAME}}
-          package-type: 'container'
-          min-versions-to-keep: 2
-          delete-only-untagged-versions: 'false'
+          image-names: ${{env.REPOSITORY-NAME}}
+          cut-off: 10 min ago UTC+1
+          timestamp-to-use: updated_at
+          untagged-only: true
+          account-type: org
+          org-name: ${{env.ORG-NAME}}
+          skip-tags: latest
           token: ${{ secrets.DELETE_PACKAGES_TOKEN }}
+
