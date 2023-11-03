@@ -77,40 +77,6 @@ jobs:
         with:
           distribution: 'liberica'
           java-version: ${{ inputs.java-version }}
-#      - name: Cache Maven packages
-#        uses: actions/cache@v3.3.1
-#        with:
-#          path: ~/.m2
-#          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-#          restore-keys: ${{ runner.os }}-m2
-#      - uses: s4u/maven-settings-action@v2.8.0
-#        with:
-#          servers: |
-#            [{
-#            "id": "github",
-#            "username": "${{ secrets.MAVEN_USER }}",
-#            "password": "${{ secrets.MAVEN_PASSWORD }}"
-#            }]
-      - name: Build with Maven
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          mvn -B clean install --update-snapshots       
-
-      - uses: anchore/sbom-action@v0
-        with:
-          path: ${{ inputs.sbom-path }}
-
-
-  build2:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up JDK ${{ inputs.java-version }}
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'liberica'
-          java-version: ${{ inputs.java-version }}
 
       - uses: s4u/maven-settings-action@v2.8.0
         with:
