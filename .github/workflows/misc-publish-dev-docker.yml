@@ -38,4 +38,3 @@ jobs:
           file: ${{ inputs.docker-file }}
           labels: dev
           tags: ${{env.CONTAINER-REGISTERY}}/${{env.ORG-NAME}}/${{env.REPOSITORY-NAME}}:latest
-          
