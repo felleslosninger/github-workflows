@@ -17,21 +17,19 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK
-        uses: actions/setup-java@v3
+      - uses: actions/setup-java@v3
         with:
           java-version: ${{ inputs.java-version }}
           distribution: 'liberica'
-      - name: Deploy to Github Package Registry
+      - name: Publish package
+        run: mvn -B deploy
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p ~/.m2
-          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
-          REPO="github::default::https://maven.pkg.github.com/${{ github.repository }}"
-          mvn -B deploy -DaltDeploymentRepository="${REPO}"
       - uses: anchore/sbom-action@v0
         with:
           path: ${{ inputs.sbom-path }}
