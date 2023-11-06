@@ -16,36 +16,21 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up JDK ${{ inputs.java-version }}
+      - uses: actions/checkout@v4
+      - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          distribution: 'liberica'
           java-version: ${{ inputs.java-version }}
-
-      - uses: s4u/maven-settings-action@v2.8.0
-        with:
-          servers: |
-            [{
-            "id": "github",
-            "username": "${{ secrets.EFORMIDLING_MAVEN_USER }}",
-            "password": "${{ secrets.EFORMIDLING_MAVEN_PASSWORD }}"
-            }]
-
       - name: Deploy to Github Package Registry
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          mvn -B deploy
-
+          mkdir -p ~/.m2
+          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
+          REPO="github::default::https://maven.pkg.github.com/${{ github.repository }}"
+          mvn -B deploy -DaltDeploymentRepository="${REPO}"
       - uses: anchore/sbom-action@v0
         with:
           path: ${{ inputs.sbom-path }}
-        
