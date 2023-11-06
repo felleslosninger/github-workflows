@@ -24,7 +24,7 @@ jobs:
         channel: ['${{ inputs.slack-channel-id }}', 'C05G4B8R2GG']
     steps:
       - name: Checkout JS Tools
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: felleslosninger/eid-github-workflows
           path: tools
@@ -33,7 +33,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const Utils = require('./tools/.github/js/github-context-utils.js');
+            const Utils = require('.github/js/github-context-utils.js');
             const message = Utils.getHeadCommitMessage(${{ toJson(github) }}); 
             return message;
       - name: Notify
