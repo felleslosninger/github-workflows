@@ -75,7 +75,8 @@ jobs:
             cache: 'maven'
             cache-dependency-path: ${{ inputs.cache-dependency-path }}
         - run: |
-            ls -latrh ~/.m2/repository/no/einnsyn
+            ls -latrh ~/.m2/repository/no/einnsyn/common
+            ls -latrh ~/.m2/repository/no/einnsyn/core
         - uses: s4u/maven-settings-action@v2.8.0
           with:
             servers: |
