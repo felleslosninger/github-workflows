@@ -26,7 +26,7 @@ on:
         default: ''
         required: false
         type: string
-      folder-name:
+      folder-path:
         description: Set to path of the module-to-build, only use if multi module project
         default: ''
         required: false
@@ -59,7 +59,7 @@ jobs:
         - name: yaml-lint
           uses: ibiqlik/action-yamllint@v3
           with:
-            file_or_dir: ${{inputs.folder-name}}/src/main/resources/application*.y*ml
+            file_or_dir: ${{inputs.folder-path}}/src/main/resources/application*.y*ml
             config_data: |
               extends: default
               rules:
@@ -93,10 +93,10 @@ jobs:
               }]
         - name: Build image with Maven/Spring Boot
           run: |
-            if [ -z "${{inputs.folder-name}}" ]; then
+            if [ -z "${{inputs.folder-path}}" ]; then
               mvn -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
             else
-              mvn -B spring-boot:build-image --file ${{folder-name}}/pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
+              mvn -B spring-boot:build-image --file ${{folder-path}}/pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
             fi
         - name: Run Trivy vulnerability scanner
           uses: aquasecurity/trivy-action@41f05d9ecffa2ed3f1580af306000f734b733e54 # pin@v0.11.2
