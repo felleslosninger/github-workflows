@@ -73,9 +73,7 @@ jobs:
             distribution: 'liberica'
             java-version: ${{ inputs.java-version }}
             cache: 'maven'
-            cache-dependency-path:
-              - .
-              - libraries/
+            cache-dependency-path: .
         - uses: s4u/maven-settings-action@v2.8.0
           with:
             servers: |
