@@ -54,7 +54,7 @@ jobs:
         - name: yaml-lint
           uses: ibiqlik/action-yamllint@v3
           with:
-            file_or_dir: ${{inputs.path}}/src/main/resources/application*.y*ml
+            file_or_dir: applications/api/src/main/resources/application*.y*ml
             config_data: |
               extends: default
               rules:
@@ -88,11 +88,7 @@ jobs:
               }]
         - name: Build image with Maven/Spring Boot
           run: |
-            if [ -z "${{inputs.path}}" ]; then
-              mvn -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
-            else
-              mvn -B spring-boot:build-image --file ${{path}}/pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
-            fi
+              mvn -B spring-boot:build-image --file applications/api/pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
         - name: Run Trivy vulnerability scanner
           uses: aquasecurity/trivy-action@41f05d9ecffa2ed3f1580af306000f734b733e54 # pin@v0.11.2
           with:
