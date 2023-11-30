@@ -74,6 +74,9 @@ jobs:
             java-version: ${{ inputs.java-version }}
             cache: 'maven'
             cache-dependency-path: ${{ inputs.cache-dependency-path }}
+        - run: |
+            ls -latrh ~/.m2
+            ls -latrh ~/.m2/cache
         - uses: s4u/maven-settings-action@v2.8.0
           with:
             servers: |
