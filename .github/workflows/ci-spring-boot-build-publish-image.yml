@@ -73,7 +73,7 @@ jobs:
             distribution: 'liberica'
             java-version: ${{ inputs.java-version }}
             cache: 'maven'
-            cache-dependency-path: ${{ inputs.cache-dependency-path }}
+            cache-dependency-path: .
         - run: |
             ls -latrh ~/.m2/repository/no/einnsyn/common
             ls -latrh ~/.m2/repository/no/einnsyn/core
