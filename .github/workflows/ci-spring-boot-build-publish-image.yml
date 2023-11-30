@@ -26,6 +26,16 @@ on:
         default: ''
         required: false
         type: string
+      pom-path:
+        description: Set to path of the module-to-build, only use if multi module project
+        default: ''
+        required: false
+        type: string
+      resources-path:
+        description: The module name in the multi module project to build, only set if using multi module project
+        default: ''
+        required: false
+        type: string
     outputs:
       image-version:
         description: "Docker image version"
@@ -50,11 +60,11 @@ jobs:
         - name: Set IMAGE-NAME env variable
           run: |
              echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v3
         - name: yaml-lint
           uses: ibiqlik/action-yamllint@v3
           with:
-            file_or_dir: src/main/resources/application*.y*ml
+            file_or_dir: ${{inputs.resources-path}}/src/main/resources/application*.y*ml
             config_data: |
               extends: default
               rules:
@@ -68,7 +78,7 @@ jobs:
             distribution: 'liberica'
             java-version: ${{ inputs.java-version }}
         - name: Cache Maven packages
-          uses: actions/cache@v3.3.2
+          uses: actions/cache@v3.3.1
           with:
             path: ~/.m2
             key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -78,18 +88,21 @@ jobs:
             servers: |
               [{
                   "id": "github-oidc-sdk",
-                  "username": "${{ secrets.MAVEN_USER }}",
-                  "password": "${{ secrets.MAVEN_PASSWORD }}"
+                  "username": "${{ secrets.GH_PACKAGES_READ_USER }}",
+                  "password": "${{ secrets.GH_PACKAGES_READ_PAT }}"
               },
               {
                 "id": "github",
-                "username": "${{ secrets.MAVEN_USER }}",
-                "password": "${{ secrets.MAVEN_PASSWORD }}"
+                "username": "${{ secrets.GH_PACKAGES_READ_USER }}",
+                "password": "${{ secrets.GH_PACKAGES_READ_PAT }}"
               }]
-        - name: Maven update version used in application.yaml
-          run: mvn versions:set -B -DnewVersion="$IMAGETAG"
         - name: Build image with Maven/Spring Boot
-          run: mvn -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
+          run: |
+            if [ -z "${{inputs.module-to-build}}" ]; then
+              mvn -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
+            else
+              mvn -B spring-boot:build-image --file ${{inputs.pom-path}}/pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
+            fi
         - name: Run Trivy vulnerability scanner
           uses: aquasecurity/trivy-action@41f05d9ecffa2ed3f1580af306000f734b733e54 # pin@v0.11.2
           with:
