@@ -72,8 +72,12 @@ jobs:
           with:
             distribution: 'liberica'
             java-version: ${{ inputs.java-version }}
-            cache: 'maven'
-            cache-dependency-path: ./
+        - name: Restore Maven repository
+          uses: actions/cache/restore@v3
+          id: cache
+          with:
+            path: ~/.m2/repository
+            key: ${{ runner.os }}-${{ hashFiles('pom.xml') }}
         - uses: s4u/maven-settings-action@v2.8.0
           with:
             servers: |
