@@ -3,6 +3,10 @@ name: Build/publish Docker image
 on:
   workflow_call:
     inputs:
+      folder-path:
+        description: Path to application folder
+        required: false
+        type: string
       image-name:
         description: Name of Docker image
         required: false
@@ -23,11 +27,6 @@ on:
         type: boolean
       slack-channel-id:
         description: Team channel id
-        default: ''
-        required: false
-        type: string
-      folder-path:
-        description: Set to path of the module-to-build, only use if multi module project
         default: ''
         required: false
         type: string
