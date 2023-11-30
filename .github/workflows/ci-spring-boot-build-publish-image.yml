@@ -77,7 +77,7 @@ jobs:
           id: cache
           with:
             path: ~/.m2/repository
-            key: ${{ runner.os }}-${{ hashFiles('pom.xml') }}
+            key: Linux-maven-2fd5100d8406bc0f988a3588618d7cf1230b046792cb951053cd6859c42ed88b
         - uses: s4u/maven-settings-action@v2.8.0
           with:
             servers: |
