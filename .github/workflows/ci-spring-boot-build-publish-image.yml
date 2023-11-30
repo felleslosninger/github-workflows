@@ -73,10 +73,9 @@ jobs:
             distribution: 'liberica'
             java-version: ${{ inputs.java-version }}
             cache: 'maven'
-            cache-dependency-path: .
-        - run: |
-            ls -latrh ~/.m2/repository/no/einnsyn/common
-            ls -latrh ~/.m2/repository/no/einnsyn/core
+            cache-dependency-path:
+              - .
+              - libraries/
         - uses: s4u/maven-settings-action@v2.8.0
           with:
             servers: |
