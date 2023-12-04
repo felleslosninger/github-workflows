@@ -3,9 +3,14 @@ name: Build/publish Docker image
 on:
   workflow_call:
     inputs:
-      cache-dependency-path:
+      application-path:
         description:
         default: ''
+        required: false
+        type: string
+      cache-path:
+        description:
+        default: '**/pom.xml'
         required: false
         type: string
       image-name:
@@ -59,7 +64,7 @@ jobs:
         - name: yaml-lint
           uses: ibiqlik/action-yamllint@v3
           with:
-            file_or_dir: applications/api/src/main/resources/application*.y*ml
+            file_or_dir: ${{ inputs.application-path }}src/main/resources/application*.y*ml
             config_data: |
               extends: default
               rules:
@@ -72,12 +77,13 @@ jobs:
           with:
             distribution: 'liberica'
             java-version: ${{ inputs.java-version }}
-        - name: Restore Maven repository
-          uses: actions/cache/restore@v3
-          id: cache
+        - name: Cache local Maven repository
+          uses: actions/cache@v3
           with:
             path: ~/.m2/repository
-            key: Linux-maven-2fd5100d8406bc0f988a3588618d7cf1230b046792cb951053cd6859c42ed88b
+            key: ${{ runner.os }}-maven-${{ hashFiles(${{ inputs.cache-path }}) }}
+            restore-keys: |
+              ${{ runner.os }}-maven-
         - uses: s4u/maven-settings-action@v2.8.0
           with:
             servers: |
@@ -93,7 +99,7 @@ jobs:
               }]
         - name: Build image with Maven/Spring Boot
           run: |
-              mvn -B spring-boot:build-image --file applications/api/pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
+              mvn -B spring-boot:build-image --file ${{ inputs.application-path }}pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
         - name: Run Trivy vulnerability scanner
           uses: aquasecurity/trivy-action@41f05d9ecffa2ed3f1580af306000f734b733e54 # pin@v0.11.2
           with:
