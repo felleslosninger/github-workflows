@@ -5,7 +5,7 @@ on:
     inputs:
       application-path:
         description:
-        default: ''
+        default: './'
         required: false
         type: string
       cache-path:
@@ -106,6 +106,7 @@ jobs:
             image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
             exit-code: '1'
             severity: 'CRITICAL,HIGH'
+            trivyignores: ${{ inputs.application-path }}.trivyignore
         - name: Create SBOM artifact-name
           id: sbom-name
           run: |
