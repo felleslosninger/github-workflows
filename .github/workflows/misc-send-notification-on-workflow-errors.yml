@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        channel: ['${{ inputs.slack-channel-id }}', 'C05G4B8R2GG']
+        channel: ['${{ inputs.slack-channel-id }}', 'C069NQ6U4DB']
     steps:
       - name: Checkout JS Tools
         uses: actions/checkout@v3
