@@ -74,7 +74,7 @@ jobs:
         run: echo "JIRA_ID=Dependabot" >> "$GITHUB_ENV"
       - run: npm install @octokit/app@v13.1.8
       - name: Generate Token
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         id: token
         env:
           GH_APP_ID: ${{ secrets.DIGDIR_PLATFORM_CI_APP_ID }}
