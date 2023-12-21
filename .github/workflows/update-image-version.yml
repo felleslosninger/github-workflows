@@ -136,26 +136,30 @@ jobs:
             actor_email="41898282+github-actions[bot]@users.noreply.github.com"  # Set default value
           fi
 
-          echo "author-username=${{ github.event.pusher.name }}" >> "$GITHUB_OUTPUT"
-          echo "author-email=${actor_email}@users.noreply.github.com" >> "$GITHUB_OUTPUT"
-          echo "author-name=${actor_name}" >> "$GITHUB_OUTPUT"
+          {
+            echo "author-username=${{ github.event.pusher.name }}"
+            echo "author-email=${actor_email}@users.noreply.github.com"
+            echo "author-name=${actor_name}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Set Outputs
         id: set-outputs
         run: |
-          echo "event-type=${{ inputs.kubernetes-repo-event }}" >> "$GITHUB_OUTPUT"
-          echo "repository=felleslosninger/${{ inputs.kubernetes-repo }}" >> "$GITHUB_OUTPUT"
-          echo "image-name=${{ vars.REGISTRY_URL }}/${{ inputs.image-name }}" >> "$GITHUB_OUTPUT"
-          echo "image=${{ vars.REGISTRY_URL }}/${{ inputs.image-name }}:${{ inputs.image-version }}@${{ inputs.image-digest }}" >> "$GITHUB_OUTPUT"
-          echo "version=${{ inputs.image-version }}" >> "$GITHUB_OUTPUT"
-          echo "application-name=${{ inputs.application-name }}" >> "$GITHUB_OUTPUT"
-          echo "jira-id=${{ steps.find-jira-id.outputs.jira-id }}" >> "$GITHUB_OUTPUT"
-          echo "actor=${{ github.event.pusher.name }}" >> "$GITHUB_OUTPUT"
-          echo "pr-number=${{ steps.set-pr-labels-and-number.outputs.pr-number }}" >> "$GITHUB_OUTPUT"
-          echo "pr-labels=${{ steps.set-pr-labels-and-number.outputs.pr-labels }}" >> "$GITHUB_OUTPUT"
-          echo "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
-          echo "repository=${{ github.repository }}" >> "$GITHUB_OUTPUT"
-          echo "dependabot=${{ steps.check-dependabot.outputs.dependabot }}" >> "$GITHUB_OUTPUT"
+          {
+            echo "event-type=${{ inputs.kubernetes-repo-event }}"
+            echo "repository=felleslosninger/${{ inputs.kubernetes-repo }}"
+            echo "image-name=${{ vars.REGISTRY_URL }}/${{ inputs.image-name }}"
+            echo "image=${{ vars.REGISTRY_URL }}/${{ inputs.image-name }}:${{ inputs.image-version }}@${{ inputs.image-digest }}"
+            echo "version=${{ inputs.image-version }}"
+            echo "application-name=${{ inputs.application-name }}"
+            echo "jira-id=${{ steps.find-jira-id.outputs.jira-id }}"
+            echo "actor=${{ github.event.pusher.name }}"
+            echo "pr-number=${{ steps.set-pr-labels-and-number.outputs.pr-number }}"
+            echo "pr-labels=${{ steps.set-pr-labels-and-number.outputs.pr-labels }}"
+            echo "sha=${{ github.sha }}"
+            echo "repository=${{ github.repository }}"
+            echo "dependabot=${{ steps.check-dependabot.outputs.dependabot }}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Log Outputs
         id: log-outputs
