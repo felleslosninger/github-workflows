@@ -1,3 +1,6 @@
+# Merge Update Version PR Workflow
+# This workflow automates the process of merging and approving a pull request for updating the version of a repository.
+
 name: Merge Update Version PR
 
 on:
@@ -15,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Displaying the input values for reference
       - name: Log inputs
         run: |
           {
@@ -25,12 +29,14 @@ jobs:
             echo "| repository          | ${{ inputs.repository }}          |"
           } >> $GITHUB_STEP_SUMMARY
 
+      # Checking out the specified repository
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           repository: felleslosninger/${{ inputs.repository }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      # Approving the pull request using GitHub CLI
       - name: Auto approve
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN}}
@@ -38,6 +44,7 @@ jobs:
           gh pr review --approve "${{ inputs.pull-request-number }}"
           echo "- :white_check_mark: PR ${{ inputs.pull-request-number }} approved" >> $GITHUB_STEP_SUMMARY
 
+      # Merging the pull request, squashing commits, and deleting the branch
       - name: Pull Request Activate Automerge
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
