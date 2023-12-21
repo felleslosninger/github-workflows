@@ -4,7 +4,6 @@ on:
   workflow_call:
     inputs:
       pull-request-number:
-        description: PR Number
         required: true
         type: string
       repository:
