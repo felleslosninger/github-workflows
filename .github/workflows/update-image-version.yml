@@ -1,4 +1,4 @@
-name: New image version in Kubernetes config
+name: Update Image Version
 
 on:
   workflow_call:
