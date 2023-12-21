@@ -42,7 +42,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN}}
         run: |
           gh pr review --approve "${{ inputs.pull-request-number }}"
-          echo "- :white_check_mark: PR ${{ inputs.pull-request-number }} approved" >> $GITHUB_STEP_SUMMARY
+          echo "- :white_check_mark: PR ${{ inputs.pull-request-number }} approved" >> "$GITHUB_STEP_SUMMARY"
 
       # Merging the pull request, squashing commits, and deleting the branch
       - name: Pull Request Activate Automerge
