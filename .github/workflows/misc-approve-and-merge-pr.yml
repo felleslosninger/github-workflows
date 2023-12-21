@@ -51,4 +51,4 @@ jobs:
         run: |
           sleep 3
           gh pr merge --squash --auto --delete-branch "${{ inputs.pull-request-number }}"
-          echo "- :white_check_mark: PR ${{ inputs.pull-request-number }} merged" >> $GITHUB_STEP_SUMMARY
+          echo "- :white_check_mark: PR ${{ inputs.pull-request-number }} merged" >> "$GITHUB_STEP_SUMMARY"
