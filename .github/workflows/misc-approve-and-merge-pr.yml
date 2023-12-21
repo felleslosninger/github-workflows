@@ -27,7 +27,7 @@ jobs:
             echo "| ------------------- | --------------------------------- |"
             echo "| pull-request-number | ${{ inputs.pull-request-number }} |"
             echo "| repository          | ${{ inputs.repository }}          |"
-          } >> $GITHUB_STEP_SUMMARY
+          } >> "$GITHUB_STEP_SUMMARY"
 
       # Checking out the specified repository
       - name: Checkout repository
