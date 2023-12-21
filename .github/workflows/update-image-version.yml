@@ -444,7 +444,7 @@ jobs:
             echo "| pull-request-url        | ${{ steps.create-pull-request.outputs.pull-request-url }}       |"
             echo "| pull-request-operation  | ${{ steps.create-pull-request.outputs.pull-request-operation }} |"
             echo "| pull-request-head-sha   | ${{ steps.create-pull-request.outputs.pull-request-head-sha }}  |"
-          } >> $GITHUB_STEP_SUMMARY
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Set Auto-Merge Output
         id: set-auto-merge-output
