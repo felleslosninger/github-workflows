@@ -14,7 +14,7 @@ on:
         type: string
 
 jobs:
-  prepare-payload:
+  approve-and-merge-pr:
     runs-on: ubuntu-latest
 
     steps:
