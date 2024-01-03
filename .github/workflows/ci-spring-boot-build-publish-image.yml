@@ -98,9 +98,9 @@ jobs:
         - name: Build image with Maven/Spring Boot
           run: |
               mvn -B spring-boot:build-image --file ${{ inputs.application-path }}pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
-        - name: Set trivyignore path env variable
+        - name: Set trivyignore env if file exists
           run: |
-            if [ -n "${{ inputs.application-path }}" ]; then
+            if [ -f "${{ inputs.application-path }}.trivyignore" ]; then
               echo "trivyignore-path=${{ inputs.application-path }}.trivyignore" >> "$GITHUB_ENV"
             fi
         - name: Run Trivy vulnerability scanner
