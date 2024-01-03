@@ -1,4 +1,4 @@
-name: Build/publish Docker image
+ name: Build/publish Docker image
 
 on:
   workflow_call:
@@ -104,6 +104,8 @@ jobs:
           run: |
             if [ -z "${{ inputs.application-path }}" ]; then
               echo "trivyignore-path=${{ inputs.application-path }}.trivyignore" >> "$GITHUB_ENV"
+            else
+              echo "trivyignore-path=""" >> "$GITHUB_ENV"
             fi
         - name: Run Trivy vulnerability scanner
           uses: aquasecurity/trivy-action@41f05d9ecffa2ed3f1580af306000f734b733e54 # pin@v0.11.2
@@ -111,7 +113,7 @@ jobs:
             image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
             exit-code: '1'
             severity: 'CRITICAL,HIGH'
-            trivyignores: ${{ env.trivyignore-path || "" }}
+            trivyignores: ${{ env.trivyignore-path || '' }}
         - name: Create SBOM artifact-name
           id: sbom-name
           run: |
