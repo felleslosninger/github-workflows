@@ -1,15 +1,13 @@
- name: Build/publish Docker image
+name: Build/publish Docker image
 
 on:
   workflow_call:
     inputs:
       application-path:
-        description:
         default: './'
         required: false
         type: string
       cache-path:
-        description:
         default: '**/pom.xml'
         required: false
         type: string
