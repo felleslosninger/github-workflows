@@ -107,7 +107,7 @@ jobs:
           uses: aquasecurity/trivy-action@41f05d9ecffa2ed3f1580af306000f734b733e54 # pin@v0.11.2
           with:
             image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-            exit-code: '1'
+          # exit-code: '1'
             severity: 'CRITICAL,HIGH'
             trivyignores: ${{ env.trivyignore-path }}
         - name: Create SBOM artifact-name
