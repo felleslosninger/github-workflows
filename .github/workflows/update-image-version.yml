@@ -38,7 +38,7 @@ on:
         default: ""
         required: false
         type: string
-      default-environment:
+      deployment-environment:
         required: true
         type: string
       kustomize-version:
@@ -208,13 +208,13 @@ jobs:
       - name: Check if deployment-metadata.env exists
         id: check-deployment-metadata
         run: |
-          if [ -f ${{ github.workspace }}/apps/${{ inputs.product-name }}/${{ inputs.default-environment }}/${{ inputs.application-name }}/deployment-metadata.env ]; then
+          if [ -f ${{ github.workspace }}/apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env ]; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "- :white_check_mark: /apps/${{ inputs.product-name }}/${{ inputs.default-environment }}/${{ inputs.application-name }}/deployment-metadata.env exists" >> "$GITHUB_STEP_SUMMARY"
+            echo "- :white_check_mark: /apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env exists" >> "$GITHUB_STEP_SUMMARY"
           else 
             echo "exists=false" >> "$GITHUB_OUTPUT"
-            echo "- :x: /apps/${{ inputs.product-name }}/${{ inputs.default-environment }}/${{ inputs.application-name }}/deployment-metadata.env exists" >> "$GITHUB_STEP_SUMMARY"
-            echo "::error title=File not found::/apps/${{ inputs.product-name }}/${{ inputs.default-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+            echo "- :x: /apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env exists" >> "$GITHUB_STEP_SUMMARY"
+            echo "::error title=File not found::/apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
             exit 1
           fi
 
@@ -230,16 +230,16 @@ jobs:
             echo "::warning title=File not found::/apps/${{ inputs.product-name }}/base/${{ inputs.application-name }}/patches/image.yaml"
           fi
 
-      - name: Check if image.yaml exists in /${{ inputs.default-environment }}
+      - name: Check if image.yaml exists in /${{ inputs.deployment-environment }}
         id: check-image-yaml-environment-exists
         run: |
-          if [ -f ${{ github.workspace }}/apps/${{ inputs.product-name }}/${{ inputs.default-environment }}/${{ inputs.application-name }}/patches/image.yaml ]; then
+          if [ -f ${{ github.workspace }}/apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/patches/image.yaml ]; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "- :white_check_mark: /apps/${{ inputs.product-name }}/${{ inputs.default-environment }}/${{ inputs.application-name }}/patches/image.yaml exists" >> "$GITHUB_STEP_SUMMARY"
+            echo "- :white_check_mark: /apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/patches/image.yaml exists" >> "$GITHUB_STEP_SUMMARY"
           else 
             echo "exists=false" >> "$GITHUB_OUTPUT"
-            echo "- :x: /apps/${{ inputs.product-name }}/${{ inputs.default-environment }}/${{ inputs.application-name }}/patches/image.yaml exists" >> "$GITHUB_STEP_SUMMARY"
-            echo "::error title=File not found::/apps/${{ inputs.product-name }}/${{ inputs.default-environment }}/${{ inputs.application-name }}/patches/image.yaml"
+            echo "- :x: /apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/patches/image.yaml exists" >> "$GITHUB_STEP_SUMMARY"
+            echo "::error title=File not found::/apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/patches/image.yaml"
             exit 1
           fi
 
@@ -263,23 +263,23 @@ jobs:
             /apps/${{ inputs.product-name }}/base/${{ inputs.application-name }}/patches/image.yaml"
           exit 1
 
-      - name: Find and replace image version in ${{ inputs.default-environment }}
+      - name: Find and replace image version in ${{ inputs.deployment-environment }}
         uses: jacobtomlinson/gha-find-replace@v3
         id: update-version-environment
         with:
           find: "${{ needs.prepare-payload.outputs.image-name }}:\\d{4}-\\d{2}-\\d{2}-\\d{4}-[\\w:@]+"
           replace: "${{ needs.prepare-payload.outputs.image }}"
-          include: "apps/${{ inputs.product-name }}/${{ inputs.default-environment }}/${{ inputs.application-name }}/patches/image.yaml"
+          include: "apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/patches/image.yaml"
           regex: true
 
-      - name: Find and replace image version in ${{ inputs.default-environment }} FAILED
+      - name: Find and replace image version in ${{ inputs.deployment-environment }} FAILED
         if: |
           steps.update-version-environment.outputs.modifiedFiles == 0 &&
           steps.check-image-yaml-environment-exists.outputs.exists == 'true'
         run: |
           echo "::error title=Find and replace image failed:: \
             'image' value matching the expected pattern not found in \
-            /apps/${{ inputs.product-name }}/${{ inputs.default-environment }}/${{ inputs.application-name }}/patches/image.yaml"
+            /apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/patches/image.yaml"
           exit 1
 
       - name: Find and replace image version in deployment-metadata.env
@@ -288,7 +288,7 @@ jobs:
         with:
           find: "image=${{ needs.prepare-payload.outputs.image-name }}:\\d{4}-\\d{2}-\\d{2}-\\d{4}-[\\w:@]+"
           replace: "image=${{ needs.prepare-payload.outputs.image }}"
-          include: "apps/${{ inputs.product-name }}/${{ inputs.default-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+          include: "apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
           regex: true
 
       - name: Find and replace image version in deployment-metadata.env FAILED
@@ -298,7 +298,7 @@ jobs:
         run: |
           echo "::error title=Find and replace image failed:: \
             'image' value matching the expected pattern not found in \
-            apps/${{ inputs.product-name }}/${{ inputs.default-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+            apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
           exit 1
 
       - name: Find and replace app SHA in deployment-metadata.env
@@ -307,7 +307,7 @@ jobs:
         with:
           find: "(?m)^sha=.*"
           replace: "sha=${{ needs.prepare-payload.outputs.sha }}"
-          include: "apps/${{ inputs.product-name }}/${{ inputs.default-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+          include: "apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
           regex: true
 
       - name: Find and replace app SHA in deployment-metadata.env FAILED
@@ -317,7 +317,7 @@ jobs:
         run: |
           echo "::error title=Find and replace SHA failed:: \
             'sha' value matching the expected pattern not found in \
-            apps/${{ inputs.product-name }}/${{ inputs.default-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+            apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
           exit 1
 
       - name: Find and replace version in deployment-metadata.env
@@ -326,7 +326,7 @@ jobs:
         with:
           find: "version=.*"
           replace: "version=${{ needs.prepare-payload.outputs.version }}"
-          include: "apps/${{ inputs.product-name }}/${{ inputs.default-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+          include: "apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
           regex: true
 
       - name: Find and replace version in deployment-metadata.env FAILED
@@ -336,7 +336,7 @@ jobs:
         run: |
           echo "::error title=Find and replace version failed:: \
             'version' value matching the expected pattern not found in \
-            apps/${{ inputs.product-name }}/${{ inputs.default-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+            apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
           exit 1
 
       - name: Find and replace Jira ID in deployment-metadata.env
@@ -345,7 +345,7 @@ jobs:
         with:
           find: "jira_id=.*"
           replace: "jira_id=${{ needs.prepare-payload.outputs.jira-id }}"
-          include: "apps/${{ inputs.product-name }}/${{ inputs.default-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+          include: "apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
           regex: true
 
       - name: Find and replace PR number in deployment-metadata.env
@@ -354,7 +354,7 @@ jobs:
         with:
           find: "pr_number=.*"
           replace: "pr_number=${{ needs.prepare-payload.outputs.pr-number }}"
-          include: "apps/${{ inputs.product-name }}/${{ inputs.default-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+          include: "apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
           regex: true
 
       - name: Find and replace PR labels in deployment-metadata.env
@@ -363,13 +363,13 @@ jobs:
         with:
           find: "pr_labels=.*"
           replace: "pr_labels=${{ needs.prepare-payload.outputs.pr-labels }}"
-          include: "apps/${{ inputs.product-name }}/${{ inputs.default-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+          include: "apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
           regex: true
 
       - name: Kustomize build
         run: |
           touch ${{ github.workspace }}/exit_status
-          find apps/*/${{ inputs.default-environment }}/ \
+          find apps/*/${{ inputs.deployment-environment }}/ \
             -name 'kustomization.yaml' \
             -not -path "*base*" \
             -not -path "*argocd-application*" \
@@ -416,20 +416,20 @@ jobs:
         uses: peter-evans/create-pull-request@v5.0.2
         with:
           token: ${{ steps.generate-token.outputs.token }}
-          commit-message: "${{ needs.prepare-payload.outputs.jira-id }}: ${{ inputs.default-environment }} ${{ inputs.application-name }} [${{ needs.prepare-payload.outputs.version }}]"
+          commit-message: "${{ needs.prepare-payload.outputs.jira-id }}: ${{ inputs.deployment-environment }} ${{ inputs.application-name }} [${{ needs.prepare-payload.outputs.version }}]"
           branch: ${{ inputs.application-name }}-version-update
           delete-branch: true
           labels: |
             app/${{ inputs.application-name }}
-            env/${{ inputs.default-environment }}
+            env/${{ inputs.deployment-environment }}
             ${{ needs.prepare-payload.outputs.pr-labels }}
           branch-suffix: random
           assignees: ${{ needs.prepare-payload.outputs.author-username }}
           author: ${{ needs.prepare-payload.outputs.author-name }} <${{ needs.prepare-payload.outputs.author-email }}>
           committer: ${{ needs.prepare-payload.outputs.author-name }} <${{ needs.prepare-payload.outputs.author-email }}>
-          title: "${{ needs.prepare-payload.outputs.jira-id }}: ${{ inputs.default-environment }} ${{ inputs.application-name }} [${{needs.prepare-payload.outputs.version }}]"
+          title: "${{ needs.prepare-payload.outputs.jira-id }}: ${{ inputs.deployment-environment }} ${{ inputs.application-name }} [${{needs.prepare-payload.outputs.version }}]"
           body: |
-            # Promotion PR for ${{ inputs.application-name }} to ${{ inputs.default-environment }}
+            # Promotion PR for ${{ inputs.application-name }} to ${{ inputs.deployment-environment }}
 
             * Jira-ID: https://digdir.atlassian.net/browse/${{ needs.prepare-payload.outputs.jira-id }}
             * Application commit: https://github.com/${{ needs.prepare-payload.outputs.repository }}/commit/${{ needs.prepare-payload.outputs.sha }}
