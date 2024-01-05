@@ -67,6 +67,7 @@ jobs:
             {
               echo "- Skipped because of unsupported update type, ${{ steps.dependabot-metadata.outputs.update-type}} :x:"
               echo "> [!NOTE]"
-              echo "> Supported types are: ${{ inputs.update-types }}"
+              echo "> Supported types are:"
+              echo "> ${{ inputs.update-types }}"
             } >> "$GITHUB_STEP_SUMMARY" 
           fi
