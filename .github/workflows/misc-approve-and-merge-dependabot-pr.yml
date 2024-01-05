@@ -64,5 +64,9 @@ jobs:
           if [ ${{ steps.auto-merge.outputs.status }} == "true" ]; then
             echo "- Done with auto-merge! :white_check_mark:" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "- Skipped because of unsupported update type (${{ steps.dependabot-metadata.outputs.update-type}}). Supported types are: ${{ inputs.update-types }} :x:" >> "$GITHUB_STEP_SUMMARY" 
+            {
+              echo "- Skipped because of unsupported update type, ${{ steps.dependabot-metadata.outputs.update-type}} :x:"
+              echo "> [!NOTE]"
+              echo "> Supported types are: ${{ inputs.update-types }}"
+            } >> "$GITHUB_STEP_SUMMARY" 
           fi
