@@ -59,12 +59,10 @@ jobs:
 
       - name: Write summary
         run: |
-          result="Skipped because of unsupported update type ${UPDATE_TYPE}, supported types are types=${UPDATE_TYPES}."
+          result="Skipped."
           if [ "${STATUS}" == "true" ]; then
               result=" auto-merge! :white_check_mark:"
           fi
           echo "### Done with ${result}" >> "$GITHUB_STEP_SUMMARY"
         env:
-          UPDATE_TYPE: ${{ fromJson(steps.dependabot-metadata.outputs.update-type) }}
-          UPDATE_TYPES: ${{ inputs.update-types }}
           STATUS: ${{ steps.auto-merge.outputs.STATUS }}
