@@ -60,7 +60,7 @@ jobs:
       - name: Write summary
         id: write-summary
         run: |
-          echo "# Results"
+          echo "# Results" >> "$GITHUB_STEP_SUMMARY"
           if [ ${{ steps.auto-merge.outputs.status }} == "true" ]; then
             echo "- Done with auto-merge! :white_check_mark:" >> "$GITHUB_STEP_SUMMARY"
           else
