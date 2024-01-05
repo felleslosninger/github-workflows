@@ -59,8 +59,7 @@ jobs:
 
       - name: Write summary
         run: |
-          arr="(${UPDATE_TYPES//;/ })"
-          result="Skipped because of unsupported update type ${steps.dependabot-metadata.outputs.update-type}, supported types are types=${arr[*]}."
+          result="Skipped because of unsupported update type ${steps.dependabot-metadata.outputs.update-type}, supported types are types=${UPDATE_TYPES}."
           if [ "${STATUS}" == "true" ]; then
               result=" auto-merge! :white_check_mark:"
           fi
