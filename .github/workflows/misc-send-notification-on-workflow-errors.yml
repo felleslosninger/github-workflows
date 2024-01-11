@@ -34,7 +34,7 @@ jobs:
         with:
           script: |
             const Utils = require('./tools/.github/js/github-context-utils.js');
-            const message = Utils.getHeadCommitMessage(${{ toJson(github) }}); 
+            const message = Utils.getCommitMessage(${{ toJson(github) }});
             return message;
       - name: Notify
         if: ${{ matrix.channel != '' }}
