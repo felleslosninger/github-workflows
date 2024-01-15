@@ -9,10 +9,6 @@ on:
         default: "version-update:semver-patch;version-update:semver-minor"
         required: false
         type: string
-    secrets:
-      github-token:
-        description: GitHub token
-        required: true
 
 permissions:
   pull-requests: write
