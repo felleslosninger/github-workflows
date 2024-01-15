@@ -31,9 +31,9 @@ jobs:
         uses: actions/github-script@v7
         id: generate-token
         env:
-          GH_APP_ID: ${{ secrets.DIGDIR_PLATFORM_CD_APP_ID }}
-          GH_APP_PRIVATE_KEY: ${{ secrets.DIGDIR_PLATFORM_CD_APP_PRIVATE_KEY }}
-          INSTALLATION_ID: ${{ secrets.DIGDIR_PLATFORM_CD_APP_INSTALLATION_ID }}
+          GH_APP_ID: ${{ secrets.DIGDIR_PLATFORM_CI_APP_ID }}
+          GH_APP_PRIVATE_KEY: ${{ secrets.DIGDIR_PLATFORM_CI_APP_PRIVATE_KEY }}
+          INSTALLATION_ID: ${{ secrets.DIGDIR_PLATFORM_CI_APP_INSTALLATION_ID }}
         with:
           script: |
             const { createAppAuth } = require("@octokit/auth-app");
