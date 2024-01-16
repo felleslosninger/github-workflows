@@ -10,13 +10,6 @@ on:
         required: false
         type: string
 
-permissions:
-  pull-requests: write
-  contents: write
-  issues: write
-  packages: write
-  repository-projects: read
-
 jobs:
   dependabot:
     name: Auto approve
