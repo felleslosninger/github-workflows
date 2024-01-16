@@ -9,38 +9,19 @@ on:
         default: "version-update:semver-patch;version-update:semver-minor"
         required: false
         type: string
+    outputs:
+      merged:
+        value: ${{ jobs.dependabot.outputs.merged }}
 
 jobs:
   dependabot:
     name: Auto approve
     runs-on: ubuntu-latest
+    outputs:
+      merged: ${{ steps.write-summary.outputs.merged }}
 
     if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     steps:
-      - name: Install Dependencies
-        run: npm install @octokit/app@v14.0.2
-
-      - name: Generate Token
-        uses: actions/github-script@v7
-        id: generate-token
-        env:
-          GH_APP_ID: ${{ secrets.DIGDIR_PLATFORM_CI_APP_ID }}
-          GH_APP_PRIVATE_KEY: ${{ secrets.DIGDIR_PLATFORM_CI_APP_PRIVATE_KEY }}
-          INSTALLATION_ID: ${{ secrets.DIGDIR_PLATFORM_CI_APP_INSTALLATION_ID }}
-        with:
-          script: |
-            const { createAppAuth } = require("@octokit/auth-app");
-
-            const auth = createAppAuth({
-              appId: +process.env.GH_APP_ID,
-              privateKey: process.env.GH_APP_PRIVATE_KEY
-            });
-
-            const { token } = await auth({ type: "installation", installationId: +process.env.INSTALLATION_ID });
-
-            core.setOutput('token', token);
-          result-encoding: string
-
       - name: Fetch update types
         id: update-types
         env:
@@ -68,7 +49,7 @@ jobs:
           echo "status=true" >> "$GITHUB_OUTPUT"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Write summary
         id: write-summary
@@ -76,6 +57,7 @@ jobs:
           echo "# Results" >> "$GITHUB_STEP_SUMMARY"
           if [ ${{ steps.auto-merge.outputs.status }} == "true" ]; then
             echo "- Done with auto-merge! :white_check_mark:" >> "$GITHUB_STEP_SUMMARY"
+            echo "merged=true" >> "$GITHUB_OUTPUT"
           else
             {
               echo "- Skipped because of unsupported update type, ${{ steps.dependabot-metadata.outputs.update-type}} :x:"
@@ -83,4 +65,5 @@ jobs:
               echo "> Supported types are:"
               echo "> ${{ inputs.update-types }}"
             } >> "$GITHUB_STEP_SUMMARY" 
+            echo "merged=false" >> "$GITHUB_OUTPUT"
           fi
