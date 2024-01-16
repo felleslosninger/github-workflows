@@ -9,22 +9,16 @@ on:
         default: "version-update:semver-patch;version-update:semver-minor"
         required: false
         type: string
-    secrets:
-      github-token:
-        description: GitHub token
-        required: true
-
-permissions:
-  pull-requests: write
-  contents: write
-  issues: write
-  packages: write
-  repository-projects: read
+    outputs:
+      merged:
+        value: ${{ jobs.dependabot.outputs.merged }}
 
 jobs:
   dependabot:
     name: Auto approve
     runs-on: ubuntu-latest
+    outputs:
+      merged: ${{ steps.write-summary.outputs.merged }}
 
     if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     steps:
@@ -55,7 +49,7 @@ jobs:
           echo "status=true" >> "$GITHUB_OUTPUT"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GITHUB_TOKEN: ${{ secrets.github-token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Write summary
         id: write-summary
@@ -63,6 +57,7 @@ jobs:
           echo "# Results" >> "$GITHUB_STEP_SUMMARY"
           if [ ${{ steps.auto-merge.outputs.status }} == "true" ]; then
             echo "- Done with auto-merge! :white_check_mark:" >> "$GITHUB_STEP_SUMMARY"
+            echo "merged=true" >> "$GITHUB_OUTPUT"
           else
             {
               echo "- Skipped because of unsupported update type, ${{ steps.dependabot-metadata.outputs.update-type}} :x:"
@@ -70,4 +65,5 @@ jobs:
               echo "> Supported types are:"
               echo "> ${{ inputs.update-types }}"
             } >> "$GITHUB_STEP_SUMMARY" 
+            echo "merged=false" >> "$GITHUB_OUTPUT"
           fi
