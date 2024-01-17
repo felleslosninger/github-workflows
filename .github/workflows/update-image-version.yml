@@ -33,11 +33,6 @@ on:
         default: "update-version"
         required: false
         type: string
-      slack-channel-id:
-        description: Team channel id
-        default: ""
-        required: false
-        type: string
       deployment-environment:
         required: true
         type: string
@@ -68,7 +63,6 @@ jobs:
             echo "| image-digest            | ${{ inputs.image-digest }}            |"
             echo "| kubernetes-repo         | ${{ inputs.kubernetes-repo }}         |"
             echo "| kubernetes-repo-event   | ${{ inputs.kubernetes-repo-event }}   |"
-            echo "| slack-channel-id        | ${{ inputs.slack-channel-id }}        |"
             echo "| deployment-environment  | ${{ inputs.deployment-environment }}  |"
             echo "| kustomize-version       | ${{ inputs.kustomize-version }}       |"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -232,7 +226,6 @@ jobs:
                 "product-name": "${{ inputs.product-name }}",
                 "repository": "${{ steps.set-outputs.outputs.repository }}",
                 "sha": "${{ steps.set-outputs.outputs.sha }}",
-                "slack-channel-id": "${{ steps.set-outputs.outputs.slack-channel-id }}",
                 "kustomize-version": "${{ inputs.kustomize-version }}"
               }
             }
