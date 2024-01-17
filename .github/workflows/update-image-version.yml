@@ -223,23 +223,28 @@ jobs:
           token: ${{ steps.token.outputs.result }}
           event-type: ${{ inputs.kubernetes-repo-event }}
           repository: "felleslosninger/${{ inputs.kubernetes-repo }}"
+          # Wraps everything inside 'data' to get around Github's limit:
+          # The maximum number of top-level properties in client_payload is 10.
           client-payload: |-
             {
-              "actor": "${{ steps.set-outputs.outputs.actor }}",
-              "application-name": "${{ steps.set-outputs.outputs.application-name }}",
-              "image": {
-                "name": "${{ steps.set-outputs.outputs.image-name }}",
-                "version": "${{ steps.set-outputs.outputs.image-version }}",
-                "full-name": "${{ steps.set-outputs.outputs.image-name }}:${{inputs.image-version}}@${{inputs.image-digest}}",
-              },
-              "jira-id": "${{ env.jira-id }}",
-              "kubernetes-repo": "${{ steps.set-outputs.outputs.kubernetes-repo }}",
-              "pr": {
-                "labels": "${{ steps.set-outputs.outputs.pr-labels }}",
-                "number": "${{ steps.set-outputs.outputs.pr-number }}",
-              },
-              "product-name": "${{ steps.set-outputs.outputs.product-name }}",
-              "repository": "${{ steps.set-outputs.outputs.repository }}",
-              "sha": "${{ steps.set-outputs.outputs.sha }}",
-              "version": "${{ steps.set-outputs.outputs.image-version }}"
+              "data": {
+                "application-name": "${{ steps.set-outputs.outputs.application-name }}",
+                "author-email": "${{ steps.set-outputs.outputs.author-email }}",
+                "author-name": "${{ steps.set-outputs.outputs.author-name }}",
+                "author-username": "${{ steps.set-outputs.outputs.author-username }}",
+                "deployment-environment": "${{ steps.set-outputs.outputs.deployment-environment }}",
+                "image-digest": "${{ inputs.image-digest }}",
+                "image-name": "${{ steps.set-outputs.outputs.image-name }}",
+                "image-version": "${{ steps.set-outputs.outputs.image-version }}",
+                "image": "${{ steps.set-outputs.outputs.image-name }}:${{inputs.image-version}}@${{inputs.image-digest}}",
+                "jira-id": "${{ env.jira-id }}",
+                "kubernetes-repo": "${{ steps.set-outputs.outputs.kubernetes-repo }}",
+                "pr-labels": "${{ steps.set-outputs.outputs.pr-labels }}",
+                "pr-number": "${{ steps.set-outputs.outputs.pr-number }}",
+                "product-name": "${{ steps.set-outputs.outputs.product-name }}",
+                "repository": "${{ steps.set-outputs.outputs.repository }}",
+                "sha": "${{ steps.set-outputs.outputs.sha }}",
+                "slack-channel-id": "${{ steps.set-outputs.outputs.slack-channel-id }}",
+                "version": "${{ steps.set-outputs.outputs.image-version }}"
+              }
             }
