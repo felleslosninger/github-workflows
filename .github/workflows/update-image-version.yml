@@ -134,21 +134,16 @@ jobs:
         id: set-outputs
         run: |
           {
-            echo "event-type=${{ inputs.kubernetes-repo-event }}"
-            echo "repository=felleslosninger/${{ inputs.kubernetes-repo }}"
+            echo "author-email=${{ steps.set-author-info.outputs.author-email }}"
+            echo "author-name=${{ steps.set-author-info.outputs.author-name }}"
+            echo "author-username=${{ steps.set-author-info.outputs.author-username }}"
+            echo "dependabot=${{ steps.check-dependabot.outputs.dependabot }}"
             echo "image-name=${{ vars.REGISTRY_URL }}/${{ inputs.image-name }}"
             echo "image=${{ vars.REGISTRY_URL }}/${{ inputs.image-name }}:${{ inputs.image-version }}@${{ inputs.image-digest }}"
-            echo "version=${{ inputs.image-version }}"
-            echo "application-name=${{ inputs.application-name }}"
-            echo "jira-id=${{ env.jira-id }}"
-            echo "actor=${{ github.event.pusher.name }}"
-            echo "pr-number=${{ steps.set-pr-labels-and-number.outputs.pr-number }}"
             echo "pr-labels=${{ steps.set-pr-labels-and-number.outputs.pr-labels }}"
+            echo "pr-number=${{ steps.set-pr-labels-and-number.outputs.pr-number }}"
+            echo "repository=felleslosninger/${{ inputs.kubernetes-repo }}"
             echo "sha=${{ github.sha }}"
-            echo "repository=${{ github.repository }}"
-            echo "dependabot=${{ steps.check-dependabot.outputs.dependabot }}"
-            echo "product-name=${{ inputs.product-name }}"
-            echo "kubernetes-repo=${{ inputs.kubernetes-repo }}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Install Dependencies
@@ -198,23 +193,16 @@ jobs:
             echo "# Outputs"
             echo "| Key                     | Value                                                 |"
             echo "| ----------------------- | ----------------------------------------------------- |"
-            echo "| event-type              | ${{ steps.set-outputs.outputs.event-type }}           |"
+            echo "| author-email            | ${{ steps.set-author-info.outputs.author-email }}     |"
+            echo "| author-name             | ${{ steps.set-author-info.outputs.author-name }}      |"
+            echo "| author-username         | ${{ steps.set-author-info.outputs.author-username }}  |"
+            echo "| dependabot              | ${{ steps.set-outputs.outputs.dependabot }}           |"
             echo "| image-name              | ${{ steps.set-outputs.outputs.image-name }}           |"
             echo "| image                   | ${{ steps.set-outputs.outputs.image }}                |"
-            echo "| version                 | ${{ steps.set-outputs.outputs.version }}              |"
-            echo "| application-name        | ${{ steps.set-outputs.outputs.application-name }}     |"
-            echo "| jira-id                 | ${{ steps.set-outputs.outputs.jira-id }}              |"
-            echo "| actor                   | ${{ steps.set-outputs.outputs.actor }}                |"
-            echo "| pr-number               | ${{ steps.set-outputs.outputs.pr-number }}            |"
             echo "| pr-labels               | ${{ steps.set-outputs.outputs.pr-labels }}            |"
-            echo "| sha                     | ${{ steps.set-outputs.outputs.sha }}                  |"
+            echo "| pr-number               | ${{ steps.set-outputs.outputs.pr-number }}            |"
             echo "| repository              | ${{ steps.set-outputs.outputs.repository }}           |"
-            echo "| dependabot              | ${{ steps.set-outputs.outputs.dependabot }}           |"
-            echo "| product-name            | ${{ steps.set-outputs.outputs.product-name }}         |"
-            echo "| kubernetes-repo         | ${{ steps.set-outputs.outputs.kubernetes-repo }}      |"
-            echo "| author-username         | ${{ steps.set-author-info.outputs.author-username }}  |"
-            echo "| author-name             | ${{ steps.set-author-info.outputs.author-name }}      |"
-            echo "| author-email            | ${{ steps.set-author-info.outputs.author-email }}     |"
+            echo "| sha                     | ${{ steps.set-outputs.outputs.sha }}                  |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Call Dispatch To Start Promotion
@@ -228,24 +216,23 @@ jobs:
           client-payload: |-
             {
               "data": {
-                "application-name": "${{ steps.set-outputs.outputs.application-name }}",
+                "application-name": "${{ inputs.application-name }}",
                 "author-email": "${{ steps.set-outputs.outputs.author-email }}",
                 "author-name": "${{ steps.set-outputs.outputs.author-name }}",
                 "author-username": "${{ steps.set-outputs.outputs.author-username }}",
-                "deployment-environment": "${{ steps.set-outputs.outputs.deployment-environment }}",
+                "deployment-environment": "${{ inputs.deployment-environment }}",
                 "image-digest": "${{ inputs.image-digest }}",
                 "image-name": "${{ steps.set-outputs.outputs.image-name }}",
-                "image-version": "${{ steps.set-outputs.outputs.image-version }}",
+                "image-version": "${{ inputs.image-version }}",
                 "image": "${{ steps.set-outputs.outputs.image-name }}:${{inputs.image-version}}@${{inputs.image-digest}}",
                 "jira-id": "${{ env.jira-id }}",
-                "kubernetes-repo": "${{ steps.set-outputs.outputs.kubernetes-repo }}",
+                "kubernetes-repo": "${{ inputs.kubernetes-repo }}",
                 "pr-labels": "${{ steps.set-outputs.outputs.pr-labels }}",
                 "pr-number": "${{ steps.set-outputs.outputs.pr-number }}",
-                "product-name": "${{ steps.set-outputs.outputs.product-name }}",
+                "product-name": "${{ inputs.product-name }}",
                 "repository": "${{ steps.set-outputs.outputs.repository }}",
                 "sha": "${{ steps.set-outputs.outputs.sha }}",
                 "slack-channel-id": "${{ steps.set-outputs.outputs.slack-channel-id }}",
-                "version": "${{ steps.set-outputs.outputs.image-version }}",
                 "kustomize-version": "${{ inputs.kustomize-version }}"
               }
             }
