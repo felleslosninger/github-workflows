@@ -245,6 +245,7 @@ jobs:
                 "repository": "${{ steps.set-outputs.outputs.repository }}",
                 "sha": "${{ steps.set-outputs.outputs.sha }}",
                 "slack-channel-id": "${{ steps.set-outputs.outputs.slack-channel-id }}",
-                "version": "${{ steps.set-outputs.outputs.image-version }}"
+                "version": "${{ steps.set-outputs.outputs.image-version }}",
+                "kustomize-version": "${{ inputs.kustomize-version }}"
               }
             }
