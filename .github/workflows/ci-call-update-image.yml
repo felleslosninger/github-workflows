@@ -1,6 +1,5 @@
-# This GitHub Action automates the process of updating Docker image versions,
-# creating pull requests, and merging them based on certain conditions.
-name: Update Image Version
+# This GitHub Action calls workflow to update Docker image
+name: Call Update Image
 
 on:
   workflow_call:
