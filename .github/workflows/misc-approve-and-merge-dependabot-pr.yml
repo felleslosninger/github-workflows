@@ -13,6 +13,13 @@ on:
       merged:
         value: ${{ jobs.dependabot.outputs.merged }}
 
+permissions:
+  pull-requests: write
+  contents: write
+  issues: write
+  packages: write
+  repository-projects: read
+
 jobs:
   dependabot:
     name: Auto approve
