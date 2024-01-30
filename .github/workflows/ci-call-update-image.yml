@@ -199,7 +199,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Call Dispatch To Start Promotion
-        uses: peter-evans/repository-dispatch@bf47d102fdb849e755b0b0023ea3e81a44b6f570 # pin@v2
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0
         with:
           token: ${{ steps.token.outputs.result }}
           event-type: ${{ inputs.kubernetes-repo-event }}
