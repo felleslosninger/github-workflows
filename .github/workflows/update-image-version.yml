@@ -1,0 +1,512 @@
+# This GitHub Action automates the process of updating Docker image versions,
+# creating pull requests, and merging them based on certain conditions.
+name: Update Image Version
+
+on:
+  workflow_call:
+    inputs:
+      application-name:
+        description: Name of application
+        required: true
+        type: string
+      product-name:
+        required: true
+        type: string
+      image-name:
+        description: Name of Docker image
+        required: true
+        type: string
+      image-version:
+        description: Docker image version
+        required: true
+        type: string
+      image-digest:
+        description: Docker image digest (SHA256)
+        required: true
+        type: string
+      kubernetes-repo:
+        description: Repository for kubernetes manifests (idporten-cd | minid-cd)
+        required: false
+        type: string
+      kubernetes-repo-event:
+        description: Name of event to trigger in kubernetes repository
+        default: "update-version"
+        required: false
+        type: string
+      slack-channel-id:
+        description: Team channel id
+        default: ""
+        required: false
+        type: string
+      deployment-environment:
+        required: true
+        type: string
+      kustomize-version:
+        required: false
+        type: string
+        default: "5.0.3"
+
+jobs:
+  # Job to prepare payload and set outputs
+  prepare-payload:
+    runs-on: ubuntu-latest
+
+    outputs:
+      event-type: ${{ steps.set-outputs.outputs.event-type }}
+      image-name: ${{ steps.set-outputs.outputs.image-name }}
+      image: ${{ steps.set-outputs.outputs.image }}
+      version: ${{ steps.set-outputs.outputs.version }}
+      application-name: ${{ steps.set-outputs.outputs.application-name }}
+      jira-id: ${{ steps.set-outputs.outputs.jira-id }}
+      actor: ${{ steps.set-outputs.outputs.actor }}
+      author: ${{ steps.set-outputs.outputs.author }}
+      pr-number: ${{ steps.set-outputs.outputs.pr-number }}
+      pr-labels: ${{ steps.set-outputs.outputs.pr-labels }}
+      sha: ${{ steps.set-outputs.outputs.sha }}
+      repository: ${{ steps.set-outputs.outputs.repository }}
+      dependabot: ${{ steps.check-dependabot.outputs.dependabot }}
+      author-username: ${{ steps.set-author-info.outputs.author-username }}
+      author-name: ${{ steps.set-author-info.outputs.author-name }}
+      author-email: ${{ steps.set-author-info.outputs.author-email }}
+
+    steps:
+      - name: Log Inputs
+        run: |
+          {
+            echo "# Inputs"
+            echo "| Key                     | Value                               |"
+            echo "| ----------------------- | ----------------------------------- |"
+            echo "| application-name        | ${{ inputs.application-name }}      |"
+            echo "| image-name              | ${{ inputs.image-name }}            |"
+            echo "| image-version           | ${{ inputs.image-version }}         |"
+            echo "| image-digest            | ${{ inputs.image-digest }}          |"
+            echo "| kubernetes-repo         | ${{ inputs.kubernetes-repo }}       |"
+            echo "| kubernetes-repo-event   | ${{ inputs.kubernetes-repo-event }} |"
+            echo "| slack-channel-id        | ${{ inputs.slack-channel-id }}      |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Find Jira ID
+        id: find-jira-id
+        env:
+          GIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          JIID=$(echo "$GIT_MSG" | head -1 |
+          grep -Eo '^([a-zA-Z]{2,6}-[0-9]+)') || JIID=''
+          echo "jira-id=$JIID" >> "$GITHUB_OUTPUT"
+
+      - name: Get Labels
+        uses: octokit/request-action@v2.x
+        id: get-labels
+        with:
+          route: GET /repos/${{ github.repository }}/commits/${{ github.sha }}/pulls
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set PR Labels and Number
+        id: set-pr-labels-and-number
+        run: |
+          echo "pr-labels=${{ join(fromJSON(steps.get-labels.outputs.data)[0].labels.*.name) }}" >> "$GITHUB_OUTPUT"
+          echo "pr-number=${{ fromJson(steps.get-labels.outputs.data)[0].number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Check Dependabot
+        id: check-dependabot
+        run: |
+          echo "dependabot=${{ contains(steps.set-pr-labels-and-number.outputs.pr-labels, 'dependencies') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Set Dependabot As Jira ID
+        id: output-dependabot
+        if: |
+          steps.find-jira-id.outputs.match == '' && 
+          steps.check-dependabot.outputs.dependabot == 'true'
+        run: echo "jira-id=Dependabot" >> "$GITHUB_OUTPUT"
+
+      - name: Set author username, name, and email
+        id: set-author-info
+        run: |
+          actor_name="${{ github.event.pusher.name }}"
+          actor_email="${{ github.event.pusher.name }}"
+
+          # Check if actor_name is null or empty
+          if [ -z "$actor_name" ]; then
+            actor_name="github-actions[bot]"  # Set default value
+          fi
+
+          # Check if actor_email is null or empty
+          if [ -z "$actor_email" ]; then
+            actor_email="41898282+github-actions[bot]@users.noreply.github.com"  # Set default value
+          fi
+
+          {
+            echo "author-username=${{ github.event.pusher.name }}"
+            echo "author-email=${actor_email}@users.noreply.github.com"
+            echo "author-name=${actor_name}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set Outputs
+        id: set-outputs
+        run: |
+          {
+            echo "event-type=${{ inputs.kubernetes-repo-event }}"
+            echo "repository=felleslosninger/${{ inputs.kubernetes-repo }}"
+            echo "image-name=${{ vars.REGISTRY_URL }}/${{ inputs.image-name }}"
+            echo "image=${{ vars.REGISTRY_URL }}/${{ inputs.image-name }}:${{ inputs.image-version }}@${{ inputs.image-digest }}"
+            echo "version=${{ inputs.image-version }}"
+            echo "application-name=${{ inputs.application-name }}"
+            echo "jira-id=${{ steps.find-jira-id.outputs.jira-id }}"
+            echo "actor=${{ github.event.pusher.name }}"
+            echo "pr-number=${{ steps.set-pr-labels-and-number.outputs.pr-number }}"
+            echo "pr-labels=${{ steps.set-pr-labels-and-number.outputs.pr-labels }}"
+            echo "sha=${{ github.sha }}"
+            echo "repository=${{ github.repository }}"
+            echo "dependabot=${{ steps.check-dependabot.outputs.dependabot }}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Log Outputs
+        id: log-outputs
+        run: |
+          {
+            echo "# Outputs"
+            echo "| Key                     | Value                                                 |"
+            echo "| ----------------------- | ----------------------------------------------------- |"
+            echo "| event-type              | ${{ steps.set-outputs.outputs.event-type }}           |"
+            echo "| image-name              | ${{ steps.set-outputs.outputs.image-name }}           |"
+            echo "| image                   | ${{ steps.set-outputs.outputs.image }}                |"
+            echo "| version                 | ${{ steps.set-outputs.outputs.version }}              |"
+            echo "| application-name        | ${{ steps.set-outputs.outputs.application-name }}     |"
+            echo "| jira-id                 | ${{ steps.set-outputs.outputs.jira-id }}              |"
+            echo "| actor                   | ${{ steps.set-outputs.outputs.actor }}                |"
+            echo "| pr-number               | ${{ steps.set-outputs.outputs.pr-number }}            |"
+            echo "| pr-labels               | ${{ steps.set-outputs.outputs.pr-labels }}            |"
+            echo "| sha                     | ${{ steps.set-outputs.outputs.sha }}                  |"
+            echo "| repository              | ${{ steps.set-outputs.outputs.repository }}           |"
+            echo "| dependabot              | ${{ steps.set-outputs.outputs.dependabot }}           |"
+            echo "| author-username         | ${{ steps.set-author-info.outputs.author-username }}  |"
+            echo "| author-name             | ${{ steps.set-author-info.outputs.author-name }}      |"
+            echo "| author-email            | ${{ steps.set-author-info.outputs.author-email }}     |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # Job to update the version and create a pull request
+  update-version:
+    needs: [prepare-payload]
+    runs-on: ubuntu-latest
+
+    outputs:
+      auto-merge: ${{ steps.set-auto-merge-output.outputs.auto-merge }}
+      pull-request-number: ${{ steps.create-pull-request.outputs.pull-request-number }}
+
+    steps:
+      - name: Install Dependencies
+        run: npm install @octokit/app@v14.0.2
+
+      - name: Generate Token
+        uses: actions/github-script@v7
+        id: generate-token
+        env:
+          GH_APP_ID: ${{ secrets.DIGDIR_PLATFORM_CD_APP_ID }}
+          GH_APP_PRIVATE_KEY: ${{ secrets.DIGDIR_PLATFORM_CD_APP_PRIVATE_KEY }}
+          INSTALLATION_ID: ${{ secrets.DIGDIR_PLATFORM_CD_APP_INSTALLATION_ID }}
+        with:
+          script: |
+            const { createAppAuth } = require("@octokit/auth-app");
+
+            const auth = createAppAuth({
+              appId: +process.env.GH_APP_ID,
+              privateKey: process.env.GH_APP_PRIVATE_KEY
+            });
+
+            const { token } = await auth({ type: "installation", installationId: +process.env.INSTALLATION_ID });
+
+            core.setOutput('token', token);
+          result-encoding: string
+
+      - uses: actions/checkout@v4
+        with:
+          repository: felleslosninger/${{ inputs.kubernetes-repo }}
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Setup kustomize
+        run: |
+          wget -O ${{ github.workspace }}/kustomize_v${{ inputs.kustomize-version }}_linux_amd64.tar.gz https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${{ inputs.kustomize-version }}/kustomize_v${{ inputs.kustomize-version }}_linux_amd64.tar.gz
+          tar xzf ${{ github.workspace }}/kustomize_v${{ inputs.kustomize-version }}_linux_amd64.tar.gz
+
+      - name: Check if deployment-metadata.env exists
+        id: check-deployment-metadata
+        run: |
+          if [ -f ${{ github.workspace }}/apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "- :white_check_mark: /apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env exists" >> "$GITHUB_STEP_SUMMARY"
+          else 
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "- :x: /apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env exists" >> "$GITHUB_STEP_SUMMARY"
+            echo "::error title=File not found::/apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+            exit 1
+          fi
+
+      - name: Check if image.yaml exists in /base
+        id: check-image-yaml-base-exists
+        run: |
+          if [ -f ${{ github.workspace }}/apps/${{ inputs.product-name }}/base/${{ inputs.application-name }}/patches/image.yaml ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "- :white_check_mark: /apps/${{ inputs.product-name }}/base/${{ inputs.application-name }}/patches/image.yaml exists" >> "$GITHUB_STEP_SUMMARY"
+          else 
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "- :x: /apps/${{ inputs.product-name }}/base/${{ inputs.application-name }}/patches/image.yaml exists" >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning title=File not found::/apps/${{ inputs.product-name }}/base/${{ inputs.application-name }}/patches/image.yaml"
+          fi
+
+      - name: Check if image.yaml exists in /${{ inputs.deployment-environment }}
+        id: check-image-yaml-environment-exists
+        run: |
+          if [ -f ${{ github.workspace }}/apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/patches/image.yaml ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "- :white_check_mark: /apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/patches/image.yaml exists" >> "$GITHUB_STEP_SUMMARY"
+          else 
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "- :x: /apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/patches/image.yaml exists" >> "$GITHUB_STEP_SUMMARY"
+            echo "::error title=File not found::/apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/patches/image.yaml"
+            exit 1
+          fi
+
+      - name: Find and replace image in application base
+        uses: jacobtomlinson/gha-find-replace@v3
+        id: update-image-base
+        if: steps.check-image-yaml-base-exists.outputs.exists == 'true'
+        with:
+          find: "${{ needs.prepare-payload.outputs.image-name }}:\\d{4}-\\d{2}-\\d{2}-\\d{4}-[\\w:@]+"
+          replace: "${{ needs.prepare-payload.outputs.image }}"
+          include: "apps/${{ inputs.product-name }}/base/${{ inputs.application-name }}/patches/image.yaml"
+          regex: true
+
+      - name: Find and replace image version in application base FAILED
+        if: |
+          steps.update-image-base.outputs.modifiedFiles == 0 &&
+          steps.check-image-yaml-base-exists.outputs.exists == 'true'
+        run: |
+          echo "::error title=Find and replace image failed:: \
+            'image' value matching the expected pattern not found in \
+            /apps/${{ inputs.product-name }}/base/${{ inputs.application-name }}/patches/image.yaml"
+          exit 1
+
+      - name: Find and replace image version in ${{ inputs.deployment-environment }}
+        uses: jacobtomlinson/gha-find-replace@v3
+        id: update-version-environment
+        with:
+          find: "${{ needs.prepare-payload.outputs.image-name }}:\\d{4}-\\d{2}-\\d{2}-\\d{4}-[\\w:@]+"
+          replace: "${{ needs.prepare-payload.outputs.image }}"
+          include: "apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/patches/image.yaml"
+          regex: true
+
+      - name: Find and replace image version in ${{ inputs.deployment-environment }} FAILED
+        if: |
+          steps.update-version-environment.outputs.modifiedFiles == 0 &&
+          steps.check-image-yaml-environment-exists.outputs.exists == 'true'
+        run: |
+          echo "::error title=Find and replace image failed:: \
+            'image' value matching the expected pattern not found in \
+            /apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/patches/image.yaml"
+          exit 1
+
+      - name: Find and replace image version in deployment-metadata.env
+        uses: jacobtomlinson/gha-find-replace@v3
+        id: update-version-deployment-metadata
+        with:
+          find: "image=${{ needs.prepare-payload.outputs.image-name }}:\\d{4}-\\d{2}-\\d{2}-\\d{4}-[\\w:@]+"
+          replace: "image=${{ needs.prepare-payload.outputs.image }}"
+          include: "apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+          regex: true
+
+      - name: Find and replace image version in deployment-metadata.env FAILED
+        if: |
+          steps.update-version-deployment-metadata.outputs.modifiedFiles == 0 && 
+          steps.check-deployment-metadata.outputs.exists == 'true'
+        run: |
+          echo "::error title=Find and replace image failed:: \
+            'image' value matching the expected pattern not found in \
+            apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+          exit 1
+
+      - name: Find and replace app SHA in deployment-metadata.env
+        uses: jacobtomlinson/gha-find-replace@v3
+        id: replace-app-sha
+        with:
+          find: "(?m)^sha=.*"
+          replace: "sha=${{ needs.prepare-payload.outputs.sha }}"
+          include: "apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+          regex: true
+
+      - name: Find and replace app SHA in deployment-metadata.env FAILED
+        if: |
+          steps.replace-app-sha.outputs.modifiedFiles == 0 && 
+          steps.check-deployment-metadata.outputs.exists == 'true'
+        run: |
+          echo "::error title=Find and replace SHA failed:: \
+            'sha' value matching the expected pattern not found in \
+            apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+          exit 1
+
+      - name: Find and replace version in deployment-metadata.env
+        uses: jacobtomlinson/gha-find-replace@v3
+        id: replace-version
+        with:
+          find: "version=.*"
+          replace: "version=${{ needs.prepare-payload.outputs.version }}"
+          include: "apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+          regex: true
+
+      - name: Find and replace version in deployment-metadata.env FAILED
+        if: |
+          steps.replace-version.outputs.modifiedFiles == 0 && 
+          steps.check-deployment-metadata.outputs.exists == 'true'
+        run: |
+          echo "::error title=Find and replace version failed:: \
+            'version' value matching the expected pattern not found in \
+            apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+          exit 1
+
+      - name: Find and replace Jira ID in deployment-metadata.env
+        uses: jacobtomlinson/gha-find-replace@v3
+        id: replace-jira-id
+        with:
+          find: "jira_id=.*"
+          replace: "jira_id=${{ needs.prepare-payload.outputs.jira-id }}"
+          include: "apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+          regex: true
+
+      - name: Find and replace PR number in deployment-metadata.env
+        uses: jacobtomlinson/gha-find-replace@v3
+        id: replace-pr
+        with:
+          find: "pr_number=.*"
+          replace: "pr_number=${{ needs.prepare-payload.outputs.pr-number }}"
+          include: "apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+          regex: true
+
+      - name: Find and replace PR labels in deployment-metadata.env
+        uses: jacobtomlinson/gha-find-replace@v3
+        id: replace-pr-labels
+        with:
+          find: "pr_labels=.*"
+          replace: "pr_labels=${{ needs.prepare-payload.outputs.pr-labels }}"
+          include: "apps/${{ inputs.product-name }}/${{ inputs.deployment-environment }}/${{ inputs.application-name }}/deployment-metadata.env"
+          regex: true
+
+      - name: Kustomize build
+        run: |
+          touch ${{ github.workspace }}/exit_status
+          find apps/*/${{ inputs.deployment-environment }}/ \
+            -name 'kustomization.yaml' \
+            -not -path "*base*" \
+            -not -path "*argocd-application*" \
+            -execdir sh -c '${{ github.workspace }}/kustomize build --enable-helm \
+            -o ./.output.yaml || echo 1 > ${{ github.workspace }}/exit_status' \; \
+            -execdir git add ./.output.yaml \; \
+            -execdir pwd \; 
+          if grep -q 1 "${{ github.workspace }}/exit_status"; then
+            echo "::error title=Kustomize build failed:: \
+              An error occured while running Kustomize build, check Kustomize error message for more information"
+            exit 1
+          fi
+
+      - name: Add auto-deploy label
+        if: ${{ !contains(needs.prepare-payload.outputs.pr-labels, 'manual-deploy') }}
+        run: echo "PR-LABELS=${{ needs.prepare-payload.outputs.pr-labels }},auto-deploy" >> "$GITHUB_ENV"
+
+      - name: Create Pull Request
+        id: create-pull-request
+        uses: peter-evans/create-pull-request@v5.0.2
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          commit-message: "${{ needs.prepare-payload.outputs.jira-id }}: ${{ inputs.deployment-environment }} ${{ inputs.application-name }} [${{ needs.prepare-payload.outputs.version }}]"
+          branch: ${{ inputs.application-name }}-version-update
+          delete-branch: true
+          labels: |
+            app/${{ inputs.application-name }}
+            env/${{ inputs.deployment-environment }}
+            ${{ needs.prepare-payload.outputs.pr-labels }}
+          branch-suffix: random
+          assignees: ${{ needs.prepare-payload.outputs.author-username }}
+          author: ${{ needs.prepare-payload.outputs.author-name }} <${{ needs.prepare-payload.outputs.author-email }}>
+          committer: ${{ needs.prepare-payload.outputs.author-name }} <${{ needs.prepare-payload.outputs.author-email }}>
+          title: "${{ needs.prepare-payload.outputs.jira-id }}: ${{ inputs.deployment-environment }} ${{ inputs.application-name }} [${{needs.prepare-payload.outputs.version }}]"
+          body: |
+            # Promotion PR for ${{ inputs.application-name }} to ${{ inputs.deployment-environment }}
+
+            * Jira-ID: https://digdir.atlassian.net/browse/${{ needs.prepare-payload.outputs.jira-id }}
+            * Application commit: https://github.com/${{ needs.prepare-payload.outputs.repository }}/commit/${{ needs.prepare-payload.outputs.sha }}
+            * Pull request: https://github.com/${{ needs.prepare-payload.outputs.repository }}/pull/${{ needs.prepare-payload.outputs.pr-number }}
+            * Version: ${{ needs.prepare-payload.outputs.version }}
+            * Image: ${{ needs.prepare-payload.outputs.image }}
+
+      - name: Log Outputs
+        id: log-outputs
+        run: |
+          {
+            echo "# Outputs"
+            echo "| Key                     | Value                                                           |"
+            echo "| ----------------------- | --------------------------------------------------------------- |"
+            echo "| pull-request-number     | ${{ steps.create-pull-request.outputs.pull-request-number }}    |"
+            echo "| pull-request-url        | ${{ steps.create-pull-request.outputs.pull-request-url }}       |"
+            echo "| pull-request-operation  | ${{ steps.create-pull-request.outputs.pull-request-operation }} |"
+            echo "| pull-request-head-sha   | ${{ steps.create-pull-request.outputs.pull-request-head-sha }}  |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Set Auto-Merge Output
+        id: set-auto-merge-output
+        if: ${{ !contains(needs.prepare-payload.outputs.pr-labels, 'manual-deploy') && steps.create-pull-request.outputs.pull-request-operation == 'created' }}
+        run: echo "auto-merge=true" >> "$GITHUB_OUTPUT"
+
+  # Job to approve and merge the pull request
+  approve-and-merge-pr:
+    runs-on: ubuntu-latest
+    needs: [update-version]
+    if: needs.update-version.outputs.auto-merge == 'true'
+
+    steps:
+      - name: Install Dependencies
+        run: npm install @octokit/app@v14.0.2
+
+      - name: Generate Token
+        uses: actions/github-script@v7
+        id: generate-token
+        env:
+          GH_APP_ID: ${{ secrets.DIGDIR_PLATFORM_CD_APP_ID }}
+          GH_APP_PRIVATE_KEY: ${{ secrets.DIGDIR_PLATFORM_CD_APP_PRIVATE_KEY }}
+          INSTALLATION_ID: ${{ secrets.DIGDIR_PLATFORM_CD_APP_INSTALLATION_ID }}
+        with:
+          script: |
+            const { createAppAuth } = require("@octokit/auth-app");
+
+            const auth = createAppAuth({
+              appId: +process.env.GH_APP_ID,
+              privateKey: process.env.GH_APP_PRIVATE_KEY
+            });
+
+            const { token } = await auth({ type: "installation", installationId: +process.env.INSTALLATION_ID });
+
+            core.setOutput('token', token);
+          result-encoding: string
+
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0
+        with:
+          event-type: "merge-update-version-pr"
+          repository: "felleslosninger/${{ inputs.kubernetes-repo }}"
+          token: ${{ steps.generate-token.outputs.token }}
+          client-payload: |
+            {
+              "pull-request-number": "${{ needs.update-version.outputs.pull-request-number }}",
+              "repository": "${{ inputs.kubernetes-repo }}"
+            }
+
+      - name: Approve and Merge Status
+        run: |
+          echo "Check status of Approve and Merge here :point_right: https://github.com/felleslosninger/${{ inputs.kubernetes-repo }}/actions/workflows/merge-update-version-pr.yml" >> "$GITHUB_STEP_SUMMARY"
+
+  # Job to notify on errors in case any workflow fails
+  notify-on-errors:
+    needs: [update-version]
+    if: always() && contains(needs.*.result, 'failure')
+    uses: felleslosninger/eid-github-workflows/.github/workflows/send-notification-on-workflow-errors.yml@main
+    with:
+      slack-channel-id: ${{ inputs.slack-channel-id }}
+    secrets: inherit
