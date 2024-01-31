@@ -68,7 +68,7 @@ jobs:
             distribution: 'liberica'
             java-version: ${{ inputs.java-version }}
         - name: Cache Maven packages
-          uses: actions/cache@v3.3.2
+          uses: actions/cache@v4.0.0
           with:
             path: ~/.m2
             key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -91,7 +91,7 @@ jobs:
         - name: Build image with Maven/Spring Boot
           run: mvn -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
         - name: Run Trivy vulnerability scanner
-          uses: aquasecurity/trivy-action@41f05d9ecffa2ed3f1580af306000f734b733e54 # pin@v0.11.2
+          uses: aquasecurity/trivy-action@d43c1f16c00cfd3978dde6c07f4bbcf9eb6993ca # pin@v0.16.1
           with:
             image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
             exit-code: '1'
