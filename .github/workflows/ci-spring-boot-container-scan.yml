@@ -48,12 +48,12 @@ jobs:
             distribution: 'liberica'
             java-version: ${{ inputs.java-version }}
         - name: Cache Maven packages
-          uses: actions/cache@v3.3.2
+          uses: actions/cache@v4.0.0
           with:
             path: ~/.m2
             key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
             restore-keys: ${{ runner.os }}-m2
-        - uses: s4u/maven-settings-action@v2.8.0
+        - uses: s4u/maven-settings-action@v3.0.0
           with:
             servers: |
               [{
@@ -78,7 +78,7 @@ jobs:
             image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
             artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
         - name: Run Trivy vulnerability scanner
-          uses: aquasecurity/trivy-action@41f05d9ecffa2ed3f1580af306000f734b733e54 # pin@v0.11.2
+          uses: aquasecurity/trivy-action@d43c1f16c00cfd3978dde6c07f4bbcf9eb6993ca # pin@v0.16.1
           with:
             image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
             exit-code: '1'

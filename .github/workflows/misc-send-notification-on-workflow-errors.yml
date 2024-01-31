@@ -26,20 +26,20 @@ jobs:
       - name: Checkout JS Tools
         uses: actions/checkout@v4
         with:
-          repository: felleslosninger/eid-github-workflows
+          repository: felleslosninger/github-workflows
           path: tools
-      - name: Use JS Tools
+      - name: Get commit message
         id: commit-message
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
-            const Utils = require('.github/js/github-context-utils.js');
-            const message = Utils.getHeadCommitMessage(${{ toJson(github) }}); 
+            const Utils = require('./tools/.github/js/github-context-utils.js');
+            const message = Utils.getCommitMessage(${{ toJson(github) }});
             return message;
       - name: Notify
         if: ${{ matrix.channel != '' }}
         id: slack
-        uses: slackapi/slack-github-action@v1.24.0
+        uses: slackapi/slack-github-action@v1.25.0
         with:
           channel-id: ${{ matrix.channel }}
           payload: |
@@ -86,4 +86,4 @@ jobs:
                   "type": "divider"
                 }
               ]
-            }              
+            }

@@ -1,0 +1,230 @@
+# This GitHub Action calls workflow to update Docker image
+name: Call Update Image
+
+on:
+  workflow_call:
+    inputs:
+      application-name:
+        description: Name of application
+        required: true
+        type: string
+      product-name:
+        required: true
+        type: string
+      image-name:
+        description: Name of Docker image
+        required: true
+        type: string
+      image-version:
+        description: Docker image version
+        required: true
+        type: string
+      image-digest:
+        description: Docker image digest (SHA256)
+        required: true
+        type: string
+      kubernetes-repo:
+        description: Repository for kubernetes manifests (idporten-cd | minid-cd)
+        required: false
+        type: string
+      kubernetes-repo-event:
+        description: Name of event to trigger in kubernetes repository
+        default: "update-version"
+        required: false
+        type: string
+      deployment-environment:
+        required: true
+        type: string
+      kustomize-version:
+        required: false
+        type: string
+        default: "5.0.3"
+
+jobs:
+  # Job to prepare payload and set outputs
+  prepare-payload:
+    runs-on: ubuntu-latest
+
+    env:
+      jira-id: ""
+
+    steps:
+      - name: Log Inputs
+        run: |
+          {
+            echo "# Inputs"
+            echo "| Key                     | Value                                 |"
+            echo "| ----------------------- | ------------------------------------- |"
+            echo "| application-name        | ${{ inputs.application-name }}        |"
+            echo "| product-name            | ${{ inputs.product-name }}            |"
+            echo "| image-name              | ${{ inputs.image-name }}              |"
+            echo "| image-version           | ${{ inputs.image-version }}           |"
+            echo "| image-digest            | ${{ inputs.image-digest }}            |"
+            echo "| kubernetes-repo         | ${{ inputs.kubernetes-repo }}         |"
+            echo "| kubernetes-repo-event   | ${{ inputs.kubernetes-repo-event }}   |"
+            echo "| deployment-environment  | ${{ inputs.deployment-environment }}  |"
+            echo "| kustomize-version       | ${{ inputs.kustomize-version }}       |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Find Jira ID
+        id: find-jira-id
+        env:
+          GIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          JIID=$(echo "$GIT_MSG" | head -1 |
+          grep -Eo '^([a-zA-Z]{2,6}-[0-9]+)') || JIID=''
+          echo "jira-id=$JIID" >> "$GITHUB_ENV"
+
+      - name: Get Labels
+        uses: octokit/request-action@v2.x
+        id: get-labels
+        with:
+          route: GET /repos/${{ github.repository }}/commits/${{ github.sha }}/pulls
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set PR Labels and Number
+        id: set-pr-labels-and-number
+        run: |
+          echo "pr-labels=${{ join(fromJSON(steps.get-labels.outputs.data)[0].labels.*.name) }}" >> "$GITHUB_OUTPUT"
+          echo "pr-number=${{ fromJson(steps.get-labels.outputs.data)[0].number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Check Dependabot
+        id: check-dependabot
+        run: |
+          echo "dependabot=${{ contains(steps.set-pr-labels-and-number.outputs.pr-labels, 'dependencies') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Set Dependabot As Jira ID
+        id: output-dependabot
+        if: |
+          steps.find-jira-id.outputs.match == '' && 
+          steps.check-dependabot.outputs.dependabot == 'true'
+        run: echo "jira-id=Dependabot" >> "$GITHUB_ENV"
+
+      - name: Set Author Username, Name, and Email
+        id: set-author-info
+        run: |
+          actor_name="${{ github.event.pusher.name }}"
+          actor_email="${{ github.event.pusher.name }}"
+
+          # Check if actor_name is null or empty
+          if [ -z "$actor_name" ]; then
+            actor_name="github-actions[bot]"  # Set default value
+          fi
+
+          # Check if actor_email is null or empty
+          if [ -z "$actor_email" ]; then
+            actor_email="41898282+github-actions[bot]@users.noreply.github.com"  # Set default value
+          fi
+
+          {
+            echo "author-username=${{ github.event.pusher.name }}"
+            echo "author-email=${actor_email}@users.noreply.github.com"
+            echo "author-name=${actor_name}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set Outputs
+        id: set-outputs
+        run: |
+          {
+            echo "author-email=${{ steps.set-author-info.outputs.author-email }}"
+            echo "author-name=${{ steps.set-author-info.outputs.author-name }}"
+            echo "author-username=${{ steps.set-author-info.outputs.author-username }}"
+            echo "dependabot=${{ steps.check-dependabot.outputs.dependabot }}"
+            echo "image-name=${{ vars.REGISTRY_URL }}/${{ inputs.image-name }}"
+            echo "image=${{ vars.REGISTRY_URL }}/${{ inputs.image-name }}:${{ inputs.image-version }}@${{ inputs.image-digest }}"
+            echo "pr-labels=${{ steps.set-pr-labels-and-number.outputs.pr-labels }}"
+            echo "pr-number=${{ steps.set-pr-labels-and-number.outputs.pr-number }}"
+            echo "repository=felleslosninger/${{ inputs.kubernetes-repo }}"
+            echo "sha=${{ github.sha }}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Install Dependencies
+        run: npm install @octokit/app@v13.1.8
+
+      - name: Generate Token
+        uses: actions/github-script@v7
+        id: token
+        env:
+          GH_APP_ID: ${{ secrets.DIGDIR_PLATFORM_CI_APP_ID }}
+          GH_APP_PRIVATE_KEY: ${{ secrets.DIGDIR_PLATFORM_CI_APP_PRIVATE_KEY }}
+        with:
+          script: |
+            const { App } = require("@octokit/app");
+
+            const app = new App({
+              appId: process.env.GH_APP_ID,
+              privateKey: process.env.GH_APP_PRIVATE_KEY,
+            });
+
+            const octokit = app.octokit;
+
+            const repository = 'felleslosninger/${{ inputs.kubernetes-repo }}';
+
+            const [owner, repo] = repository.split('/');
+
+            const { data: installation } = await octokit.request("GET /repos/{owner}/{repo}/installation", {
+              owner,
+              repo
+            });
+
+            const installationId = installation.id;
+
+            const { data: { token } } = await octokit.request(`POST /app/installations/${installationId}/access_tokens`, {
+              repositories: [repo]
+            });
+
+            core.setSecret(token);
+
+            return token;
+          result-encoding: string
+
+      - name: Log Outputs
+        id: log-outputs
+        run: |
+          {
+            echo "# Outputs"
+            echo "| Key                     | Value                                                 |"
+            echo "| ----------------------- | ----------------------------------------------------- |"
+            echo "| author-email            | ${{ steps.set-author-info.outputs.author-email }}     |"
+            echo "| author-name             | ${{ steps.set-author-info.outputs.author-name }}      |"
+            echo "| author-username         | ${{ steps.set-author-info.outputs.author-username }}  |"
+            echo "| dependabot              | ${{ steps.set-outputs.outputs.dependabot }}           |"
+            echo "| image-name              | ${{ steps.set-outputs.outputs.image-name }}           |"
+            echo "| image                   | ${{ steps.set-outputs.outputs.image }}                |"
+            echo "| pr-labels               | ${{ steps.set-outputs.outputs.pr-labels }}            |"
+            echo "| pr-number               | ${{ steps.set-outputs.outputs.pr-number }}            |"
+            echo "| repository              | ${{ steps.set-outputs.outputs.repository }}           |"
+            echo "| sha                     | ${{ steps.set-outputs.outputs.sha }}                  |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Call Dispatch To Start Promotion
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0
+        with:
+          token: ${{ steps.token.outputs.result }}
+          event-type: ${{ inputs.kubernetes-repo-event }}
+          repository: "felleslosninger/${{ inputs.kubernetes-repo }}"
+          # Wraps everything inside 'data' to get around Github's limit:
+          # The maximum number of top-level properties in client_payload is 10.
+          client-payload: |-
+            {
+              "data": {
+                "application-name": "${{ inputs.application-name }}",
+                "author-email": "${{ steps.set-outputs.outputs.author-email }}",
+                "author-name": "${{ steps.set-outputs.outputs.author-name }}",
+                "author-username": "${{ steps.set-outputs.outputs.author-username }}",
+                "deployment-environment": "${{ inputs.deployment-environment }}",
+                "image-digest": "${{ inputs.image-digest }}",
+                "image-name": "${{ steps.set-outputs.outputs.image-name }}",
+                "image-version": "${{ inputs.image-version }}",
+                "image": "${{ steps.set-outputs.outputs.image-name }}:${{inputs.image-version}}@${{inputs.image-digest}}",
+                "jira-id": "${{ env.jira-id }}",
+                "kubernetes-repo": "${{ inputs.kubernetes-repo }}",
+                "pr-labels": "${{ steps.set-outputs.outputs.pr-labels }}",
+                "pr-number": "${{ steps.set-outputs.outputs.pr-number }}",
+                "product-name": "${{ inputs.product-name }}",
+                "repository": "${{ steps.set-outputs.outputs.repository }}",
+                "sha": "${{ steps.set-outputs.outputs.sha }}",
+                "kustomize-version": "${{ inputs.kustomize-version }}"
+              }
+            }
