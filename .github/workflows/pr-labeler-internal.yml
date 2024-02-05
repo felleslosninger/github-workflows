@@ -1,30 +1,33 @@
-name: Append [[INTERNAL]] to PR Title
+name: Append INTERNAL-COMMIT to PR title
 
 on:
-  pull_request_target:
+  pull_request:
     types: [labeled]
 
+env:
+  append-string: "INTERNAL-COMMIT"
+
 jobs:
-  append-internal-to-title:
+  append-string-to-title:
     runs-on: ubuntu-latest
     if: github.event.label.name == 'internal'
     steps:
-      - name: Append [[INTERNAL]] to PR title
+      - name: Append ${{ env.append-string }} to PR title
         uses: actions/github-script@v7
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const { pull_request } = context.payload;
-            const newTitle = `${pull_request.title} [[INTERNAL]]`;
+            const newTitle = `${pull_request.title} ${{ env.append-string }}`;
             
-            if (!pull_request.title.includes('[[INTERNAL]]')) {
+            if (!pull_request.title.includes("${{ env.append-string }}")) {
               const response = await github.rest.pulls.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: pull_request.number,
                 title: newTitle,
               });
-              console.log("PR title updated", response.data.title);
+              core.info("PR title updated to " + response.data.title);
             } else {
-              console.log("PR title already contains [[INTERNAL]]");
+              core.info("PR title already contains ${{ env.append-string }}");
             }
