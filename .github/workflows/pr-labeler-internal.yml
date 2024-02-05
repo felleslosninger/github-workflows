@@ -1,8 +1,7 @@
 name: Append INTERNAL-COMMIT to PR title
 
 on:
-  pull_request:
-    types: [labeled]
+  workflow_call:
 
 env:
   append-string: "INTERNAL-COMMIT"
