@@ -17,10 +17,6 @@ on:
         default: '21'
         required: false
         type: string
-      container-scan-offline-mode:
-        description: Container-scan is default download updated CVE definitions via Trivy, enable offline on download problems
-        default: false
-        type: boolean
       slack-channel-id:
         description: Team channel id
         default: ''
