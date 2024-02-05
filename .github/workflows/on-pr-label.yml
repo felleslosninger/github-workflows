@@ -1,13 +1,13 @@
-name: Append INTERNAL-COMMIT to PR title
+name: On PR label
 
 on:
   workflow_call:
 
 env:
-  append-string: "INTERNAL-COMMIT"
+  internal-commit-string: "INTERNAL-COMMIT"
 
 jobs:
-  append-string-to-title:
+  append-internal-commit-string-to-title:
     runs-on: ubuntu-latest
     if: github.event.label.name == 'internal'
     steps:
@@ -17,9 +17,9 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const { pull_request } = context.payload;
-            const newTitle = `${pull_request.title} ${{ env.append-string }}`;
+            const newTitle = `${pull_request.title} ${{ env.internal-commit-string }}`;
             
-            if (!pull_request.title.includes("${{ env.append-string }}")) {
+            if (!pull_request.title.includes("${{ env.internal-commit-string }}")) {
               const response = await github.rest.pulls.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -28,5 +28,5 @@ jobs:
               });
               core.info("PR title updated to " + response.data.title);
             } else {
-              core.info("PR title already contains ${{ env.append-string }}");
+              core.info("PR title already contains ${{ env.internal-commit-string }}");
             }
