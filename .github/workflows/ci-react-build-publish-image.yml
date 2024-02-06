@@ -20,6 +20,10 @@ jobs:
       image-version: ${{ steps.tag_image.outputs.tag }}
       image-digest: ${{ steps.tag_image.outputs.digest }}
     steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
       - name: Check out repository
         uses: actions/checkout@v3
 
