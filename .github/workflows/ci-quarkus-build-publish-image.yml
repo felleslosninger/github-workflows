@@ -36,7 +36,6 @@ jobs:
         REPOSITORY-NAME: ${{ github.event.repository.name }}
         DOCKLE_HOST: "unix:///var/run/docker.sock"
         #TRIVY_TIMEOUT: "15m"
-        TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
       outputs:
         imagetag: ${{ steps.output-image-tag.outputs.imagetag }}
         imagedigest: ${{ steps.output-image-digest.outputs.imagedigest }}
