@@ -6,18 +6,18 @@ Create folder `.github/workflows/` folder in your application repo if not alread
 
 Possible inputs for `call-workflow-maven-build`:
 
-      java-version: "value" (OPTIONAL)
+      java-version: "<value>" (OPTIONAL)
         default: '11'
 
 Possible inputs for `call-container-scan`:
 
-      image-name: "value" (OPTIONAL, inherits repository name if not set)
-      image-pack: "value" (OPTIONAL)
+      image-name: "<value>" (OPTIONAL, inherits repository name if not set)
+      image-pack: "<value>" (OPTIONAL)
         default: builder-jammy-tiny
-      java-version: "value" (OPTIONAL)
+      java-version: "<value>" (OPTIONAL)
         default: '11'
 
-Add workflow file `.github/workflows/call-maventests.yml` with the following content:
+Add `.github/workflows/call-maventests.yml` to application repo with the following content. If providing inputs uncomment "with:", and replace <inputs> with inputs needed. Remove the lines if not used.
 
 ```
 name: Build Maven Java
@@ -44,7 +44,8 @@ For more details see description in workflow [ci-maven-build.yml](../.github/wor
 
 ## Build and push image and update kubernetes configuration with new image version
 
-Possible inputs for `call-workflow-image-build-publish``: 
+Possible inputs for `call-workflow-image-build-publish`: 
+
       image-name: "<value>" (OPTIONAL, inherits repository name if not set)
       image-pack: "<value>" (OPTIONAL)
         default: builder-jammy-tiny
@@ -52,14 +53,15 @@ Possible inputs for `call-workflow-image-build-publish``:
         default: '11'
       slack-channel-id: "<value>" (OPTIONAL)
 
-Possible inputs for `call-update-image-version``: 
+Possible inputs for `call-update-image-version`: 
+
       application-name: "<value>" (MANDATORY)
       product-name: "<value>" (MANDATORY)
       image-name: "<value>" (MANDATORY)
       kubernetes-repo: "<name of CD repo>" (MANDATORY)
       deployment-environment: "<value>" (MANDATORY)
 
-Example of workflow file `.github/workflows/call-buildimage.yml` with all values set
+Add `.github/workflows/call-buildimage.yml` to application repo with the following content. If providing inputs uncomment "with:", and replace <inputs> with inputs needed. Remove the lines if not used.
 
 ```
 name: Build/publish Docker image
@@ -72,14 +74,14 @@ jobs:
   call-workflow-image-build-publish:
     uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-build-publish-image.yml@main
     # with:
-      # inputs
+      # <inputs>
     secrets: inherit
 
   call-update-image-version:
     uses: felleslosninger/github-workflows/.github/workflows/ci-call-update-image.yml@main
     needs: [call-workflow-image-build-publish]
     with:
-      # inputs
+      # <inputs>
       image-version: ${{ needs.call-workflow-image-build-publish.outputs.image-version }}
       image-digest: ${{ needs.call-workflow-image-build-publish.outputs.image-digest }}
     secrets: inherit
