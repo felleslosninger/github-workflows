@@ -36,8 +36,8 @@ jobs:
       - name: Tag Docker image
         id: tag_image
         run: |
-          echo "::set-output name=tag::${{ inputs.image-name }}:${{ github.sha }}"
-          echo "::set-output name=digest::$(docker inspect --format='{{index .RepoDigests 0}}' ${{ inputs.image-name }}:${{ github.sha }})"
+          echo "tag=${{ inputs.image-name }}:${{ github.sha }}" >> $GITHUB_ENV
+          echo "digest=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ inputs.image-name }}:${{ github.sha }})" >> $GITHUB_ENV
 
       - name: Log in to Docker registry
         uses: docker/login-action@v2
