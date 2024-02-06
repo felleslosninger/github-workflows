@@ -5,14 +5,16 @@ Create folder `.github/workflows/` folder in your application repo if not alread
 ## Build branch when pull request created
 
 Possible inputs for `call-workflow-maven-build`:
-      java-version: "<value>" (OPTIONAL)
+
+      java-version: "value" (OPTIONAL)
         default: '11'
 
 Possible inputs for `call-container-scan`:
-      image-name: "<value>" (OPTIONAL, inherits repository name if not set)
-      image-pack: "<value>" (OPTIONAL)
+
+      image-name: "value" (OPTIONAL, inherits repository name if not set)
+      image-pack: "value" (OPTIONAL)
         default: builder-jammy-tiny
-      java-version: "<value>" (OPTIONAL)
+      java-version: "value" (OPTIONAL)
         default: '11'
 
 Add workflow file `.github/workflows/call-maventests.yml` with the following content:
