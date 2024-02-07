@@ -12,6 +12,16 @@ on:
         default: ""
         required: false
         type: string
+      multi-module-project-path:
+        description: Set to path of the module-to-build, only use if multi module project
+        default: ""
+        required: false
+        type: string
+      module-to-build:
+        description: The module name in the multi module project to build, only set if using multi module project
+        default: ""
+        required: false
+        type: string
 
 jobs:
   build-publish-image:
