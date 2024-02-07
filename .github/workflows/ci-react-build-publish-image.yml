@@ -57,9 +57,9 @@ jobs:
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: "Push image"
-        run: docker push ${{ env.IMAGE-NAME }}:${{ env.IMAGETAG }}
+        run: docker push ${{ inputs.image-name }}:${{ github.sha }}
 
-      - run: echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{ env.IMAGE-NAME }}:${{ env.IMAGETAG }}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
+      - run: echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{ inputs.image-name }}:${{ github.sha }}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
 
       - id: output-image-tag
         run: echo "imagetag=${{ env.IMAGETAG }}" >> "$GITHUB_OUTPUT"
