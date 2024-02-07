@@ -73,8 +73,8 @@ jobs:
           run: |
             pack build ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} \
               --path . \
-              --buildpack "paketo-buildpacks/quarkus" \
-              --buildpack "paketo-buildpacks/java" \
+              --buildpack paketobuildpacks/quarkus \
+              --buildpack paketobuildpacks/java \
               --builder paketobuildpacks/${{ inputs.image-pack }} \
               --volume "${HOME}/.m2:/home/cnb/.m2" \
               --env BP_JVM_VERSION="${{ inputs.java-version }}" \
