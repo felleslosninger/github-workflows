@@ -35,7 +35,7 @@ jobs:
 
       - name: Install Pack CLI
         run: |
-          PACK_VERSION=0.21.0
+          PACK_VERSION=0.32.1
           OS=$(uname -s)
           ARCH=$(uname -m)
           curl -sSL "https://github.com/buildpacks/pack/releases/download/v${PACK_VERSION}/pack-v${PACK_VERSION}-${OS}-${ARCH}.tgz" | sudo tar -C /usr/local/bin/ --no-same-owner -xzv pack
