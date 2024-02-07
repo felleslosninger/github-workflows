@@ -22,16 +22,34 @@ on:
         default: ""
         required: false
         type: string
+    outputs:
+      image-version:
+        description: "Docker image version"
+        value: ${{ jobs.build-publish-image.outputs.imagetag }}
+      image-digest:
+        description: "Docker image SHA256 digest"
+        value: ${{ jobs.build-publish-image.outputs.imagedigest }}
 
 jobs:
   build-publish-image:
     runs-on: ubuntu-latest
+    env:
+      REPOSITORY-NAME: ${{ github.event.repository.name }}
+      DOCKLE_HOST: "unix:///var/run/docker.sock"
+      #TRIVY_TIMEOUT: "15m"
+      TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
     outputs:
-      image-version: ${{ steps.tag_image.outputs.tag }}
-      image-digest: ${{ steps.tag_image.outputs.digest }}
+      imagetag: ${{ steps.output-image-tag.outputs.imagetag }}
+      imagedigest: ${{ steps.output-image-digest.outputs.imagedigest }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Set imagetag as env variable
+        run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
+      - name: Set IMAGE-NAME env variable
+        run: |
+           echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
 
       - name: Install Pack CLI
         run: |
@@ -57,9 +75,9 @@ jobs:
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: "Push image"
-        run: docker push ${{ inputs.image-name }}:${{ github.sha }}
+        run: docker push ${{ env.IMAGE-NAME }}:${{ env.IMAGETAG }}
 
-      - run: echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{ inputs.image-name }}:${{ github.sha }}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
+      - run: echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{ env.IMAGE-NAME }}:${{ env.IMAGETAG }}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
 
       - id: output-image-tag
         run: echo "imagetag=${{ env.IMAGETAG }}" >> "$GITHUB_OUTPUT"
