@@ -13,6 +13,10 @@ on:
         default: ./target/
         required: false
         type: string
+      profile:
+        description: Maven profile to use
+        required: false
+        type: string
 
 jobs:
   build:
