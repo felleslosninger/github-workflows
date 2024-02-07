@@ -66,7 +66,7 @@ jobs:
               --show-error \
               --silent \
               "https://github.com/buildpacks/pack/releases/download/v${PACK_VERSION}/pack-v${PACK_VERSION}-linux.tgz" \
-            | sudo tar -C /usr/local/bin/bin --no-same-owner -xzv pack
+            | sudo tar -C /usr/local/bin --no-same-owner -xzv pack
           env:
             PACK_VERSION: 0.32.1
         - name: Build image with Maven/Quarkus
