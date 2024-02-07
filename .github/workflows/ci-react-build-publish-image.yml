@@ -65,12 +65,6 @@ jobs:
           cd ${{ inputs.multi-module-project-path }}
           pack build ${{ env.IMAGE-NAME }}:${{ env.IMAGETAG }} --buildpack paketo-buildpacks/nodejs --builder paketobuildpacks/builder-jammy-base
 
-      - name: Tag Docker image
-        id: tag_image
-        run: |
-          echo "tag=${{ inputs.image-name }}:${{ github.sha }}" >> "$GITHUB_ENV"
-          echo "digest=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ inputs.image-name }}:${{ github.sha }})" >> "$GITHUB_ENV"
-
       - name: "Login Azure docker container registry"
         uses: azure/docker-login@v1
         with:
