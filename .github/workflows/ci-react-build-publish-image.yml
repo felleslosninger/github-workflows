@@ -39,7 +39,7 @@ jobs:
           curl -sSL "https://github.com/buildpacks/pack/releases/download/v${PACK_VERSION}/pack-v${PACK_VERSION}-linux.tgz" | sudo tar -C /usr/local/bin/ --no-same-owner -xzv pack
 
       - name: Build Docker image with Paketo
-        run: pack build ${{ inputs.image-name }}:${{ github.sha }} --builder paketo-buildpacks/nodejs
+        run: pack build ${{ inputs.image-name }}:${{ github.sha }} --buildpack paketo-buildpacks/nodejs
 
       - name: Tag Docker image
         id: tag_image
