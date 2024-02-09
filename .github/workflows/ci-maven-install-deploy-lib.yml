@@ -32,13 +32,23 @@ jobs:
           mkdir -p ~/.m2
           echo "<settings><servers><server><id>github</id><username>${{ secrets.GH_PACKAGES_READ_USER }}</username><password>${{ secrets.GH_PACKAGES_READ_PAT }}</password></server></servers></settings>" > ~/.m2/settings.xml
       - name: Build with Maven
-        run: mvn -B clean install --update-snapshots "${inputs.profile && '-P' + inputs.profile}"
+        run: |
+          if [ -n "${{ inputs.profile }}" ]; then
+            mvn -B clean install --update-snapshots -P"${{ inputs.profile }}"
+          else
+            mvn -B clean install --update-snapshots
+          fi
 
       - name: Overwrite m2 settings to publish libs
         run: |
           echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
       - name: Deploy package
-        run: mvn -B deploy "${inputs.profile && '-P' + inputs.profile}"
+        run: |
+          if [ -n "${{ inputs.profile }}" ]; then
+            mvn -B deploy -P"${{ inputs.profile }}"
+          else
+            mvn -B deploy
+          fi
       - uses: anchore/sbom-action@v0
         with:
           path: ${{ inputs.sbom-path }}
