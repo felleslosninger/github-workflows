@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       image-name:
-        description: Name of Docker image
+        description: Name of Docker image, set if building multiple images from same repo (ie multi modue project)
         required: false
         type: string
       image-pack:

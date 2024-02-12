@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       image-name:
-        description: Name of Docker image
+        description: Name of Docker image, set if building multiple images from same repo (ie multi modue project)
         required: false
         type: string
       slack-channel-id:
@@ -40,22 +40,20 @@ jobs:
     env:
       REPOSITORY-NAME: ${{ github.event.repository.name }}
       DOCKLE_HOST: "unix:///var/run/docker.sock"
-      #TRIVY_TIMEOUT: "15m"
       TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
     outputs:
       imagetag: ${{ steps.output-image-tag.outputs.imagetag }}
       imagedigest: ${{ steps.output-image-digest.outputs.imagedigest }}
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
       - name: Set imagetag as env variable
         run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
       - name: Set IMAGE-NAME env variable
         run: |
            echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
 
-      - name: Install Pack CLI
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install buildpack Pack CLI
         run: |
           PACK_VERSION=0.32.1
           curl -sSL "https://github.com/buildpacks/pack/releases/download/v${PACK_VERSION}/pack-v${PACK_VERSION}-linux.tgz" | sudo tar -C /usr/local/bin/ --no-same-owner -xzv pack
