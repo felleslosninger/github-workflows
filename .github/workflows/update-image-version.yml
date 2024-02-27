@@ -199,25 +199,12 @@ jobs:
         run: npm install @octokit/app@v14.0.2
 
       - name: Generate Token
-        uses: actions/github-script@v7
+        uses: felleslosninger/github-actions/github-app-token@v0.5.0
         id: generate-token
-        env:
-          GH_APP_ID: ${{ secrets.DIGDIR_PLATFORM_CD_APP_ID }}
-          GH_APP_PRIVATE_KEY: ${{ secrets.DIGDIR_PLATFORM_CD_APP_PRIVATE_KEY }}
-          INSTALLATION_ID: ${{ secrets.DIGDIR_PLATFORM_CD_APP_INSTALLATION_ID }}
         with:
-          script: |
-            const { createAppAuth } = require("@octokit/auth-app");
-
-            const auth = createAppAuth({
-              appId: +process.env.GH_APP_ID,
-              privateKey: process.env.GH_APP_PRIVATE_KEY
-            });
-
-            const { token } = await auth({ type: "installation", installationId: +process.env.INSTALLATION_ID });
-
-            core.setOutput('token', token);
-          result-encoding: string
+          app-id: ${{ secrets.DIGDIR_PLATFORM_CD_APP_ID }}
+          private-key: ${{ secrets.DIGDIR_PLATFORM_CD_APP_PRIVATE_KEY }}
+          installation-id: ${{ secrets.DIGDIR_PLATFORM_CD_APP_INSTALLATION_ID }}
 
       - uses: actions/checkout@v4
         with:
@@ -466,25 +453,12 @@ jobs:
         run: npm install @octokit/app@v14.0.2
 
       - name: Generate Token
-        uses: actions/github-script@v7
+        uses: felleslosninger/github-actions/github-app-token@v0.5.0
         id: generate-token
-        env:
-          GH_APP_ID: ${{ secrets.DIGDIR_PLATFORM_CD_APP_ID }}
-          GH_APP_PRIVATE_KEY: ${{ secrets.DIGDIR_PLATFORM_CD_APP_PRIVATE_KEY }}
-          INSTALLATION_ID: ${{ secrets.DIGDIR_PLATFORM_CD_APP_INSTALLATION_ID }}
         with:
-          script: |
-            const { createAppAuth } = require("@octokit/auth-app");
-
-            const auth = createAppAuth({
-              appId: +process.env.GH_APP_ID,
-              privateKey: process.env.GH_APP_PRIVATE_KEY
-            });
-
-            const { token } = await auth({ type: "installation", installationId: +process.env.INSTALLATION_ID });
-
-            core.setOutput('token', token);
-          result-encoding: string
+          app-id: ${{ secrets.DIGDIR_PLATFORM_CD_APP_ID }}
+          private-key: ${{ secrets.DIGDIR_PLATFORM_CD_APP_PRIVATE_KEY }}
+          installation-id: ${{ secrets.DIGDIR_PLATFORM_CD_APP_INSTALLATION_ID }}
 
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0

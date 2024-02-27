@@ -143,41 +143,13 @@ jobs:
         run: npm install @octokit/app@v13.1.8
 
       - name: Generate Token
-        uses: actions/github-script@v7
+        uses: felleslosninger/github-actions/github-app-token@v0.5.0
         id: token
-        env:
-          GH_APP_ID: ${{ secrets.DIGDIR_PLATFORM_CI_APP_ID }}
-          GH_APP_PRIVATE_KEY: ${{ secrets.DIGDIR_PLATFORM_CI_APP_PRIVATE_KEY }}
         with:
-          script: |
-            const { App } = require("@octokit/app");
-
-            const app = new App({
-              appId: process.env.GH_APP_ID,
-              privateKey: process.env.GH_APP_PRIVATE_KEY,
-            });
-
-            const octokit = app.octokit;
-
-            const repository = 'felleslosninger/${{ inputs.kubernetes-repo }}';
-
-            const [owner, repo] = repository.split('/');
-
-            const { data: installation } = await octokit.request("GET /repos/{owner}/{repo}/installation", {
-              owner,
-              repo
-            });
-
-            const installationId = installation.id;
-
-            const { data: { token } } = await octokit.request(`POST /app/installations/${installationId}/access_tokens`, {
-              repositories: [repo]
-            });
-
-            core.setSecret(token);
-
-            return token;
-          result-encoding: string
+          app-id: ${{ secrets.DIGDIR_PLATFORM_CI_APP_ID }}
+          private-key: ${{ secrets.DIGDIR_PLATFORM_CI_APP_PRIVATE_KEY }}
+          installation-id: ${{ secrets.DIGDIR_PLATFORM_CI_APP_INSTALLATION_ID }}
+          repository: ${{ inputs.kubernetes-repo }}
 
       - name: Log Outputs
         id: log-outputs
@@ -201,7 +173,7 @@ jobs:
       - name: Call Dispatch To Start Promotion
         uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0
         with:
-          token: ${{ steps.token.outputs.result }}
+          token: ${{ steps.token.outputs.token }}
           event-type: ${{ inputs.kubernetes-repo-event }}
           repository: "felleslosninger/${{ inputs.kubernetes-repo }}"
           # Wraps everything inside 'data' to get around Github's limit:
