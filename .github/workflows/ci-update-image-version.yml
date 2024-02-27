@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       application-name:
-        description: Name of application
+        description: Name of application, has to match /apps subfolder name
         required: false
         type: string
       image-name:
