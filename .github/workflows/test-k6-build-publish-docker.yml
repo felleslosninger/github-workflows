@@ -9,19 +9,19 @@ on:
         type: string
       slack-channel-id:
         description: Team channel id
-        default: ''
+        default: ""
         required: false
         type: string
       k6-folder:
         description: Folder with k6-tests
-        default: 'k6-load-tests'
+        default: "k6-load-tests"
         required: false
         type: string
       k6-libs-folder:
         description: Folder with k6-tests
-        default: 'libs'
+        default: "libs"
         required: false
-        type: string        
+        type: string
     outputs:
       image-version:
         description: "Docker image version"
@@ -31,61 +31,67 @@ on:
         value: ${{ jobs.build-publish-image.outputs.imagedigest }}
 jobs:
   build-publish-image:
-      runs-on: ubuntu-latest
-      env:
-        REPOSITORY-NAME: ${{ github.event.repository.name }}
-        DOCKLE_HOST: "unix:///var/run/docker.sock"        
-      outputs:
-        imagetag: ${{ steps.output-image-tag.outputs.imagetag }}
-        imagedigest: ${{ steps.output-image-digest.outputs.imagedigest }}
-      steps:
-        - name: Set imagetag as env variable
-          run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
-        - name: Set IMAGE-NAME env variable
-          run: |
-             echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
-        - uses: actions/checkout@v4
-        - name: Find and replace image version for ${{ env.IMAGETAG }} in version endpoint
-          uses: jacobtomlinson/gha-find-replace@v3
-          id: update-version
-          with:
-            find: "DEV-SNAPSHOT"
-            replace: "${{ env.IMAGETAG }}"
-            include: "docker/version"
-            regex: false
-        - name: Copy k6-tests to docker temp
-          run: |
-            cp -R ${{ inputs.k6-folder }}/* docker/k6-tests/
-            mkdir docker/${{ inputs.k6-libs-folder }}
-            cp -R ${{ inputs.k6-libs-folder }}/* docker/${{ inputs.k6-libs-folder }}/
-        - name: Build the tagged Docker image
-          run: docker build --tag ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} docker/
-        - name: Run Trivy vulnerability scanner
-          uses: aquasecurity/trivy-action@d43c1f16c00cfd3978dde6c07f4bbcf9eb6993ca # pin@v0.16.1
-          with:
-            image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-            exit-code: '1'
-            severity: 'CRITICAL,HIGH'
-        - name: 'Login to Azure Container registery'
-          uses: azure/docker-login@v1
-          with:
-            login-server: ${{ secrets.REGISTRY_URL }}
-            username: ${{ secrets.REGISTRY_USERNAME }}
-            password: ${{ secrets.REGISTRY_PASSWORD }}
-        - run:  |
-            docker push ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-            docker image tag ${{env.IMAGE-NAME}}:latest && docker push ${{env.IMAGE-NAME}}:latest
-        - run:
-            echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
-        - id: output-image-tag
-          run: echo "imagetag=${{env.IMAGETAG}}" >> "$GITHUB_OUTPUT"
-        - id: output-image-digest
-          run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
-  notify-on-errors:
-    needs: [ build-publish-image ]
-    if: ${{ always() && contains(needs.*.result, 'failure') }}
-    uses: ./.github/workflows/misc-send-notification-on-workflow-errors.yml
-    with:
-      slack-channel-id: ${{ inputs.slack-channel-id }}
-    secrets: inherit
+    runs-on: ubuntu-latest
+    env:
+      REPOSITORY-NAME: ${{ github.event.repository.name }}
+      DOCKLE_HOST: "unix:///var/run/docker.sock"
+    outputs:
+      imagetag: ${{ steps.output-image-tag.outputs.imagetag }}
+      imagedigest: ${{ steps.output-image-digest.outputs.imagedigest }}
+    steps:
+      - name: Set imagetag as env variable
+        run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
+      - name: Set IMAGE-NAME env variable
+        run: |
+          echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+      - name: Find and replace image version for ${{ env.IMAGETAG }} in version endpoint
+        uses: jacobtomlinson/gha-find-replace@v3
+        id: update-version
+        with:
+          find: "DEV-SNAPSHOT"
+          replace: "${{ env.IMAGETAG }}"
+          include: "docker/version"
+          regex: false
+      - name: Copy k6-tests to docker temp
+        run: |
+          cp -R ${{ inputs.k6-folder }}/* docker/k6-tests/
+          mkdir docker/${{ inputs.k6-libs-folder }}
+          cp -R ${{ inputs.k6-libs-folder }}/* docker/${{ inputs.k6-libs-folder }}/
+      - name: Build the tagged Docker image
+        run: docker build --tag ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} docker/
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@d43c1f16c00cfd3978dde6c07f4bbcf9eb6993ca # pin@v0.16.1
+        with:
+          image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
+          exit-code: "1"
+          severity: "CRITICAL,HIGH"
+      - name: "Login to Azure Container registery"
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - run: |
+          docker push ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
+          docker image tag ${{env.IMAGE-NAME}}:latest && docker push ${{env.IMAGE-NAME}}:latest
+      - run: echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
+      - id: output-image-tag
+        run: echo "imagetag=${{env.IMAGETAG}}" >> "$GITHUB_OUTPUT"
+      - id: output-image-digest
+        run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
 
+  notify-on-errors:
+    runs-on: ubuntu-latest
+    needs: [build-publish-image]
+    if: always() && contains(needs.*.result, 'failure')
+    strategy:
+      matrix:
+        slack-channel: ["${{ inputs.slack-channel-id }}", "C05G4B8R2GG"]
+    steps:
+      - name: Send Slack notification
+        uses: felleslosninger/github-actions/send-slack-notification@v0.5.2
+        with:
+          slack-channel-id: ${{ matrix.slack-channel }}
+          slack-bot-token: ${{ secrets.SLACK_CICD_NOTIFICATION_TOKEN }}
+          failed: "true"

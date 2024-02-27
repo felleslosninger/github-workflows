@@ -1,0 +1,10 @@
+name: Syntax check workflows files (actionlint)
+run-name: "actionlint"
+on: [push]
+
+jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Run actionlint"
+        uses: felleslosninger/github-actions/run-actionlint@v0.5.2
