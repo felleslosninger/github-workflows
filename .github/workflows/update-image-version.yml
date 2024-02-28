@@ -199,7 +199,7 @@ jobs:
         run: npm install @octokit/app@v14.0.2
 
       - name: Generate Token
-        uses: felleslosninger/github-actions/github-app-token@v0.5.0
+        uses: felleslosninger/github-actions/github-app-token@v0.5.2
         id: generate-token
         with:
           app-id: ${{ secrets.DIGDIR_PLATFORM_CD_APP_ID }}
@@ -453,7 +453,7 @@ jobs:
         run: npm install @octokit/app@v14.0.2
 
       - name: Generate Token
-        uses: felleslosninger/github-actions/github-app-token@v0.5.0
+        uses: felleslosninger/github-actions/github-app-token@v0.5.2
         id: generate-token
         with:
           app-id: ${{ secrets.DIGDIR_PLATFORM_CD_APP_ID }}
