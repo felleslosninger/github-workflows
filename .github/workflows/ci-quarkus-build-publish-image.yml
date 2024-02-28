@@ -14,12 +14,12 @@ on:
         type: string
       java-version:
         description: Main version of java
-        default: '21'
+        default: "21"
         required: false
         type: string
       slack-channel-id:
         description: Team channel id
-        default: ''
+        default: ""
         required: false
         type: string
     outputs:
@@ -31,107 +31,113 @@ on:
         value: ${{ jobs.build-publish-image.outputs.imagedigest }}
 jobs:
   build-publish-image:
-      runs-on: ubuntu-latest
-      env:
-        REPOSITORY-NAME: ${{ github.event.repository.name }}
-        DOCKLE_HOST: "unix:///var/run/docker.sock"
-        #TRIVY_TIMEOUT: "15m"
-      outputs:
-        imagetag: ${{ steps.output-image-tag.outputs.imagetag }}
-        imagedigest: ${{ steps.output-image-digest.outputs.imagedigest }}
-      steps:
-        - name: Set imagetag as env variable
-          run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
-        - name: Set IMAGE-NAME env variable
-          run: |
-             echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
-        - uses: actions/checkout@v4
-        - name: yaml-lint
-          uses: ibiqlik/action-yamllint@v3
-          with:
-            file_or_dir: src/main/resources/application*.y*ml
-            config_data: |
-              extends: default
-              rules:
-                empty-lines: disable
-                line-length:
-                  max: 150
-                  level: warning
-        - name: Cache Maven packages
-          uses: actions/cache@v4.0.0
-          with:
-            path: ~/.m2
-            key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-            restore-keys: ${{ runner.os }}-m2
-        - uses: s4u/maven-settings-action@v3.0.0
-          with:
-            servers: |
-              [{
-                "id": "github",
-                "username": "${{ secrets.MAVEN_USER }}",
-                "password": "${{ secrets.MAVEN_PASSWORD }}"
-              }]
-        - name: Maven update version used in application.yaml
-          run: mvn versions:set -B -DnewVersion="$IMAGETAG"        
-        - name: Install pack
-          run: |
-            #!/usr/bin/env bash
-            set -euo pipefail
-            echo "Installing pack ${PACK_VERSION}"
-            mkdir -p /usr/local/bin
-            curl \
-              --location \
-              --show-error \
-              --silent \
-              "https://github.com/buildpacks/pack/releases/download/v${PACK_VERSION}/pack-v${PACK_VERSION}-linux.tgz" \
-            | sudo tar -C /usr/local/bin/bin --no-same-owner -xzv pack
-          env:
-            PACK_VERSION: 0.32.1
-        - name: Build image with Maven/Quarkus
-          run: |
-            pack build ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} \
-              --path . \
-              --buildpack docker://paketobuildpacks/quarkus \
-              --buildpack docker://paketobuildpacks/java \
-              --builder paketobuildpacks/${{ inputs.image-pack }} \
-              --volume "${HOME}/.m2:/home/cnb/.m2:rw" \
-              --env BP_JVM_VERSION="${{ inputs.java-version }}" \
-              --env BP_MAVEN_POM_FILE="./pom.xml" \
-              --creation-time now
-        - name: Run Trivy vulnerability scanner
-          uses: aquasecurity/trivy-action@d43c1f16c00cfd3978dde6c07f4bbcf9eb6993ca # pin@v0.16.1
-          with:
-            image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-            exit-code: '1'
-            severity: 'CRITICAL,HIGH'
-        - name: Create SBOM artifact-name
-          id: sbom-name
-          run: |
-            SBOM_NAME=$(echo ${{env.IMAGE-NAME}} | tr '/' '-')
-            echo "SBOM_ARTIFACT_ID=$SBOM_NAME" >> "$GITHUB_OUTPUT"
-        - uses: anchore/sbom-action@v0
-          with:
-            image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-            artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
-        - name: 'Login Azure docker container registery'
-          uses: azure/docker-login@v1
-          with:
-            login-server: ${{ secrets.REGISTRY_URL }}
-            username: ${{ secrets.REGISTRY_USERNAME }}
-            password: ${{ secrets.REGISTRY_PASSWORD }}
-        - name: 'Push image'
-          run:
-            docker push ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-        - run:
-            echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
-        - id: output-image-tag
-          run: echo "imagetag=${{env.IMAGETAG}}" >> "$GITHUB_OUTPUT"
-        - id: output-image-digest
-          run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
+    runs-on: ubuntu-latest
+    env:
+      REPOSITORY-NAME: ${{ github.event.repository.name }}
+      DOCKLE_HOST: "unix:///var/run/docker.sock"
+      #TRIVY_TIMEOUT: "15m"
+    outputs:
+      imagetag: ${{ steps.output-image-tag.outputs.imagetag }}
+      imagedigest: ${{ steps.output-image-digest.outputs.imagedigest }}
+    steps:
+      - name: Set imagetag as env variable
+        run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
+      - name: Set IMAGE-NAME env variable
+        run: |
+          echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+      - name: yaml-lint
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: src/main/resources/application*.y*ml
+          config_data: |
+            extends: default
+            rules:
+              empty-lines: disable
+              line-length:
+                max: 150
+                level: warning
+      - name: Cache Maven packages
+        uses: actions/cache@v4.0.0
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - uses: s4u/maven-settings-action@v3.0.0
+        with:
+          servers: |
+            [{
+              "id": "github",
+              "username": "${{ secrets.MAVEN_USER }}",
+              "password": "${{ secrets.MAVEN_PASSWORD }}"
+            }]
+      - name: Maven update version used in application.yaml
+        run: mvn versions:set -B -DnewVersion="$IMAGETAG"
+      - name: Install pack
+        run: |
+          #!/usr/bin/env bash
+          set -euo pipefail
+          echo "Installing pack ${PACK_VERSION}"
+          mkdir -p /usr/local/bin
+          curl \
+            --location \
+            --show-error \
+            --silent \
+            "https://github.com/buildpacks/pack/releases/download/v${PACK_VERSION}/pack-v${PACK_VERSION}-linux.tgz" \
+          | sudo tar -C /usr/local/bin/bin --no-same-owner -xzv pack
+        env:
+          PACK_VERSION: 0.32.1
+      - name: Build image with Maven/Quarkus
+        run: |
+          pack build ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} \
+            --path . \
+            --buildpack docker://paketobuildpacks/quarkus \
+            --buildpack docker://paketobuildpacks/java \
+            --builder paketobuildpacks/${{ inputs.image-pack }} \
+            --volume "${HOME}/.m2:/home/cnb/.m2:rw" \
+            --env BP_JVM_VERSION="${{ inputs.java-version }}" \
+            --env BP_MAVEN_POM_FILE="./pom.xml" \
+            --creation-time now
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@d43c1f16c00cfd3978dde6c07f4bbcf9eb6993ca # pin@v0.16.1
+        with:
+          image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
+          exit-code: "1"
+          severity: "CRITICAL,HIGH"
+      - name: Create SBOM artifact-name
+        id: sbom-name
+        run: |
+          SBOM_NAME=$(echo ${{env.IMAGE-NAME}} | tr '/' '-')
+          echo "SBOM_ARTIFACT_ID=$SBOM_NAME" >> "$GITHUB_OUTPUT"
+      - uses: anchore/sbom-action@v0
+        with:
+          image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
+          artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
+      - name: "Login Azure docker container registery"
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: "Push image"
+        run: docker push ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
+      - run: echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
+      - id: output-image-tag
+        run: echo "imagetag=${{env.IMAGETAG}}" >> "$GITHUB_OUTPUT"
+      - id: output-image-digest
+        run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
+
   notify-on-errors:
-    needs: [ build-publish-image ]
-    if: ${{ always() && contains(needs.*.result, 'failure') }}
-    uses: ./.github/workflows/misc-send-notification-on-workflow-errors.yml
-    with:
-      slack-channel-id: ${{ inputs.slack-channel-id }}
-    secrets: inherit
+    runs-on: ubuntu-latest
+    needs: [build-publish-image]
+    if: always() && contains(needs.*.result, 'failure')
+    strategy:
+      matrix:
+        slack-channel: ["${{ inputs.slack-channel-id }}", "C05G4B8R2GG"]
+    steps:
+      - name: Send Slack notification
+        uses: felleslosninger/github-actions/send-slack-notification@v0.5.2
+        with:
+          slack-channel-id: ${{ matrix.slack-channel }}
+          slack-bot-token: ${{ secrets.SLACK_CICD_NOTIFICATION_TOKEN }}
+          failed: "true"

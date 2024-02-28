@@ -110,9 +110,16 @@ jobs:
           client-payload: '{"image-name": "${{env.IMAGE-NAME}}","image": "${{env.IMAGE-NAME}}:${{inputs.image-version}}@${{inputs.image-digest}}","version":"${{inputs.image-version}}","application-name":"${{env.APPLICATION-NAME}}","jira-id":"${{env.JIRA_ID}}","author":${{ toJSON(github.event.head_commit.author) }},"pr-number":"${{ env.PR_NUMBER }}","pr-labels":"${{ env.PR_LABELS }}","sha":"${{ github.sha }}","repository":"${{ github.repository }}" }'
 
   notify-on-errors:
+    runs-on: ubuntu-latest
     needs: [update-version]
-    if: ${{ always() && contains(needs.*.result, 'failure') }}
-    uses: ./.github/workflows/misc-send-notification-on-workflow-errors.yml
-    with:
-      slack-channel-id: ${{ inputs.slack-channel-id }}
-    secrets: inherit
+    if: always() && contains(needs.*.result, 'failure')
+    strategy:
+      matrix:
+        slack-channel: ["${{ inputs.slack-channel-id }}", "C05G4B8R2GG"]
+    steps:
+      - name: Send Slack notification
+        uses: felleslosninger/github-actions/send-slack-notification@v0.5.2
+        with:
+          slack-channel-id: ${{ matrix.slack-channel }}
+          slack-bot-token: ${{ secrets.SLACK_CICD_NOTIFICATION_TOKEN }}
+          failed: "true"
