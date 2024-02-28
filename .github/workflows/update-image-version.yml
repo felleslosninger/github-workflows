@@ -400,7 +400,7 @@ jobs:
 
       - name: Create Pull Request
         id: create-pull-request
-        uses: peter-evans/create-pull-request@b1ddad2c994a25fbc81a28b3ec0e368bb2021c50 # pin@v6.0.0
+        uses: peter-evans/create-pull-request@a4f52f8033a6168103c2538976c07b467e8163bc # pin@v6.0.1
         with:
           token: ${{ steps.generate-token.outputs.token }}
           commit-message: "${{ needs.prepare-payload.outputs.jira-id }}: ${{ inputs.deployment-environment }} ${{ inputs.application-name }} [${{ needs.prepare-payload.outputs.version }}]"
