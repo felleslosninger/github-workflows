@@ -58,7 +58,7 @@ jobs:
                 max: 150
                 level: warning
       - name: Cache Maven packages
-        uses: actions/cache@v4.0.0
+        uses: actions/cache@v4.0.1
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
