@@ -61,7 +61,7 @@ jobs:
       - name: Build Docker image with Paketo
         run: |
           cd ${{ inputs.multi-module-project-path }}
-          pack build ${{ env.IMAGE-NAME }}:${{ env.IMAGETAG }} --env BP_LAUNCHPOINT="./src/index.js" --buildpack paketo-buildpacks/nodejs --builder paketobuildpacks/builder-jammy-base
+          pack build ${{ env.IMAGE-NAME }}:${{ env.IMAGETAG }} --buildpack paketo-buildpacks/nodejs --builder paketobuildpacks/builder-jammy-base
 
       - name: "Login Azure docker container registry"
         uses: azure/docker-login@v1
