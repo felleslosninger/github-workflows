@@ -121,7 +121,7 @@ jobs:
 
   check-for-cve-suppression-changes:
     needs: [build-publish-image]
-    uses: ./.github/workflows/ci-check-for-cve-suppression-changes.yml@main
+    uses: ./.github/workflows/ci-check-for-cve-suppression-changes.yml
     secrets: inherit
 
   notify-on-errors:
