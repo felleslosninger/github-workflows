@@ -42,7 +42,7 @@ jobs:
              echo "IMAGE-NAME=${{ inputs.registry-url }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
         - uses: actions/checkout@v4
         - name: Cache Maven packages
-          uses: actions/cache@v4.0.0
+          uses: actions/cache@v4.0.1
           with:
             path: ~/.m2
             key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
