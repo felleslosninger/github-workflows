@@ -119,6 +119,11 @@ jobs:
       - id: output-image-digest
         run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
 
+  check-for-cve-suppression-changes:
+    needs: [build-publish-image]
+    uses: ./.github/workflows/ci-check-for-cve-suppression-changes.yml
+    secrets: inherit
+
   notify-on-errors:
     runs-on: ubuntu-latest
     needs: [build-publish-image]
