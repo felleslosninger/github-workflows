@@ -66,20 +66,18 @@ jobs:
           image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
           exit-code: "1"
           severity: "CRITICAL,HIGH"
-      - name: "Login to Azure Container registery"
+      - name: 'Login to Azure Container registery and Build the tagged Docker image'
         uses: azure/docker-login@v1
         with:
           login-server: ${{ secrets.REGISTRY_URL }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
       - run: |
-          docker push ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-          docker image tag ${{env.IMAGE-NAME}}:latest && docker push ${{env.IMAGE-NAME}}:latest
-      - run: echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
-      - id: output-image-tag
-        run: echo "imagetag=${{env.IMAGETAG}}" >> "$GITHUB_OUTPUT"
-      - id: output-image-digest
-        run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
+          docker push ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:${{env.IMAGETAG}}
+          docker image tag ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:${{env.IMAGETAG}} ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:latest && docker push ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:latest
+      - run:
+          echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
+
 
   notify-on-errors:
     runs-on: ubuntu-latest
