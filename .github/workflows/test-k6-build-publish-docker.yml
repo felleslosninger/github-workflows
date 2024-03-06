@@ -76,7 +76,7 @@ jobs:
         run: |
           docker push ${{env.IMAGE_NAME}}:${{env.IMAGETAG}}
           docker image tag ${{env.IMAGE_NAME}}:${{env.IMAGETAG}} ${{env.IMAGE_NAME}}:latest && docker push ${{env.IMAGE_NAME}}:latest
-        - name: 'Set image digest'
+      - name: 'Set image digest'
         run: |
           echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE_NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
 
