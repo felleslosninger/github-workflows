@@ -73,11 +73,11 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
       - name: 'Build the tagged Docker image'
-      - run: |
-          docker push ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:${{env.IMAGETAG}}
-          docker image tag ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:${{env.IMAGETAG}} ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:latest && docker push ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:latest
-      - run:
-          echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
+        run: |
+          docker push ${{ secrets.REGISTRY_URL }}:${{env.IMAGETAG}}
+          docker image tag ${{ secrets.REGISTRY_URL }}:${{env.IMAGETAG}} ${{ secrets.REGISTRY_URL }}:latest && docker push ${{ secrets.REGISTRY_URL }}:latest
+        run:
+          echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{ secrets.REGISTRY_URL }}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
       - id: output-image-tag
         run: echo "imagetag=${{env.IMAGETAG}}" >> "$GITHUB_OUTPUT"
       - id: output-image-digest
