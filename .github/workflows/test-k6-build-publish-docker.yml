@@ -72,15 +72,18 @@ jobs:
           login-server: ${{ secrets.REGISTRY_URL }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
-      - run: |
-          docker push ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-          docker image tag ${{env.IMAGE-NAME}}:latest && docker push ${{env.IMAGE-NAME}}:latest
-      - run: echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
+      - name: "Build the tagged Docker image"
+        run: |
+          docker push ${{env.IMAGE_NAME}}:${{env.IMAGETAG}}
+          docker image tag ${{env.IMAGE_NAME}}:${{env.IMAGETAG}} ${{env.IMAGE_NAME}}:latest && docker push ${{env.IMAGE_NAME}}:latest
+      - name: 'Set image digest'
+        run: |
+          echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE_NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
+
       - id: output-image-tag
         run: echo "imagetag=${{env.IMAGETAG}}" >> "$GITHUB_OUTPUT"
       - id: output-image-digest
         run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
-
   notify-on-errors:
     runs-on: ubuntu-latest
     needs: [build-publish-image]
