@@ -66,12 +66,13 @@ jobs:
           image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
           exit-code: "1"
           severity: "CRITICAL,HIGH"
-      - name: 'Login to Azure Container registery and Build the tagged Docker image'
+      - name: 'Login to Azure Container registery'
         uses: azure/docker-login@v1
         with:
           login-server: ${{ secrets.REGISTRY_URL }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: 'Build the tagged Docker image'
       - run: |
           docker push ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:${{env.IMAGETAG}}
           docker image tag ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:${{env.IMAGETAG}} ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:latest && docker push ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:latest
