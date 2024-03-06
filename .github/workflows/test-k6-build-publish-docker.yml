@@ -77,8 +77,10 @@ jobs:
           docker image tag ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:${{env.IMAGETAG}} ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:latest && docker push ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:latest
       - run:
           echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{ secrets.REGISTRY_URL }}/${{env.IMAGE_NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
-
-
+      - id: output-image-tag
+        run: echo "imagetag=${{env.IMAGETAG}}" >> "$GITHUB_OUTPUT"
+      - id: output-image-digest
+        run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
   notify-on-errors:
     runs-on: ubuntu-latest
     needs: [build-publish-image]
