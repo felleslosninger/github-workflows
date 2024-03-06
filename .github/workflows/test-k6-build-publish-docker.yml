@@ -41,9 +41,9 @@ jobs:
     steps:
       - name: Set imagetag as env variable
         run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
-      - name: Set IMAGE-NAME env variable
+      - name: Set IMAGE_NAME env variable
         run: |
-          echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
+          echo "IMAGE_NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - name: Find and replace image version for ${{ env.IMAGETAG }} in version endpoint
         uses: jacobtomlinson/gha-find-replace@v3
@@ -59,11 +59,11 @@ jobs:
           mkdir docker/${{ inputs.k6-libs-folder }}
           cp -R ${{ inputs.k6-libs-folder }}/* docker/${{ inputs.k6-libs-folder }}/
       - name: Build the tagged Docker image
-        run: docker build --tag ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} docker/
+        run: docker build --tag ${{env.IMAGE_NAME}}:${{env.IMAGETAG}} docker/
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@d43c1f16c00cfd3978dde6c07f4bbcf9eb6993ca # pin@v0.16.1
         with:
-          image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
+          image-ref: ${{env.IMAGE_NAME}}:${{env.IMAGETAG}}
           exit-code: "1"
           severity: "CRITICAL,HIGH"
       - name: "Login to Azure Container registery"
