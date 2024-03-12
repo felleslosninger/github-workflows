@@ -59,12 +59,13 @@ jobs:
       TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
 
     outputs:
-      imagetag: ${{ steps.output-image-tag.outputs.imagetag }}
+      imagetag: ${{ steps.set-image-tag.outputs.image-tag }}
       imagedigest: ${{ steps.output-image-digest.outputs.imagedigest }}
 
     steps:
-      - name: Set imagetag as env variable
-        run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
+      - name: Set image tag
+        id: set-image-tag
+        run: echo "image-tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_OUTPUT"
 
       - name: Set IMAGE-NAME env variable
         run: |
@@ -117,7 +118,7 @@ jobs:
         run: mvn versions:set -B -DnewVersion="$IMAGETAG"
 
       - name: Build image with Maven/Spring Boot
-        run: mvn -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
+        run: mvn -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
 
       - name: Set trivyignore env if file exists
         id: set-trivyignore-path
@@ -129,7 +130,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@d43c1f16c00cfd3978dde6c07f4bbcf9eb6993ca # pin@v0.16.1
         with:
-          image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
+          image-ref: ${{env.IMAGE-NAME}}:${{ steps.set-image-tag.outputs.image-tag }}
           exit-code: "1"
           severity: "CRITICAL,HIGH"
           trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
@@ -143,8 +144,8 @@ jobs:
       - name: Create SBOM
         uses: anchore/sbom-action@9fece9e20048ca9590af301449208b2b8861333b # pin@v0.15.9
         with:
-          image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-          artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
+          image: ${{env.IMAGE-NAME}}:${{ steps.set-image-tag.outputs.image-tag }}
+          artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{ steps.set-image-tag.outputs.image-tag }}.spdx
 
       - name: Login Azure docker container registery
         uses: azure/docker-login@83efeb77770c98b620c73055fbb59b2847e17dc0 # pin@v1.0.1
@@ -154,14 +155,10 @@ jobs:
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Push image
-        run: docker push ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
+        run: docker push ${{env.IMAGE-NAME}}:${{ steps.set-image-tag.outputs.image-tag }}
 
       - name: Set image digest
-        run: echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
-
-      - name: Output image tag
-        id: output-image-tag
-        run: echo "imagetag=${{env.IMAGETAG}}" >> "$GITHUB_OUTPUT"
+        run: echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE-NAME}}:${{ steps.set-image-tag.outputs.image-tag }}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
 
       - name: Output image digest
         id: output-image-digest
