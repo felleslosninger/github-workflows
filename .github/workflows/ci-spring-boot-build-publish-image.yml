@@ -84,7 +84,7 @@ jobs:
       - name: Run yamllint
         uses: ibiqlik/action-yamllint@81e214fd484713882ce4237cb7cd264d550856cf # pin@v3.1.0
         with:
-          file_or_dir: src/main/resources/application*.y*ml
+          file_or_dir: ${{ inputs.application-path }}src/main/resources/application*.y*ml
           config_data: |
             extends: default
             rules:
