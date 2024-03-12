@@ -171,7 +171,7 @@ jobs:
 
       - name: Set image digest
         id: set-image-digest
-        run: echo "image-digest"=$(docker inspect --format='{{.RepoDigests}}' ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_OUTPUT"
+        run: echo "image-digest=$(docker inspect --format='{{.RepoDigests}}' ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_OUTPUT"
 
   check-for-cve-suppression-changes:
     needs: [build-publish-image]
