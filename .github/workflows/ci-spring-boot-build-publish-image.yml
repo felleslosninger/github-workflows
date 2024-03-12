@@ -1,4 +1,4 @@
-name: Build/publish Docker image
+name: Build and publish Docker image
 
 on:
   workflow_call:
@@ -26,6 +26,7 @@ on:
         default: ""
         required: false
         type: string
+
     outputs:
       image-version:
         description: "Docker image version"
@@ -33,26 +34,33 @@ on:
       image-digest:
         description: "Docker image SHA256 digest"
         value: ${{ jobs.build-publish-image.outputs.imagedigest }}
+
 jobs:
   build-publish-image:
     runs-on: ubuntu-latest
+
     env:
       REPOSITORY-NAME: ${{ github.event.repository.name }}
       DOCKLE_HOST: "unix:///var/run/docker.sock"
-      #TRIVY_TIMEOUT: "15m"
       TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
+
     outputs:
       imagetag: ${{ steps.output-image-tag.outputs.imagetag }}
       imagedigest: ${{ steps.output-image-digest.outputs.imagedigest }}
+
     steps:
       - name: Set imagetag as env variable
         run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
+
       - name: Set IMAGE-NAME env variable
         run: |
           echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
-      - uses: actions/checkout@v4
-      - name: yaml-lint
-        uses: ibiqlik/action-yamllint@v3
+
+      - name: Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin@v4.1.1
+
+      - name: Run yamllint
+        uses: ibiqlik/action-yamllint@81e214fd484713882ce4237cb7cd264d550856cf # pin@v3.1.0
         with:
           file_or_dir: src/main/resources/application*.y*ml
           config_data: |
@@ -62,18 +70,22 @@ jobs:
               line-length:
                 max: 150
                 level: warning
+
       - name: Set up JDK ${{ inputs.java-version }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@9704b39bf258b59bc04b50fa2dd55e9ed76b47a8 # pin@v4.1.0
         with:
           distribution: "liberica"
           java-version: ${{ inputs.java-version }}
+
       - name: Cache Maven packages
-        uses: actions/cache@v4.0.1
+        uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # pin@v4.0.1
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - uses: s4u/maven-settings-action@v3.0.0
+
+      - name: Maven environment setup
+        uses: s4u/maven-settings-action@7802f6aec16c9098b4798ad1f1d8ac75198194bd # pin@v3.0.0
         with:
           servers: |
             [{
@@ -86,37 +98,51 @@ jobs:
               "username": "${{ secrets.MAVEN_USER }}",
               "password": "${{ secrets.MAVEN_PASSWORD }}"
             }]
+
       - name: Maven update version used in application.yaml
         run: mvn versions:set -B -DnewVersion="$IMAGETAG"
+
       - name: Build image with Maven/Spring Boot
         run: mvn -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@d43c1f16c00cfd3978dde6c07f4bbcf9eb6993ca # pin@v0.16.1
         with:
           image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
           exit-code: "1"
           severity: "CRITICAL,HIGH"
+
       - name: Create SBOM artifact-name
         id: sbom-name
         run: |
           SBOM_NAME=$(echo ${{env.IMAGE-NAME}} | tr '/' '-')
           echo "SBOM_ARTIFACT_ID=$SBOM_NAME" >> "$GITHUB_OUTPUT"
-      - uses: anchore/sbom-action@v0
+
+      - name: Create SBOM
+        uses: anchore/sbom-action@9fece9e20048ca9590af301449208b2b8861333b # pin@v0.15.9
         with:
           image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
           artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
-      - name: "Login Azure docker container registery"
-        uses: azure/docker-login@v1
+
+      - name: Login Azure docker container registery
+        uses: azure/docker-login@83efeb77770c98b620c73055fbb59b2847e17dc0 # pin@v1.0.1
         with:
           login-server: ${{ secrets.REGISTRY_URL }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
-      - name: "Push image"
+
+      - name: Push image
         run: docker push ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-      - run: echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
-      - id: output-image-tag
+
+      - name: Set image digest
+        run: echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
+
+      - name: Output image tag
+        id: output-image-tag
         run: echo "imagetag=${{env.IMAGETAG}}" >> "$GITHUB_OUTPUT"
-      - id: output-image-digest
+
+      - name: Output image digest
+        id: output-image-digest
         run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
 
   check-for-cve-suppression-changes:
