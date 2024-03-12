@@ -41,10 +41,17 @@ on:
         required: false
         type: string
 
+      module-to-build:
+        description: The module name in the multi module project to build, only set if using multi module project
+        default: ""
+        required: false
+        type: string
+
     outputs:
       image-version:
         description: "Docker image version"
         value: ${{ jobs.build-publish-image.outputs.image-tag }}
+
       image-digest:
         description: "Docker image SHA256 digest"
         value: ${{ jobs.build-publish-image.outputs.image-digest }}
@@ -118,7 +125,12 @@ jobs:
         run: mvn versions:set -B -DnewVersion="$IMAGETAG"
 
       - name: Build image with Maven/Spring Boot
-        run: mvn -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
+        run: |
+          if [ -z "${{inputs.module-to-build}}" ]; then
+            mvn -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
+          else
+            mvn -B -pl ${{inputs.module-to-build}} spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
+          fi
 
       - name: Set trivyignore env if file exists
         id: set-trivyignore-path
