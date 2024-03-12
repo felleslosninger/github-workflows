@@ -68,7 +68,7 @@ jobs:
           distribution: "liberica"
           java-version: ${{ inputs.java-version }}
       - name: Cache Maven packages
-        uses: actions/cache@v4.0.0
+        uses: actions/cache@v4.0.1
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -118,6 +118,11 @@ jobs:
         run: echo "imagetag=${{env.IMAGETAG}}" >> "$GITHUB_OUTPUT"
       - id: output-image-digest
         run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
+
+  check-for-cve-suppression-changes:
+    needs: [build-publish-image]
+    uses: ./.github/workflows/ci-check-for-cve-suppression-changes.yml
+    secrets: inherit
 
   notify-on-errors:
     runs-on: ubuntu-latest
