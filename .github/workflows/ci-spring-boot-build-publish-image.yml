@@ -159,10 +159,10 @@ jobs:
           image: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
           artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{ steps.set-image-tag.outputs.image-tag }}.spdx
 
-      - name: Login Azure docker container registery
-        uses: azure/docker-login@83efeb77770c98b620c73055fbb59b2847e17dc0 # pin@v1.0.1
+      - name: Login to ACR
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # pin@v3.0.0
         with:
-          login-server: ${{ secrets.REGISTRY_URL }}
+          registry: ${{ secrets.REGISTRY_URL }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
