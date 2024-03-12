@@ -122,7 +122,7 @@ jobs:
             }]
 
       - name: Maven update version used in application.yaml
-        run: mvn versions:set -B -DnewVersion="$IMAGETAG"
+        run: mvn versions:set -B -DnewVersion="${{ steps.set-image-tag.outputs.image-tag }}"
 
       - name: Build image with Maven/Spring Boot
         run: |
