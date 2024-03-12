@@ -44,32 +44,32 @@ on:
     outputs:
       image-version:
         description: "Docker image version"
-        value: ${{ jobs.build-publish-image.outputs.imagetag }}
+        value: ${{ jobs.build-publish-image.outputs.image-tag }}
       image-digest:
         description: "Docker image SHA256 digest"
-        value: ${{ jobs.build-publish-image.outputs.imagedigest }}
+        value: ${{ jobs.build-publish-image.outputs.image-digest }}
 
 jobs:
   build-publish-image:
     runs-on: ubuntu-latest
 
     env:
-      REPOSITORY-NAME: ${{ github.event.repository.name }}
       DOCKLE_HOST: "unix:///var/run/docker.sock"
       TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
 
     outputs:
-      imagetag: ${{ steps.set-image-tag.outputs.image-tag }}
-      imagedigest: ${{ steps.output-image-digest.outputs.imagedigest }}
+      image-tag: ${{ steps.set-image-tag.outputs.image-tag }}
+      image-digest: ${{ steps.set-image-digest.outputs.image-digest }}
 
     steps:
       - name: Set image tag
         id: set-image-tag
         run: echo "image-tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_OUTPUT"
 
-      - name: Set IMAGE-NAME env variable
+      - name: Set image name
+        id: set-image-name
         run: |
-          echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
+          echo "image-name=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || github.event.repository.name }}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin@v4.1.1
@@ -118,7 +118,7 @@ jobs:
         run: mvn versions:set -B -DnewVersion="$IMAGETAG"
 
       - name: Build image with Maven/Spring Boot
-        run: mvn -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
+        run: mvn -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
 
       - name: Set trivyignore env if file exists
         id: set-trivyignore-path
@@ -130,7 +130,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@d43c1f16c00cfd3978dde6c07f4bbcf9eb6993ca # pin@v0.16.1
         with:
-          image-ref: ${{env.IMAGE-NAME}}:${{ steps.set-image-tag.outputs.image-tag }}
+          image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
           exit-code: "1"
           severity: "CRITICAL,HIGH"
           trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
@@ -138,13 +138,13 @@ jobs:
       - name: Create SBOM artifact-name
         id: sbom-name
         run: |
-          SBOM_NAME=$(echo ${{env.IMAGE-NAME}} | tr '/' '-')
+          SBOM_NAME=$(echo ${{ steps.set-image-name.outputs.image-name }} | tr '/' '-')
           echo "SBOM_ARTIFACT_ID=$SBOM_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Create SBOM
         uses: anchore/sbom-action@9fece9e20048ca9590af301449208b2b8861333b # pin@v0.15.9
         with:
-          image: ${{env.IMAGE-NAME}}:${{ steps.set-image-tag.outputs.image-tag }}
+          image: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
           artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{ steps.set-image-tag.outputs.image-tag }}.spdx
 
       - name: Login Azure docker container registery
@@ -155,14 +155,11 @@ jobs:
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Push image
-        run: docker push ${{env.IMAGE-NAME}}:${{ steps.set-image-tag.outputs.image-tag }}
+        run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
 
       - name: Set image digest
-        run: echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE-NAME}}:${{ steps.set-image-tag.outputs.image-tag }}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
-
-      - name: Output image digest
-        id: output-image-digest
-        run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
+        id: set-image-digest
+        run: echo "image-digest"=$(docker inspect --format='{{.RepoDigests}}' ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_OUTPUT"
 
   check-for-cve-suppression-changes:
     needs: [build-publish-image]
