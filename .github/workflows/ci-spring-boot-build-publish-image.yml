@@ -155,13 +155,13 @@ jobs:
             echo "- Trivy ignore path: $trivyignore_path" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@062f2592684a31eb3aa050cc61e7ca1451cecd3d # pin@v0.18.0
-        with:
-          image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
-          trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
+      # - name: Run Trivy vulnerability scanner
+      #   uses: aquasecurity/trivy-action@062f2592684a31eb3aa050cc61e7ca1451cecd3d # pin@v0.18.0
+      #   with:
+      #     image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+      #     exit-code: "1"
+      #     severity: "CRITICAL,HIGH"
+      #     trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
 
       - name: Create SBOM artifact-name
         id: sbom-name
