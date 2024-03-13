@@ -142,13 +142,13 @@ jobs:
         run: |
           if [ -z "${{inputs.module-to-build}}" ]; then
             mvn -B spring-boot:build-image \
-              --file pom.xml \
+              --file ${{ inputs.application-path }}pom.xml \
               -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
               -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} \
               -Dspring-boot.build-image.createdDate=now
           else
             mvn -B -pl ${{inputs.module-to-build}} spring-boot:build-image \
-              --file pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
+              --file ${{ inputs.application-path }}pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
               -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} \
               -Dspring-boot.build-image.createdDate=now
           fi
