@@ -127,9 +127,16 @@ jobs:
       - name: Build image with Maven/Spring Boot
         run: |
           if [ -z "${{inputs.module-to-build}}" ]; then
-            mvn -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
+            mvn -B spring-boot:build-image \
+              --file pom.xml \
+              -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
+              -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} \
+              -Dspring-boot.build-image.createdDate=now
           else
-            mvn -B -pl ${{inputs.module-to-build}} spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
+            mvn -B -pl ${{inputs.module-to-build}} spring-boot:build-image \
+              --file pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
+              -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} \
+              -Dspring-boot.build-image.createdDate=now
           fi
 
       - name: Set trivyignore env if file exists
@@ -171,7 +178,11 @@ jobs:
 
       - name: Set image digest
         id: set-image-digest
-        run: echo "image-digest=$(docker inspect --format='{{.RepoDigests}}' ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "image-digest=$(docker inspect \
+            --format='{{.RepoDigests}}' ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
+            | cut -d '@' -f 2 \
+            | cut -d ']' -f 1)" >> "$GITHUB_OUTPUT"
 
   check-for-cve-suppression-changes:
     needs: [build-publish-image]
