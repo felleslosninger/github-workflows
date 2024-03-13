@@ -79,9 +79,9 @@ jobs:
           uses: actions/cache@v3
           with:
             path: ~/.m2/repository
-            key: ${{ runner.os }}-maven-${{ hashFiles('${{ inputs.cache-path }}') }}
+            key: setup-java-${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
             restore-keys: |
-              ${{ runner.os }}-maven-
+              setup-java-${{ runner.os }}-maven-
         - uses: s4u/maven-settings-action@v2.8.0
           with:
             servers: |
