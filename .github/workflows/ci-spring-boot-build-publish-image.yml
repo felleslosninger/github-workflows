@@ -111,13 +111,8 @@ jobs:
         with:
           distribution: "liberica"
           java-version: ${{ inputs.java-version }}
-
-      - name: Cache Maven packages
-        uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # pin@v4.0.1
-        with:
-          path: ~/.m2/repository
-          key: setup-java-${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: setup-java-${{ runner.os }}-maven-
+          cache: maven
+          cache-dependency-path: ${{ inputs.cache-path }}
 
       - name: Maven environment setup
         uses: s4u/maven-settings-action@7802f6aec16c9098b4798ad1f1d8ac75198194bd # pin@v3.0.0
@@ -138,7 +133,7 @@ jobs:
         run: |
           if [ "${{ inputs.update-versions }}" == "true" ]; then
             mvn versions:set -B -DnewVersion="${{ steps.set-image-tag.outputs.image-tag }}"
-            echo "- \`mvn versions\` executed" >> "$GITHUB_STEP_SUMMARY"
+            echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
           fi
@@ -161,7 +156,7 @@ jobs:
           fi
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@d43c1f16c00cfd3978dde6c07f4bbcf9eb6993ca # pin@v0.16.1
+        uses: aquasecurity/trivy-action@062f2592684a31eb3aa050cc61e7ca1451cecd3d # pin@v0.18.0
         with:
           image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
           exit-code: "1"
@@ -203,7 +198,7 @@ jobs:
 
   check-for-cve-suppression-changes:
     needs: [build-publish-image]
-    uses: ./.github/workflows/ci-check-for-cve-suppression-changes.yml
+    uses: felleslosninger/github-workflows/.github/workflows/ci-check-for-cve-suppression-changes.yml@21c4f5ec8cd3208be9f4dfa59b0eae31667535ae # pin@v0.1.0
     secrets: inherit
 
   notify-on-errors:
@@ -215,7 +210,7 @@ jobs:
         slack-channel: ["${{ inputs.slack-channel-id }}", "C05G4B8R2GG"]
     steps:
       - name: Send Slack notification
-        uses: felleslosninger/github-actions/send-slack-notification@v0.5.2
+        uses: felleslosninger/github-actions/send-slack-notification@3d52b283b516f8d6433a54a8dc480e3408340dd5 # pin@v0.6.2
         with:
           slack-channel-id: ${{ matrix.slack-channel }}
           slack-bot-token: ${{ secrets.SLACK_CICD_NOTIFICATION_TOKEN }}
