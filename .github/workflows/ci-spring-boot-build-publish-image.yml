@@ -41,9 +41,8 @@ on:
         required: false
         type: string
 
-      module-to-build:
-        description: The module name in the multi module project to build, only set if using multi module project
-        default: ""
+      update-versions:
+        default: "true"
         required: false
         type: string
 
@@ -135,8 +134,14 @@ jobs:
               "password": "${{ secrets.GH_PACKAGES_READ_PAT }}"
             }]
 
-      # - name: Maven update version used in application.yaml
-      #   run: mvn versions:set -B -DnewVersion="${{ steps.set-image-tag.outputs.image-tag }}"
+      - name: Maven update version used in application.yaml
+        run: |
+          if [ "${{ inputs.update-versions }}" == "true" ]; then
+            mvn versions:set -B -DnewVersion="${{ steps.set-image-tag.outputs.image-tag }}"
+            echo "- `mvn versions` executed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- `mvn versions` was not executed" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Build image with Maven/Spring Boot
         run: |
