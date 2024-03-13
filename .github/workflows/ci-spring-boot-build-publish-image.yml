@@ -112,8 +112,13 @@ jobs:
         with:
           distribution: "liberica"
           java-version: ${{ inputs.java-version }}
-          cache: maven
-          cache-dependency-path: ${{ inputs.cache-path }}
+
+      - name: Cache Maven packages
+        uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # pin@v4.0.1
+        with:
+          path: ~/.m2/repository
+          key: setup-java-${{ runner.os }}-maven-${{ hashFiles('${{ inputs.cache-path }}') }}
+          restore-keys: setup-java-${{ runner.os }}-maven-
 
       - name: Maven environment setup
         uses: s4u/maven-settings-action@7802f6aec16c9098b4798ad1f1d8ac75198194bd # pin@v3.0.0
