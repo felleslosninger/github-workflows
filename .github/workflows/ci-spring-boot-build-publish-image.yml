@@ -193,7 +193,7 @@ jobs:
             --format='{{.RepoDigests}}' ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
             | cut -d '@' -f 2 \
             | cut -d ']' -f 1)
-          echo "image-digest=$image_digest)" >> "$GITHUB_OUTPUT"
+          echo "image-digest=$image_digest" >> "$GITHUB_OUTPUT"
           echo "- Image digest: $image_digest" >> "$GITHUB_STEP_SUMMARY"
 
   check-for-cve-suppression-changes:
