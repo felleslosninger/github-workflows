@@ -138,9 +138,9 @@ jobs:
         run: |
           if [ "${{ inputs.update-versions }}" == "true" ]; then
             mvn versions:set -B -DnewVersion="${{ steps.set-image-tag.outputs.image-tag }}"
-            echo "- `mvn versions` executed" >> "$GITHUB_STEP_SUMMARY"
+            echo "- \`mvn versions\` executed" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "- `mvn versions` was not executed" >> "$GITHUB_STEP_SUMMARY"
+            echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Build image with Maven/Spring Boot
