@@ -113,6 +113,7 @@ jobs:
           distribution: "liberica"
           java-version: ${{ inputs.java-version }}
           cache: maven
+          overwrite-settings: false
           cache-dependency-path: ${{ inputs.cache-path }}
 
       - name: Maven environment setup
@@ -131,7 +132,7 @@ jobs:
             }]
       - name: Output m2 info
         run: |
-          ls -latrh ~/.m2/repository
+          ls -latrh ~/.m2/repository/no/einnsyn/core
           cat ~/.m2/settings.xml
 
       - name: Maven update version used in application.yaml
