@@ -117,7 +117,7 @@ jobs:
         uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # pin@v4.0.1
         with:
           path: ~/.m2/repository
-          key: setup-java-${{ runner.os }}-maven-${{ hashFiles('pom.xml') }}
+          key: setup-java-${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: setup-java-${{ runner.os }}-maven-
 
       - name: Maven environment setup
