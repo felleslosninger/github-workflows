@@ -57,6 +57,15 @@ on:
         value: ${{ jobs.build-publish-image.outputs.image-digest }}
 
 jobs:
+  inputs-to-summary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Write inputs to summary"
+        uses: felleslosninger/github-actions/json-to-summary@3d52b283b516f8d6433a54a8dc480e3408340dd5 # pin@v0.6.2
+        with:
+          json: ${{ toJson(inputs) }}
+          title: "Inputs"
+
   build-publish-image:
     runs-on: ubuntu-latest
 
@@ -71,12 +80,17 @@ jobs:
     steps:
       - name: Set image tag
         id: set-image-tag
-        run: echo "image-tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_OUTPUT"
+        run: |
+          image_tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}
+          echo "image-tag=$image_tag" >> "$GITHUB_OUTPUT"
+          echo "- Image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Set image name
         id: set-image-name
         run: |
-          echo "image-name=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || github.event.repository.name }}" >> "$GITHUB_OUTPUT"
+          image_name=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || github.event.repository.name }}
+          echo "image-name=$image_name" >> "$GITHUB_OUTPUT"
+          echo "- Image name: $image_name" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Checkout repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin@v4.1.1
