@@ -94,8 +94,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin@v4.1.1
 
+      - name: Check if YAML files exist
+        id: yaml-files-exists
+        run: |
+          if [ -f "${{ inputs.application-path }}src/main/resources/application*.y*ml" ]; then
+            echo "file-exists=true" >> "$GITHUB_OUTPUT"
+            echo "- \`${{ inputs.application-path }}src/main/resources/application*.y*ml\` file exists :white_check_mark:" >> "$GITHUB_STEP_SUMMARY"            
+          else
+            echo "file-exists=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "- \`${{ inputs.application-path }}src/main/resources/application*.y*ml\` file exists :x:"
+              echo "  - Skipping yamllint"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Run yamllint
-        uses: ibiqlik/action-yamllint@81e214fd484713882ce4237cb7cd264d550856cf # pin@v3.1.0
+        if: steps.yaml-files-exists.outputs.file_exists == 'true'
+        uses: ibiqlik/action-yamllint@2576378a8e339169678f9939646ee3ee325e845c # pin@v3.1.1
         with:
           file_or_dir: ${{ inputs.application-path }}src/main/resources/application*.y*ml
           config_data: |
