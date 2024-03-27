@@ -143,7 +143,7 @@ jobs:
         run: npm install @octokit/app@v13.1.8
 
       - name: Generate Token
-        uses: felleslosninger/github-actions/github-app-token@v0.5.2
+        uses: felleslosninger/github-actions/github-app-token@v0.6.2
         id: token
         with:
           app-id: ${{ secrets.DIGDIR_PLATFORM_CI_APP_ID }}
