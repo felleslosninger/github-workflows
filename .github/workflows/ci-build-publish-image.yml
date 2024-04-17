@@ -1,0 +1,121 @@
+name: Build and publish Docker image
+
+on:
+  workflow_call:
+    inputs:
+      image-name:
+        description: Name of Docker image
+        required: false
+        type: string
+
+      image-pack:
+        description: Docker image pack of builder-jammy-tiny, builder-jammy-base or builder-jammy-full
+        default: builder-jammy-tiny
+        required: false
+        type: string
+
+      java-version:
+        description: Main version of java
+        default: "11"
+        required: false
+        type: string
+
+      container-scan-offline-mode:
+        description: Container-scan is default download updated CVE definitions via Trivy, enable offline on download problems
+        default: false
+        type: boolean
+
+      slack-channel-id:
+        description: Team channel id
+        default: ""
+        required: false
+        type: string
+
+      application-path:
+        default: "./"
+        required: false
+        type: string
+
+      cache-path:
+        default: "**/pom.xml"
+        required: false
+        type: string
+
+      update-versions:
+        default: "true"
+        required: false
+        type: string
+
+      application-type:
+        default: "spring-boot"
+        required: false
+        type: string
+
+    outputs:
+      image-version:
+        description: "Docker image version"
+        value: ${{ jobs.run-spring-boot-build.outputs.image-version || jobs.run-quarkus-build.outputs.image-version || jobs.run-docker-build.outputs.image-version }}
+
+      image-digest:
+        description: "Docker image SHA256 digest"
+        value: ${{ jobs.run-spring-boot-build.outputs.image-digest || jobs.run-quarkus-build.outputs.image-digest || jobs.run-docker-build.outputs.image-digest }}
+
+jobs:
+  inputs-to-summary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Write inputs to summary"
+        uses: felleslosninger/github-actions/json-to-summary@3d52b283b516f8d6433a54a8dc480e3408340dd5 # pin@v0.6.2
+        with:
+          json: ${{ toJson(inputs) }}
+          title: "Inputs"
+
+  input-checks:
+    runs-on: ubuntu-latest
+
+    env:
+      DOCKLE_HOST: "unix:///var/run/docker.sock"
+      TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
+
+    steps:
+      - name: Check for supported application-type
+        id: application-type-check
+        run: |
+          if [[ ${{ inputs.application-type }} != "spring-boot" && ${{ inputs.application-type }} != "quarkus" && ${{ inputs.application-type }} != "docker" ]]; then
+            echo "Invalid application type. Supported types are: \`spring-boot\`, \`quarkus\` and \`docker\`" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+  run-spring-boot-build:
+    needs: input-checks
+    if: inputs.application-type == 'spring-boot'
+    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-build-publish-image.yml@main
+    with:
+      image-name: ${{ inputs.image-name }}
+      image-pack: ${{ inputs.image-pack }}
+      java-version: ${{ inputs.java-version }}
+      container-scan-offline-mode: ${{ inputs.container-scan-offline-mode }}
+      slack-channel-id: ${{ inputs.slack-channel-id }}
+      application-path: ${{ inputs.application-path }}
+      cache-path: ${{ inputs.cache-path }}
+      update-versions: ${{ inputs.update-versions }}
+
+  run-quarkus-build:
+    needs: input-checks
+    if: inputs.application-type == 'quarkus'
+    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-build-publish-image.yml@main
+    with:
+      image-name: ${{ inputs.image-name }}
+      image-pack: ${{ inputs.image-pack }}
+      java-version: ${{ inputs.java-version }}
+      slack-channel-id: ${{ inputs.slack-channel-id }}
+
+  run-docker-build:
+    needs: input-checks
+    if: inputs.application-type == 'docker'
+    uses: felleslosninger/github-workflows/.github/workflows/ci-docker-build-publish-image.yml@main
+    with:
+      image-name: ${{ inputs.image-name }}
+      image-pack: ${{ inputs.image-pack }}
+      container-scan-offline-mode: ${{ inputs.container-scan-offline-mode }}
+      slack-channel-id: ${{ inputs.slack-channel-id }}
