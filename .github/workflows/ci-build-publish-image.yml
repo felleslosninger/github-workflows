@@ -99,6 +99,7 @@ jobs:
       application-path: ${{ inputs.application-path }}
       cache-path: ${{ inputs.cache-path }}
       update-versions: ${{ inputs.update-versions }}
+    secrets: inherit
 
   run-quarkus-build:
     needs: input-checks
@@ -109,7 +110,8 @@ jobs:
       image-pack: ${{ inputs.image-pack }}
       java-version: ${{ inputs.java-version }}
       slack-channel-id: ${{ inputs.slack-channel-id }}
-
+    secrets: inherit
+    
   run-docker-build:
     needs: input-checks
     if: inputs.application-type == 'docker'
@@ -120,3 +122,4 @@ jobs:
       container-scan-offline-mode: ${{ inputs.container-scan-offline-mode }}
       slack-channel-id: ${{ inputs.slack-channel-id }}
       application-path: ${{ inputs.application-path }}
+    secrets: inherit

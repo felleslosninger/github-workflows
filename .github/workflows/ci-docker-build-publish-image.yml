@@ -33,11 +33,12 @@ on:
     outputs:
       image-version:
         description: "Docker image version"
-        value: ${{ jobs.build-publish-image.outputs.imagetag }}
+        value: ${{ jobs.build-publish-image.outputs.image-tag }}
 
       image-digest:
         description: "Docker image SHA256 digest"
-        value: ${{ jobs.build-publish-image.outputs.imagedigest }}
+        value: ${{ jobs.build-publish-image.outputs.image-digest }}
+
 jobs:
   build-publish-image:
     runs-on: ubuntu-latest
@@ -47,45 +48,56 @@ jobs:
       TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
 
     outputs:
-      imagetag: ${{ steps.output-image-tag.outputs.imagetag }}
-      imagedigest: ${{ steps.output-image-digest.outputs.imagedigest }}
+      image-tag: ${{ steps.set-image-tag.outputs.image-tag }}
+      image-digest: ${{ steps.set-image-digest.outputs.image-digest }}
 
     steps:
-      - name: Set imagetag as env variable
-        run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
-
-      - name: Set IMAGE-NAME env variable
+      - name: Set image tag
+        id: set-image-tag
         run: |
-          echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
-      - uses: actions/checkout@v4
+          image_tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}
+          echo "image-tag=$image_tag" >> "$GITHUB_OUTPUT"
+          echo "- Image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Set image name
+        id: set-image-name
+        run: |
+          image_name=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || github.event.repository.name }}
+          echo "image-name=$image_name" >> "$GITHUB_OUTPUT"
+          echo "- Image name: $image_name" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Build image
-        run: docker build -t ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -f ${{ inputs.application-path }}/Dockerfile .
+        run: docker build -t ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -f ${{ inputs.application-path }}/Dockerfile .
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@d710430a6722f083d3b36b8339ff66b32f22ee55 # pin@v0.19.0
         with:
-          image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
+          image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
           exit-code: "1"
           severity: "CRITICAL,HIGH"
 
-      - name: "Login Azure docker container registery"
-        uses: azure/docker-login@v1
+      - name: Login to ACR
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # pin@v3.0.0
         with:
-          login-server: ${{ secrets.REGISTRY_URL }}
+          registry: ${{ secrets.REGISTRY_URL }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: "Push image"
-        run: docker push ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
+        run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
 
-      - run: echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
-
-      - id: output-image-tag
-        run: echo "imagetag=${{env.IMAGETAG}}" >> "$GITHUB_OUTPUT"
-
-      - id: output-image-digest
-        run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
+      - name: Set image digest
+        id: set-image-digest
+        run: |
+          image_digest=$(docker inspect \
+            --format='{{.RepoDigests}}' ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
+            | cut -d '@' -f 2 \
+            | cut -d ']' -f 1)
+          echo "image-digest=$image_digest" >> "$GITHUB_OUTPUT"
+          echo "- Image digest: $image_digest" >> "$GITHUB_STEP_SUMMARY"
 
   check-for-cve-suppression-changes:
     needs: [build-publish-image]
