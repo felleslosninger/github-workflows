@@ -119,3 +119,4 @@ jobs:
       image-pack: ${{ inputs.image-pack }}
       container-scan-offline-mode: ${{ inputs.container-scan-offline-mode }}
       slack-channel-id: ${{ inputs.slack-channel-id }}
+      application-path: ${{ inputs.application-path }}
