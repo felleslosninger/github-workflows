@@ -1,4 +1,4 @@
-name: Build/publish Docker image
+name: Build and publish Docker image
 
 on:
   workflow_call:
@@ -7,54 +7,112 @@ on:
         description: Name of Docker image
         required: false
         type: string
+
       image-pack:
         description: Docker image pack of builder-jammy-tiny, builder-jammy-base or builder-jammy-full
         default: builder-jammy-tiny
         required: false
         type: string
+
       java-version:
         description: Main version of java
         default: "11"
         required: false
         type: string
+
       container-scan-offline-mode:
         description: Container-scan is default download updated CVE definitions via Trivy, enable offline on download problems
         default: false
         type: boolean
+
       slack-channel-id:
         description: Team channel id
         default: ""
         required: false
         type: string
+
+      application-path:
+        default: "./"
+        required: false
+        type: string
+
+      cache-path:
+        default: "**/pom.xml"
+        required: false
+        type: string
+
+      update-versions:
+        default: "true"
+        required: false
+        type: string
+
     outputs:
       image-version:
         description: "Docker image version"
-        value: ${{ jobs.build-publish-image.outputs.imagetag }}
+        value: ${{ jobs.build-publish-image.outputs.image-tag }}
+
       image-digest:
         description: "Docker image SHA256 digest"
-        value: ${{ jobs.build-publish-image.outputs.imagedigest }}
+        value: ${{ jobs.build-publish-image.outputs.image-digest }}
+
 jobs:
+  inputs-to-summary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Write inputs to summary"
+        uses: felleslosninger/github-actions/json-to-summary@3d52b283b516f8d6433a54a8dc480e3408340dd5 # pin@v0.6.2
+        with:
+          json: ${{ toJson(inputs) }}
+          title: "Inputs"
+
   build-publish-image:
     runs-on: ubuntu-latest
+
     env:
-      REPOSITORY-NAME: ${{ github.event.repository.name }}
       DOCKLE_HOST: "unix:///var/run/docker.sock"
-      #TRIVY_TIMEOUT: "15m"
       TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
+
     outputs:
-      imagetag: ${{ steps.output-image-tag.outputs.imagetag }}
-      imagedigest: ${{ steps.output-image-digest.outputs.imagedigest }}
+      image-tag: ${{ steps.set-image-tag.outputs.image-tag }}
+      image-digest: ${{ steps.set-image-digest.outputs.image-digest }}
+
     steps:
-      - name: Set imagetag as env variable
-        run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
-      - name: Set IMAGE-NAME env variable
+      - name: Set image tag
+        id: set-image-tag
         run: |
-          echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
-      - uses: actions/checkout@v4
-      - name: yaml-lint
-        uses: ibiqlik/action-yamllint@v3
+          image_tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}
+          echo "image-tag=$image_tag" >> "$GITHUB_OUTPUT"
+          echo "- Image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Set image name
+        id: set-image-name
+        run: |
+          image_name=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || github.event.repository.name }}
+          echo "image-name=$image_name" >> "$GITHUB_OUTPUT"
+          echo "- Image name: $image_name" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin@v4.1.1
+
+      - name: Check if YAML files exist
+        id: yaml-files-exists
+        run: |
+          if [ -f "${{ inputs.application-path }}src/main/resources/application*.y*ml" ]; then
+            echo "file-exists=true" >> "$GITHUB_OUTPUT"
+            echo "- \`${{ inputs.application-path }}src/main/resources/application*.y*ml\` file exists :white_check_mark:" >> "$GITHUB_STEP_SUMMARY"            
+          else
+            echo "file-exists=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "- \`${{ inputs.application-path }}src/main/resources/application*.y*ml\` file exists :x:"
+              echo "  - Skipping yamllint"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Run yamllint
+        if: steps.yaml-files-exists.outputs.file_exists == 'true'
+        uses: ibiqlik/action-yamllint@2576378a8e339169678f9939646ee3ee325e845c # pin@v3.1.1
         with:
-          file_or_dir: src/main/resources/application*.y*ml
+          file_or_dir: ${{ inputs.application-path }}src/main/resources/application*.y*ml
           config_data: |
             extends: default
             rules:
@@ -62,66 +120,100 @@ jobs:
               line-length:
                 max: 150
                 level: warning
+
       - name: Set up JDK ${{ inputs.java-version }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@9704b39bf258b59bc04b50fa2dd55e9ed76b47a8 # pin@v4.1.0
         with:
           distribution: "liberica"
           java-version: ${{ inputs.java-version }}
-      - name: Cache Maven packages
-        uses: actions/cache@v4.0.2
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
-      - uses: s4u/maven-settings-action@v3.0.0
+          cache: maven
+          cache-dependency-path: ${{ inputs.cache-path }}
+
+      - name: Maven environment setup
+        uses: s4u/maven-settings-action@7802f6aec16c9098b4798ad1f1d8ac75198194bd # pin@v3.0.0
         with:
           servers: |
             [{
                 "id": "github-oidc-sdk",
-                "username": "${{ secrets.MAVEN_USER }}",
-                "password": "${{ secrets.MAVEN_PASSWORD }}"
+                "username": "${{ secrets.GH_PACKAGES_READ_USER }}",
+                "password": "${{ secrets.GH_PACKAGES_READ_PAT }}"
             },
             {
               "id": "github",
-              "username": "${{ secrets.MAVEN_USER }}",
-              "password": "${{ secrets.MAVEN_PASSWORD }}"
+              "username": "${{ secrets.GH_PACKAGES_READ_USER }}",
+              "password": "${{ secrets.GH_PACKAGES_READ_PAT }}"
             }]
+
       - name: Maven update version used in application.yaml
-        run: mvn versions:set -B -DnewVersion="$IMAGETAG"
+        run: |
+          if [ "${{ inputs.update-versions }}" == "true" ]; then
+            mvn versions:set -B -DnewVersion="${{ steps.set-image-tag.outputs.image-tag }}"
+            echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Build image with Maven/Spring Boot
-        run: mvn -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} -Dspring-boot.build-image.createdDate=now
+        run: |
+          mvn -B spring-boot:build-image \
+            --file ${{ inputs.application-path }}pom.xml \
+            -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
+            -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} \
+            -Dspring-boot.build-image.createdDate=now
+
+      - name: Set trivyignore env if file exists
+        id: set-trivyignore-path
+        run: |
+          if [ -f "${{ inputs.application-path }}.trivyignore" ]; then
+            trivyignore_path=${{ inputs.application-path }}.trivyignore
+            echo "trivyignore-path=$trivyignore_path" >> "$GITHUB_OUTPUT"
+            echo "- Trivy ignore path: $trivyignore_path" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@d710430a6722f083d3b36b8339ff66b32f22ee55 # pin@v0.19.0
         with:
-          image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
+          image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
           exit-code: "1"
           severity: "CRITICAL,HIGH"
+          trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
+
       - name: Create SBOM artifact-name
         id: sbom-name
         run: |
-          SBOM_NAME=$(echo ${{env.IMAGE-NAME}} | tr '/' '-')
+          SBOM_NAME=$(echo ${{ steps.set-image-name.outputs.image-name }} | tr '/' '-')
           echo "SBOM_ARTIFACT_ID=$SBOM_NAME" >> "$GITHUB_OUTPUT"
-      - uses: anchore/sbom-action@v0
+          echo "- SBOM: $SBOM_NAME" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create SBOM
+        uses: anchore/sbom-action@9fece9e20048ca9590af301449208b2b8861333b # pin@v0.15.9
         with:
-          image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-          artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
-      - name: "Login Azure docker container registery"
-        uses: azure/docker-login@v1
+          image: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+          artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{ steps.set-image-tag.outputs.image-tag }}.spdx
+
+      - name: Login to ACR
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # pin@v3.0.0
         with:
-          login-server: ${{ secrets.REGISTRY_URL }}
+          registry: ${{ secrets.REGISTRY_URL }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
-      - name: "Push image"
-        run: docker push ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-      - run: echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
-      - id: output-image-tag
-        run: echo "imagetag=${{env.IMAGETAG}}" >> "$GITHUB_OUTPUT"
-      - id: output-image-digest
-        run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
+
+      - name: Push image
+        run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+
+      - name: Set image digest
+        id: set-image-digest
+        run: |
+          image_digest=$(docker inspect \
+            --format='{{.RepoDigests}}' ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
+            | cut -d '@' -f 2 \
+            | cut -d ']' -f 1)
+          echo "image-digest=$image_digest" >> "$GITHUB_OUTPUT"
+          echo "- Image digest: $image_digest" >> "$GITHUB_STEP_SUMMARY"
 
   check-for-cve-suppression-changes:
     needs: [build-publish-image]
-    uses: ./.github/workflows/ci-check-for-cve-suppression-changes.yml
+    uses: felleslosninger/github-workflows/.github/workflows/ci-check-for-cve-suppression-changes.yml@21c4f5ec8cd3208be9f4dfa59b0eae31667535ae # pin@v0.1.0
     secrets: inherit
 
   notify-on-errors:
@@ -133,7 +225,7 @@ jobs:
         slack-channel: ["${{ inputs.slack-channel-id }}", "C05G4B8R2GG"]
     steps:
       - name: Send Slack notification
-        uses: felleslosninger/github-actions/send-slack-notification@v0.5.2
+        uses: felleslosninger/github-actions/send-slack-notification@3d52b283b516f8d6433a54a8dc480e3408340dd5 # pin@v0.6.2
         with:
           slack-channel-id: ${{ matrix.slack-channel }}
           slack-bot-token: ${{ secrets.SLACK_CICD_NOTIFICATION_TOKEN }}
