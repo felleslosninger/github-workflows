@@ -42,7 +42,7 @@ jobs:
              echo "IMAGE-NAME=${{ inputs.registry-url }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
         - uses: actions/checkout@v4
         - name: Cache Maven packages
-          uses: actions/cache@v4.0.1
+          uses: actions/cache@v4.0.2
           with:
             path: ~/.m2
             key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -90,7 +90,7 @@ jobs:
             image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
             artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
         - name: Run Trivy vulnerability scanner
-          uses: aquasecurity/trivy-action@d43c1f16c00cfd3978dde6c07f4bbcf9eb6993ca # pin@v0.16.1
+          uses: aquasecurity/trivy-action@d710430a6722f083d3b36b8339ff66b32f22ee55 # pin@v0.19.0
           with:
             image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
             exit-code: '1'
