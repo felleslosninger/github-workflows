@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Write inputs to summary"
-        uses: felleslosninger/github-actions/json-to-summary@3d52b283b516f8d6433a54a8dc480e3408340dd5 # pin@v0.6.2
+        uses: felleslosninger/github-actions/json-to-summary@27146b554b375945f354f7e43356e67b1a42f9f6 # pin@v0.6.4
         with:
           json: ${{ toJson(inputs) }}
           title: "Inputs"
@@ -225,7 +225,7 @@ jobs:
         slack-channel: ["${{ inputs.slack-channel-id }}", "C05G4B8R2GG"]
     steps:
       - name: Send Slack notification
-        uses: felleslosninger/github-actions/send-slack-notification@3d52b283b516f8d6433a54a8dc480e3408340dd5 # pin@v0.6.2
+        uses: felleslosninger/github-actions/send-slack-notification@27146b554b375945f354f7e43356e67b1a42f9f6 # pin@v0.6.4
         with:
           slack-channel-id: ${{ matrix.slack-channel }}
           slack-bot-token: ${{ secrets.SLACK_CICD_NOTIFICATION_TOKEN }}

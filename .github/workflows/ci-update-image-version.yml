@@ -83,7 +83,7 @@ jobs:
       - run: npm install @octokit/app@v13.1.8
 
       - name: Generate Token
-        uses: felleslosninger/github-actions/github-app-token@v0.5.2
+        uses: felleslosninger/github-actions/github-app-token@v0.6.4
         id: token
         with:
           app-id: ${{ secrets.DIGDIR_PLATFORM_CI_APP_ID }}
@@ -118,7 +118,7 @@ jobs:
         slack-channel: ["${{ inputs.slack-channel-id }}", "C05G4B8R2GG"]
     steps:
       - name: Send Slack notification
-        uses: felleslosninger/github-actions/send-slack-notification@v0.5.2
+        uses: felleslosninger/github-actions/send-slack-notification@v0.6.4
         with:
           slack-channel-id: ${{ matrix.slack-channel }}
           slack-bot-token: ${{ secrets.SLACK_CICD_NOTIFICATION_TOKEN }}
