@@ -135,7 +135,7 @@ jobs:
             echo "image=${{ vars.REGISTRY_URL }}/${{ inputs.image-name }}:${{ inputs.image-version }}@${{ inputs.image-digest }}"
             echo "pr-labels=${{ steps.set-pr-labels-and-number.outputs.pr-labels }}"
             echo "pr-number=${{ steps.set-pr-labels-and-number.outputs.pr-number }}"
-            echo "repository=felleslosninger/${{ inputs.kubernetes-repo }}"
+            echo "repository=${{ github.repository }}"
             echo "sha=${{ github.sha }}"
           } >> "$GITHUB_OUTPUT"
 
