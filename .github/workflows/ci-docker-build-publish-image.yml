@@ -1,0 +1,120 @@
+name: Build/publish Docker image
+
+on:
+  workflow_call:
+    inputs:
+      image-name:
+        description: Name of Docker image
+        required: false
+        type: string
+
+      image-pack:
+        description: Docker image pack of builder-jammy-tiny, builder-jammy-base or builder-jammy-full
+        default: builder-jammy-tiny
+        required: false
+        type: string
+
+      container-scan-offline-mode:
+        description: Container-scan is default download updated CVE definitions via Trivy, enable offline on download problems
+        default: false
+        type: boolean
+
+      slack-channel-id:
+        description: Team channel id
+        default: ""
+        required: false
+        type: string
+
+      application-path:
+        default: "./"
+        required: false
+        type: string
+
+    outputs:
+      image-version:
+        description: "Docker image version"
+        value: ${{ jobs.build-publish-image.outputs.image-tag }}
+
+      image-digest:
+        description: "Docker image SHA256 digest"
+        value: ${{ jobs.build-publish-image.outputs.image-digest }}
+
+jobs:
+  build-publish-image:
+    runs-on: ubuntu-latest
+    env:
+      REPOSITORY-NAME: ${{ github.event.repository.name }}
+      DOCKLE_HOST: "unix:///var/run/docker.sock"
+      TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
+
+    outputs:
+      image-tag: ${{ steps.set-image-tag.outputs.image-tag }}
+      image-digest: ${{ steps.set-image-digest.outputs.image-digest }}
+
+    steps:
+      - name: Set image tag
+        id: set-image-tag
+        run: |
+          image_tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}
+          echo "image-tag=$image_tag" >> "$GITHUB_OUTPUT"
+          echo "- Image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Set image name
+        id: set-image-name
+        run: |
+          image_name=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || github.event.repository.name }}
+          echo "image-name=$image_name" >> "$GITHUB_OUTPUT"
+          echo "- Image name: $image_name" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -f ${{ inputs.application-path }}/Dockerfile .
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@d710430a6722f083d3b36b8339ff66b32f22ee55 # pin@v0.19.0
+        with:
+          image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+          exit-code: "1"
+          severity: "CRITICAL,HIGH"
+
+      - name: Login to ACR
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # pin@v3.0.0
+        with:
+          registry: ${{ secrets.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: "Push image"
+        run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+
+      - name: Set image digest
+        id: set-image-digest
+        run: |
+          image_digest=$(docker inspect \
+            --format='{{.RepoDigests}}' ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
+            | cut -d '@' -f 2 \
+            | cut -d ']' -f 1)
+          echo "image-digest=$image_digest" >> "$GITHUB_OUTPUT"
+          echo "- Image digest: $image_digest" >> "$GITHUB_STEP_SUMMARY"
+
+  check-for-cve-suppression-changes:
+    needs: [build-publish-image]
+    uses: felleslosninger/github-workflows/.github/workflows/ci-check-for-cve-suppression-changes.yml@main
+    secrets: inherit
+
+  notify-on-errors:
+    runs-on: ubuntu-latest
+    needs: [build-publish-image]
+    if: always() && contains(needs.*.result, 'failure')
+    strategy:
+      matrix:
+        slack-channel: ["${{ inputs.slack-channel-id }}", "C05G4B8R2GG"]
+    steps:
+      - name: Send Slack notification
+        uses: felleslosninger/github-actions/send-slack-notification@v0.5.2
+        with:
+          slack-channel-id: ${{ matrix.slack-channel }}
+          slack-bot-token: ${{ secrets.SLACK_CICD_NOTIFICATION_TOKEN }}
+          failed: "true"
