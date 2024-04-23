@@ -65,7 +65,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Write inputs to summary"
-        uses: felleslosninger/github-actions/json-to-summary@3d52b283b516f8d6433a54a8dc480e3408340dd5 # pin@v0.6.2
+        uses: felleslosninger/github-actions/json-to-summary@4b3e834f471d97cab51a6da91e1c6ad2f4da986c # pin@v0.6.6
         with:
           json: ${{ toJson(inputs) }}
           title: "Inputs"
