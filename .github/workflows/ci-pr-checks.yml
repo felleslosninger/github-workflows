@@ -1,0 +1,66 @@
+# 1. Verifies PR title
+# 2. Builds and runs application
+# 3. Scans image with Trivy
+# 4. Auto-merges Dependabot PRs (optional)
+
+name: PR Checks
+
+on:
+  workflow_call:
+    inputs:
+      enable-auto-merge:
+        type: boolean
+        default: false
+      enable-pr-title-verify:
+        type: boolean
+        default: true
+      java-version:
+        default: "21"
+        required: false
+        type: string
+      application-type:
+        type: string
+      image-name:
+        description: Name of Docker image
+        required: false
+        type: string
+      image-pack:
+        description: Docker image pack of builder-jammy-tiny, builder-jammy-base or builder-jammy-full
+        default: builder-jammy-tiny
+        required: false
+        type: string
+      auto-merge-types:
+        type: string
+
+jobs:
+  call-workflow-maven-build:
+    uses: felleslosninger/github-workflows/.github/workflows/ci-maven-build.yml@main
+    with:
+      java-version: ${{ inputs.java-version }}
+    secrets: inherit
+
+  call-container-scan:
+    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@main
+    with:
+      image-name: ${{ inputs.image-name }}
+      image-pack: ${{ inputs.image-pack }}
+      java-version: ${{ inputs.java-version }}
+    secrets: inherit
+
+  call-auto-merge:
+    if: inputs.auto-merge == true
+    needs: [call-workflow-maven-build, call-container-scan]
+    uses: felleslosninger/github-workflows/.github/workflows/misc-approve-and-merge-dependabot-pr.yml@main
+    with:
+      update-types: ${{ inputs.auto-merge-types }}
+    secrets: inherit
+
+  call-build-image:
+    if: needs.call-auto-merge.outputs.merged == 'true'
+    runs-on: ubuntu-latest
+    needs: call-auto-merge
+    steps:
+      - name: call-build-publish-image
+        uses: peter-evans/repository-dispatch@26b39ed245ab8f31526069329e112ab2fb224588 # pin@v2
+        with:
+          event-type: build-publish-image
