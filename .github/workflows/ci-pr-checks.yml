@@ -8,17 +8,21 @@ name: PR Checks
 on:
   workflow_call:
     inputs:
-      enable-auto-merge:
+      application-type:
+        type: string
+        required: true
+      enable-auto-merge-dependabot:
         type: boolean
         default: false
       enable-pr-title-verify:
         type: boolean
         default: true
+      enable-trivy-image-scan:
+        type: boolean
+        default: true
       java-version:
         default: "21"
         required: false
-        type: string
-      application-type:
         type: string
       image-name:
         description: Name of Docker image
@@ -31,15 +35,91 @@ on:
         type: string
       auto-merge-types:
         type: string
+      pull-request-title:
+        type: string
+        required: true
+      pull-request-allowed-prefixes:
+        type: string
+        required: true
+      pull-request-min-length-title:
+        type: number
+        required: false
+        default: 10
+      pull-request-max-length-title:
+        type: number
+        required: false
+        default: 100
+      pull-request-case-sensitive-prefix:
+        type: boolean
+        required: false
+        default: true
 
 jobs:
-  call-workflow-maven-build:
-    uses: felleslosninger/github-workflows/.github/workflows/ci-maven-build.yml@main
-    with:
-      java-version: ${{ inputs.java-version }}
-    secrets: inherit
+  verify-pull-request-title:
+    if: |
+      inputs.enable-pr-title-verify == true &&
+      github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title
+        id: check-pr-title
+        uses: felleslosninger/github-actions/validate-pull-request-title@e89b30d36192feae260189485737e6b78fa1e98a # pin@v0.7.0
+        with:
+          pull-request-title: ${{ inputs.pull-request-title }}
+          allowed-prefixes: ${{ inputs.pull-request-allowed-prefixes }}
+          min-length-title: ${{ inputs.pull-request-min-length-title }}
+          max-length-title: ${{ inputs.pull-request-max-length-title }}
+          case-sensitive-prefix: ${{ inputs.pull-request-case-sensitive-prefix }}
+
+      - name: Fail if PR title is not valid
+        if: ${{ steps.check-pr-title.outputs.is-valid }} == false
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # pin@v7.0.1
+        with:
+          script: |
+            core.setFailed('Pull request title is not valid')
+
+  build-and-test-spring-boot:
+    if: inputs.application-type == 'spring-boot'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # pin@v4.1.3
+
+      - name: Set up JDK ${{ inputs.java-version }}
+        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # pin@v4.2.1
+        with:
+          distribution: "liberica"
+          java-version: ${{ inputs.java-version }}
+
+      - name: Cache Maven packages
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # pin@v4.0.2
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Maven environment set up
+        uses: s4u/maven-settings-action@7802f6aec16c9098b4798ad1f1d8ac75198194bd # pin@v3.0.0
+        with:
+          servers: |
+            [{
+                "id": "github-oidc-sdk",
+                "username": "${{ secrets.MAVEN_USER }}",
+                "password": "${{ secrets.MAVEN_PASSWORD }}"
+            },
+            {
+                "id": "github",
+                "username": "${{ secrets.MAVEN_USER }}",
+                "password": "${{ secrets.MAVEN_PASSWORD }}"
+            }]
+
+      - name: Run build and test with Maven
+        run: mvn -B test
 
   call-container-scan:
+    if: |
+      inputs.enable-trivy-image-scan == true &&
+      inputs.application-type == 'spring-boot'
     uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@main
     with:
       image-name: ${{ inputs.image-name }}
@@ -48,8 +128,8 @@ jobs:
     secrets: inherit
 
   call-auto-merge:
-    if: inputs.auto-merge == true
-    needs: [call-workflow-maven-build, call-container-scan]
+    if: inputs.enable-auto-merge-dependabot == true
+    needs: [build-and-test-spring-boot, call-container-scan]
     uses: felleslosninger/github-workflows/.github/workflows/misc-approve-and-merge-dependabot-pr.yml@main
     with:
       update-types: ${{ inputs.auto-merge-types }}
