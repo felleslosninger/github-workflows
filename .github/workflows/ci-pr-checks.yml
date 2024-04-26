@@ -75,7 +75,7 @@ jobs:
         uses: felleslosninger/github-actions/json-to-summary@e8db52bf0bd0f3b1412b89c7039403eec3ebabd7 # pin@v0.7.2
         with:
           json: ${{ toJson(steps.check-pr-title.outputs) }}
-          title: "Inputs"
+          title: "PR title check results"
 
       - name: Fail if PR title is not valid
         if: steps.check-pr-title.outputs.is-valid == 'false'
