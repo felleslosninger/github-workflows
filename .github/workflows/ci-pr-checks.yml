@@ -78,7 +78,7 @@ jobs:
           title: "Inputs"
 
       - name: Fail if PR title is not valid
-        if: ${{ steps.check-pr-title.outputs.is-valid }} == 'false'
+        if: steps.check-pr-title.outputs.is-valid == 'false'
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # pin@v7.0.1
         with:
           script: |
