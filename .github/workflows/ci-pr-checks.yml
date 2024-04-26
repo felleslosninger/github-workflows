@@ -63,7 +63,7 @@ jobs:
     steps:
       - name: Check PR title
         id: check-pr-title
-        uses: felleslosninger/github-actions/validate-pull-request-title@e89b30d36192feae260189485737e6b78fa1e98a # pin@v0.7.0
+        uses: felleslosninger/github-actions/validate-pull-request-title@e6e1d633535e21578bee2e0bb0ba58772dbaa7cf # pin@v0.7.1
         with:
           pull-request-title: ${{ inputs.pull-request-title }}
           allowed-prefixes: ${{ inputs.pull-request-allowed-prefixes }}
@@ -76,7 +76,7 @@ jobs:
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # pin@v7.0.1
         with:
           script: |
-            core.setFailed('Pull request title is not valid')
+            core.setFailed('${{ steps.check-pr-title.outputs.error-message }}')
 
   build-and-test-spring-boot:
     if: inputs.application-type == 'spring-boot'
