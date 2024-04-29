@@ -33,17 +33,17 @@ jobs:
     env:
       REPOSITORY-NAME: ${{ github.event.repository.name }}
       DOCKLE_HOST: "unix:///var/run/docker.sock"
-      #TRIVY_TIMEOUT: "15m"
       TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
     steps:
-      - name: Set imagetag as env variable
+      - name: Set IMAGETAG env variable
         run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
 
       - name: Set IMAGE-NAME env variable
         run: |
           echo "IMAGE-NAME=${{ inputs.registry-url }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
 
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up JDK ${{ inputs.java-version }}
         uses: actions/setup-java@v4
@@ -58,7 +58,8 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - uses: s4u/maven-settings-action@v3.0.0
+      - name: Maven environment setup
+        uses: s4u/maven-settings-action@v3.0.0
         with:
           servers: |
             [{
@@ -72,7 +73,7 @@ jobs:
               "password": "${{ secrets.MAVEN_PASSWORD }}"
             }]
 
-      - name: Build image with Maven/Spring Boot (skipTests)
+      - name: Build image with Maven (skips tests)
         run: mvn -DskipTests -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}
 
       - name: Create SBOM artifact-name
@@ -81,7 +82,8 @@ jobs:
           SBOM_NAME=$(echo ${{env.IMAGE-NAME}} | tr '/' '-')
           echo "SBOM_ARTIFACT_ID=$SBOM_NAME" >> "$GITHUB_OUTPUT"
 
-      - uses: anchore/sbom-action@ab5d7b5f48981941c4c5d6bf33aeb98fe3bae38c # pin@v0.15.10
+      - name: Create SBOM
+        uses: anchore/sbom-action@ab5d7b5f48981941c4c5d6bf33aeb98fe3bae38c # pin@v0.15.10
         with:
           image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
           artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
