@@ -160,6 +160,6 @@ jobs:
     needs: call-auto-merge
     steps:
       - name: call-build-publish-image
-        uses: peter-evans/repository-dispatch@26b39ed245ab8f31526069329e112ab2fb224588 # pin@v2
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # pin@v2
         with:
           event-type: build-publish-image
