@@ -14,12 +14,12 @@ on:
         type: string
       registry-url:
         description: Image/Container Registery URL
-        default: 'my-local-registery'
+        default: "my-local-registery"
         required: false
         type: string
       java-version:
         description: Main version of java
-        default: '11'
+        default: "11"
         required: false
         type: string
       container-scan-offline-mode:
@@ -29,69 +29,78 @@ on:
 
 jobs:
   build-and-scan-image:
-      runs-on: ubuntu-latest
-      env:
-        REPOSITORY-NAME: ${{ github.event.repository.name }}
-        DOCKLE_HOST: "unix:///var/run/docker.sock"
-        #TRIVY_TIMEOUT: "15m"
-      steps:
-        - name: Set imagetag as env variable
-          run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
-        - name: Set IMAGE-NAME env variable
-          run: |
-             echo "IMAGE-NAME=${{ inputs.registry-url }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
-        - uses: actions/checkout@v4
-        - name: Cache Maven packages
-          uses: actions/cache@v4.0.2
-          with:
-            path: ~/.m2
-            key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-            restore-keys: ${{ runner.os }}-m2
-        - uses: s4u/maven-settings-action@v3.0.0
-          with:
-            servers: |
-              [{
-                "id": "github",
-                "username": "${{ secrets.MAVEN_USER }}",
-                "password": "${{ secrets.MAVEN_PASSWORD }}"
-              }]
-        - name: Install pack
-          run: |
-            #!/usr/bin/env bash
-            set -euo pipefail
-            echo "Installing pack ${PACK_VERSION}"
-            mkdir -p /usr/local/bin
-            curl \
-              --location \
-              --show-error \
-              --silent \
-              "https://github.com/buildpacks/pack/releases/download/v${PACK_VERSION}/pack-v${PACK_VERSION}-linux.tgz" \
-            | sudo tar -C /usr/local/bin --no-same-owner -xzv pack
-          env:
-            PACK_VERSION: 0.32.1
-        - name: Build image with Maven/Quarkus
-          run: |
-            pack build ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} \
-              --path . \
-              --buildpack docker://paketobuildpacks/quarkus \
-              --buildpack docker://paketobuildpacks/java \
-              --builder paketobuildpacks/${{ inputs.image-pack }} \
-              --volume "${HOME}/.m2:/home/cnb/.m2:rw" \
-              --env BP_JVM_VERSION="${{ inputs.java-version }}" \
-              --env BP_MAVEN_POM_FILE="./pom.xml" \
-              --creation-time now
-        - name: Create SBOM artifact-name
-          id: sbom-name
-          run: |
-            SBOM_NAME=$(echo ${{env.IMAGE-NAME}} | tr '/' '-')
-            echo "SBOM_ARTIFACT_ID=$SBOM_NAME" >> "$GITHUB_OUTPUT"
-        - uses: anchore/sbom-action@v0
-          with:
-            image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-            artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
-        - name: Run Trivy vulnerability scanner
-          uses: aquasecurity/trivy-action@d710430a6722f083d3b36b8339ff66b32f22ee55 # pin@v0.19.0
-          with:
-            image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-            exit-code: '1'
-            severity: 'CRITICAL,HIGH'
+    runs-on: ubuntu-latest
+    env:
+      REPOSITORY-NAME: ${{ github.event.repository.name }}
+      DOCKLE_HOST: "unix:///var/run/docker.sock"
+      #TRIVY_TIMEOUT: "15m"
+    steps:
+      - name: Set imagetag as env variable
+        run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
+
+      - name: Set IMAGE-NAME env variable
+        run: |
+          echo "IMAGE-NAME=${{ inputs.registry-url }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b #ping@v4.1.4
+
+      - name: Cache Maven packages
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # pin@v4.0.2
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - uses: s4u/maven-settings-action@7802f6aec16c9098b4798ad1f1d8ac75198194bd # pin@v3.0.0
+        with:
+          servers: |
+            [{
+              "id": "github",
+              "username": "${{ secrets.MAVEN_USER }}",
+              "password": "${{ secrets.MAVEN_PASSWORD }}"
+            }]
+
+      - name: Install pack
+        run: |
+          #!/usr/bin/env bash
+          set -euo pipefail
+          echo "Installing pack ${PACK_VERSION}"
+          mkdir -p /usr/local/bin
+          curl \
+            --location \
+            --show-error \
+            --silent \
+            "https://github.com/buildpacks/pack/releases/download/v${PACK_VERSION}/pack-v${PACK_VERSION}-linux.tgz" \
+          | sudo tar -C /usr/local/bin --no-same-owner -xzv pack
+        env:
+          PACK_VERSION: 0.32.1
+
+      - name: Build image with Maven/Quarkus
+        run: |
+          pack build ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} \
+            --path . \
+            --buildpack docker://paketobuildpacks/quarkus \
+            --buildpack docker://paketobuildpacks/java \
+            --builder paketobuildpacks/${{ inputs.image-pack }} \
+            --volume "${HOME}/.m2:/home/cnb/.m2:rw" \
+            --env BP_JVM_VERSION="${{ inputs.java-version }}" \
+            --env BP_MAVEN_POM_FILE="./pom.xml" \
+            --creation-time now
+
+      - name: Create SBOM artifact-name
+        id: sbom-name
+        run: |
+          SBOM_NAME=$(echo ${{env.IMAGE-NAME}} | tr '/' '-')
+          echo "SBOM_ARTIFACT_ID=$SBOM_NAME" >> "$GITHUB_OUTPUT"
+
+      - uses: anchore/sbom-action@7ccf588e3cf3cc2611714c2eeae48550fbc17552 #pin@v0.15.11
+        with:
+          image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
+          artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@d710430a6722f083d3b36b8339ff66b32f22ee55 # pin@v0.19.0
+        with:
+          image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
+          exit-code: "1"
+          severity: "CRITICAL,HIGH"

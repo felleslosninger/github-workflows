@@ -67,7 +67,7 @@ jobs:
           echo "- Image name: $image_name" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b #ping@v4.1.4
 
       - name: Build image
         run: docker build -t ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -f ${{ inputs.application-path }}/Dockerfile .
@@ -113,7 +113,7 @@ jobs:
         slack-channel: ["${{ inputs.slack-channel-id }}", "C05G4B8R2GG"]
     steps:
       - name: Send Slack notification
-        uses: felleslosninger/github-actions/send-slack-notification@v0.7.2
+        uses: felleslosninger/github-actions/send-slack-notification@e8db52bf0bd0f3b1412b89c7039403eec3ebabd7 #pin@v0.7.2
         with:
           slack-channel-id: ${{ matrix.slack-channel }}
           slack-bot-token: ${{ secrets.SLACK_CICD_NOTIFICATION_TOKEN }}
