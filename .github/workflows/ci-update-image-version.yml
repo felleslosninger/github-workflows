@@ -62,7 +62,7 @@ jobs:
         if: ${{ steps.regex-find-jira-id.outputs.JIRAID != '' }}
         run: echo "JIRA_ID=${{ steps.regex-find-jira-id.outputs.JIRAID }}" >> "$GITHUB_ENV"
 
-      - uses: octokit/request-action@v2.x
+      - uses: octokit/request-action@21d174fc38ff59af9cf4d7e07347d29df6dbaa99 # pin@v2.3.0
         id: get_labels
         with:
           route: GET /repos/${{ github.repository }}/commits/${{ github.sha }}/pulls
@@ -83,7 +83,7 @@ jobs:
       - run: npm install @octokit/app@v13.1.8
 
       - name: Generate Token
-        uses: felleslosninger/github-actions/github-app-token@v0.7.2
+        uses: felleslosninger/github-actions/github-app-token@e8db52bf0bd0f3b1412b89c7039403eec3ebabd7 #pin@v0.7.2
         id: token
         with:
           app-id: ${{ secrets.DIGDIR_PLATFORM_CI_APP_ID }}
@@ -118,7 +118,7 @@ jobs:
         slack-channel: ["${{ inputs.slack-channel-id }}", "C05G4B8R2GG"]
     steps:
       - name: Send Slack notification
-        uses: felleslosninger/github-actions/send-slack-notification@v0.7.2
+        uses: felleslosninger/github-actions/send-slack-notification@e8db52bf0bd0f3b1412b89c7039403eec3ebabd7 #pin@v0.7.2
         with:
           slack-channel-id: ${{ matrix.slack-channel }}
           slack-bot-token: ${{ secrets.SLACK_CICD_NOTIFICATION_TOKEN }}

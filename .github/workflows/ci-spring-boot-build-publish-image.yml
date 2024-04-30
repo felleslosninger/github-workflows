@@ -92,7 +92,7 @@ jobs:
           echo "- Image name: $image_name" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Checkout repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin@v4.1.1
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # pin@v4.1.4
 
       - name: Check if YAML files exist
         id: yaml-files-exists
@@ -122,7 +122,7 @@ jobs:
                 level: warning
 
       - name: Set up JDK ${{ inputs.java-version }}
-        uses: actions/setup-java@9704b39bf258b59bc04b50fa2dd55e9ed76b47a8 # pin@v4.1.0
+        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # pin@v4.2.1
         with:
           distribution: "liberica"
           java-version: ${{ inputs.java-version }}
@@ -186,13 +186,13 @@ jobs:
           echo "- SBOM: $SBOM_NAME" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Create SBOM
-        uses: anchore/sbom-action@9fece9e20048ca9590af301449208b2b8861333b # pin@v0.15.9
+        uses: anchore/sbom-action@7ccf588e3cf3cc2611714c2eeae48550fbc17552 # pin@v0.15.11
         with:
           image: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
           artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{ steps.set-image-tag.outputs.image-tag }}.spdx
 
       - name: Login to ACR
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # pin@v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # pin@v3.1.0
         with:
           registry: ${{ secrets.REGISTRY_URL }}
           username: ${{ secrets.REGISTRY_USERNAME }}

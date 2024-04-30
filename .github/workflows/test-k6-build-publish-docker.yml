@@ -41,47 +41,57 @@ jobs:
     steps:
       - name: Set imagetag as env variable
         run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
+
       - name: Set IMAGE_NAME env variable
         run: |
           echo "IMAGE_NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
-      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # pin@v4.1.4
+
       - name: Find and replace image version for ${{ env.IMAGETAG }} in version endpoint
-        uses: jacobtomlinson/gha-find-replace@v3
+        uses: jacobtomlinson/gha-find-replace@a51bbcd94d000df9ca0fcb54ec8be69aad8374b0 # pin@v3
         id: update-version
         with:
           find: "DEV-SNAPSHOT"
           replace: "${{ env.IMAGETAG }}"
           include: "docker/version"
           regex: false
+
       - name: Copy k6-tests to docker temp
         run: |
           cp -R ${{ inputs.k6-folder }}/* docker/k6-tests/
           mkdir docker/${{ inputs.k6-libs-folder }}
           cp -R ${{ inputs.k6-libs-folder }}/* docker/${{ inputs.k6-libs-folder }}/
+
       - name: Build the tagged Docker image
         run: docker build --tag ${{env.IMAGE_NAME}}:${{env.IMAGETAG}} docker/
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@d710430a6722f083d3b36b8339ff66b32f22ee55 # pin@v0.19.0
         with:
           image-ref: ${{env.IMAGE_NAME}}:${{env.IMAGETAG}}
           exit-code: "1"
           severity: "CRITICAL,HIGH"
+
       - name: "Login to Azure Container registery"
-        uses: azure/docker-login@v1
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # pin@v3.1.0
         with:
-          login-server: ${{ secrets.REGISTRY_URL }}
+          registry: ${{ secrets.REGISTRY_URL }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
+
       - name: "Build the tagged Docker image"
         run: |
           docker push ${{env.IMAGE_NAME}}:${{env.IMAGETAG}}
           docker image tag ${{env.IMAGE_NAME}}:${{env.IMAGETAG}} ${{env.IMAGE_NAME}}:latest && docker push ${{env.IMAGE_NAME}}:latest
-      - name: 'Set image digest'
+
+      - name: "Set image digest"
         run: |
           echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE_NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
 
       - id: output-image-tag
         run: echo "imagetag=${{env.IMAGETAG}}" >> "$GITHUB_OUTPUT"
+
       - id: output-image-digest
         run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
   notify-on-errors:
@@ -93,7 +103,7 @@ jobs:
         slack-channel: ["${{ inputs.slack-channel-id }}", "C05G4B8R2GG"]
     steps:
       - name: Send Slack notification
-        uses: felleslosninger/github-actions/send-slack-notification@v0.7.2
+        uses: felleslosninger/github-actions/send-slack-notification@e8db52bf0bd0f3b1412b89c7039403eec3ebabd7 #pin@v0.7.2
         with:
           slack-channel-id: ${{ matrix.slack-channel }}
           slack-bot-token: ${{ secrets.SLACK_CICD_NOTIFICATION_TOKEN }}

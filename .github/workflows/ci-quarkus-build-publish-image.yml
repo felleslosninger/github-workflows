@@ -42,12 +42,16 @@ jobs:
     steps:
       - name: Set imagetag as env variable
         run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
+
       - name: Set IMAGE-NAME env variable
         run: |
           echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
-      - uses: actions/checkout@v4
+
+      - name: Checkout
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b #ping@v4.1.4
+
       - name: yaml-lint
-        uses: ibiqlik/action-yamllint@v3
+        uses: ibiqlik/action-yamllint@2576378a8e339169678f9939646ee3ee325e845c # pin@v3.1.1
         with:
           file_or_dir: src/main/resources/application*.y*ml
           config_data: |
@@ -57,13 +61,15 @@ jobs:
               line-length:
                 max: 150
                 level: warning
+
       - name: Cache Maven packages
-        uses: actions/cache@v4.0.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # pin@v4.0.2
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - uses: s4u/maven-settings-action@v3.0.0
+
+      - uses: s4u/maven-settings-action@7802f6aec16c9098b4798ad1f1d8ac75198194bd # pin@v3.0.0
         with:
           servers: |
             [{
@@ -71,8 +77,10 @@ jobs:
               "username": "${{ secrets.MAVEN_USER }}",
               "password": "${{ secrets.MAVEN_PASSWORD }}"
             }]
+
       - name: Maven update version used in application.yaml
         run: mvn versions:set -B -DnewVersion="$IMAGETAG"
+
       - name: Install pack
         run: |
           #!/usr/bin/env bash
@@ -87,6 +95,7 @@ jobs:
           | sudo tar -C /usr/local/bin/bin --no-same-owner -xzv pack
         env:
           PACK_VERSION: 0.32.1
+
       - name: Build image with Maven/Quarkus
         run: |
           pack build ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} \
@@ -98,32 +107,40 @@ jobs:
             --env BP_JVM_VERSION="${{ inputs.java-version }}" \
             --env BP_MAVEN_POM_FILE="./pom.xml" \
             --creation-time now
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@d710430a6722f083d3b36b8339ff66b32f22ee55 # pin@v0.19.0
         with:
           image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
           exit-code: "1"
           severity: "CRITICAL,HIGH"
+
       - name: Create SBOM artifact-name
         id: sbom-name
         run: |
           SBOM_NAME=$(echo ${{env.IMAGE-NAME}} | tr '/' '-')
           echo "SBOM_ARTIFACT_ID=$SBOM_NAME" >> "$GITHUB_OUTPUT"
-      - uses: anchore/sbom-action@v0
+
+      - uses: anchore/sbom-action@7ccf588e3cf3cc2611714c2eeae48550fbc17552 #pin@v0.15.11
         with:
           image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
           artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
-      - name: "Login Azure docker container registery"
-        uses: azure/docker-login@v1
+
+      - name: Login to ACR
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # pin@v3.1.0
         with:
-          login-server: ${{ secrets.REGISTRY_URL }}
+          registry: ${{ secrets.REGISTRY_URL }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
+
       - name: "Push image"
         run: docker push ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
+
       - run: echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
+
       - id: output-image-tag
         run: echo "imagetag=${{env.IMAGETAG}}" >> "$GITHUB_OUTPUT"
+
       - id: output-image-digest
         run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
 
@@ -136,7 +153,7 @@ jobs:
         slack-channel: ["${{ inputs.slack-channel-id }}", "C05G4B8R2GG"]
     steps:
       - name: Send Slack notification
-        uses: felleslosninger/github-actions/send-slack-notification@v0.7.2
+        uses: felleslosninger/github-actions/send-slack-notification@e8db52bf0bd0f3b1412b89c7039403eec3ebabd7 #pin@v0.7.2
         with:
           slack-channel-id: ${{ matrix.slack-channel }}
           slack-bot-token: ${{ secrets.SLACK_CICD_NOTIFICATION_TOKEN }}
