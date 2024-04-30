@@ -9,12 +9,12 @@ on:
         type: string
       k6-folder:
         description: Folder with k6-tests
-        default: 'k6-load-tests'
+        default: "k6-load-tests"
         required: false
         type: string
       k6-libs-folder:
         description: Folder with k6-tests
-        default: 'libs'
+        default: "libs"
         required: false
         type: string
 
@@ -28,21 +28,25 @@ jobs:
     steps:
       - name: Set imagetag as env variable
         run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
+
       - name: Set IMAGE-NAME env variable
         run: |
-           echo "IMAGE-NAME=${{ env.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
-      - uses: actions/checkout@v4
+          echo "IMAGE-NAME=${{ env.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin@v4.1.1
+
       - name: Copy k6-tests to docker temp
         run: |
           cp -R ${{ inputs.k6-folder }}/* docker/k6-tests/
           mkdir docker/${{ inputs.k6-libs-folder }}
           cp -R ${{ inputs.k6-libs-folder }}/* docker/${{ inputs.k6-libs-folder }}/
+
       - name: Build the tagged Docker image
         run: docker build --tag ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} docker/
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@d710430a6722f083d3b36b8339ff66b32f22ee55 # pin@v0.19.0
         with:
           image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-          exit-code: '1'
-          severity: 'CRITICAL,HIGH'
-          
+          exit-code: "1"
+          severity: "CRITICAL,HIGH"
