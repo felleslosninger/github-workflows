@@ -139,7 +139,7 @@ jobs:
     if: |
       inputs.enable-trivy-image-scan == true &&
       inputs.application-type == 'spring-boot'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@pf-1179-build-sbom-with-trivy-action
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
