@@ -89,7 +89,7 @@ jobs:
   run-spring-boot-build:
     needs: input-checks
     if: inputs.application-type == 'spring-boot'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-build-publish-image.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-build-publish-image.yml@pf-1179-build-sbom-with-trivy-action
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
@@ -111,7 +111,7 @@ jobs:
       java-version: ${{ inputs.java-version }}
       slack-channel-id: ${{ inputs.slack-channel-id }}
     secrets: inherit
-    
+
   run-docker-build:
     needs: input-checks
     if: inputs.application-type == 'docker'
