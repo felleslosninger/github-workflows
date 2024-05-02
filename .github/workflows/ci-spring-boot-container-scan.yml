@@ -92,3 +92,9 @@ jobs:
           exit-code: "1"
           severity: "CRITICAL,HIGH"
           github-pat: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload trivy report as a Github artifact
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # pin@v4.3.3
+        with:
+          name: trivy-sbom-report
+          path: "${{ github.workspace }}/sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.json"
