@@ -170,26 +170,30 @@ jobs:
             echo "- Trivy ignore path: $trivyignore_path" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@d710430a6722f083d3b36b8339ff66b32f22ee55 # pin@v0.19.0
-        with:
-          image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
-          trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
-
       - name: Create SBOM artifact-name
         id: sbom-name
         run: |
           SBOM_NAME=$(echo ${{ steps.set-image-name.outputs.image-name }} | tr '/' '-')
-          echo "SBOM_ARTIFACT_ID=$SBOM_NAME" >> "$GITHUB_OUTPUT"
+          echo "sbom-artifact-id=$SBOM_NAME" >> "$GITHUB_OUTPUT"
           echo "- SBOM: $SBOM_NAME" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Create SBOM
-        uses: anchore/sbom-action@7ccf588e3cf3cc2611714c2eeae48550fbc17552 # pin@v0.15.11
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@d710430a6722f083d3b36b8339ff66b32f22ee55 # pin@v0.19.0
         with:
-          image: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
-          artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{ steps.set-image-tag.outputs.image-tag }}.spdx
+          scan-type: image
+          format: github
+          image-ref: "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}"
+          output: "sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}.json"
+          exit-code: "1"
+          severity: "CRITICAL,HIGH"
+          trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload trivy report as a Github artifact
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # pin@v4.3.3
+        with:
+          name: trivy-sbom-report
+          path: "${{ github.workspace }}/sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}.json"
 
       - name: Login to ACR
         uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # pin@v3.1.0

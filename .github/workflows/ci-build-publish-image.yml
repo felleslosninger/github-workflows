@@ -111,7 +111,7 @@ jobs:
       java-version: ${{ inputs.java-version }}
       slack-channel-id: ${{ inputs.slack-channel-id }}
     secrets: inherit
-    
+
   run-docker-build:
     needs: input-checks
     if: inputs.application-type == 'docker'
