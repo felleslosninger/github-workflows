@@ -82,15 +82,13 @@ jobs:
           SBOM_NAME=$(echo ${{env.IMAGE-NAME}} | tr '/' '-')
           echo "SBOM_ARTIFACT_ID=$SBOM_NAME" >> "$GITHUB_OUTPUT"
 
-      - name: Create SBOM
-        uses: anchore/sbom-action@7ccf588e3cf3cc2611714c2eeae48550fbc17552 # pin@v0.15.11
-        with:
-          image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-          artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
-
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@d710430a6722f083d3b36b8339ff66b32f22ee55 # pin@v0.19.0
         with:
-          image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
+          scan-type: "fs"
+          image-ref: "${{env.IMAGE-NAME}}:${{env.IMAGETAG}}"
+          format: "github"
+          output: "sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.json"
           exit-code: "1"
           severity: "CRITICAL,HIGH"
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
