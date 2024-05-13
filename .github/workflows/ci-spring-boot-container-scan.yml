@@ -97,5 +97,5 @@ jobs:
               cat trivy.txt
               echo '```'
               echo "</details>"
-            } >> $GITHUB_STEP_SUMMARY
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
