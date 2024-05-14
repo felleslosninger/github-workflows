@@ -51,6 +51,10 @@ on:
         required: false
         type: string
 
+      add-git-package-token:
+        required: false
+        type: boolean
+
     outputs:
       image-version:
         description: "Docker image version"
@@ -122,4 +126,5 @@ jobs:
       container-scan-offline-mode: ${{ inputs.container-scan-offline-mode }}
       slack-channel-id: ${{ inputs.slack-channel-id }}
       application-path: ${{ inputs.application-path }}
+      add-git-package-token: ${{ inputs.add-git-package-token }}
     secrets: inherit
