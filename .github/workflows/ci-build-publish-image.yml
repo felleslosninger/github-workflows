@@ -51,6 +51,10 @@ on:
         required: false
         type: string
 
+      build-arg:
+        required: false
+        type: string
+
     outputs:
       image-version:
         description: "Docker image version"
@@ -115,11 +119,12 @@ jobs:
   run-docker-build:
     needs: input-checks
     if: inputs.application-type == 'docker'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-docker-build-publish-image.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-docker-build-publish-image.yml@add-sbom-generation-to-docker-build
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
       container-scan-offline-mode: ${{ inputs.container-scan-offline-mode }}
       slack-channel-id: ${{ inputs.slack-channel-id }}
       application-path: ${{ inputs.application-path }}
+      build-arg: ${{ inputs.build-arg }}
     secrets: inherit
