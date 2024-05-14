@@ -30,10 +30,10 @@ on:
         required: false
         type: string
 
-      build-arg:
-        description: Optional build argument for Docker, such as GIT_PACKAGE_TOKEN
+      add-git-package-token:
+        description: Adds GIT_PACKAGE_TOKEN build argument for Docker
         required: false
-        type: string
+        type: boolean
 
     outputs:
       image-version:
@@ -76,8 +76,8 @@ jobs:
 
       - name: Build image
         run: |
-          if [ -n "${{ inputs.build-arg }}" ]; then
-            docker build --tag ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} --file docker/Dockerfile --build-arg ${{ inputs.build-arg }} .
+          if [ "${{ inputs.add-git-package-token }}" = "true" ]; then
+            docker build --tag ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} --file docker/Dockerfile --build-arg GIT_PACKAGE_TOKEN=${{ secrets.GITHUB_TOKEN }} .
           else
             docker build --tag ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} --file ${{ inputs.application-path }}/Dockerfile .
           fi
