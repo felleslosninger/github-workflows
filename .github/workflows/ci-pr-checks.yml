@@ -77,7 +77,7 @@ jobs:
           max-length-title: ${{ inputs.pull-request-max-length-title }}
           case-sensitive-prefix: ${{ inputs.pull-request-case-sensitive-prefix }}
 
-      - name: "Write to summary"
+      - name: Write to summary
         uses: felleslosninger/github-actions/json-to-summary@64581edd1acd1930db337b64e896036c1aa05736 # pin@v0.7.3
         with:
           json: ${{ toJson(steps.check-pr-title.outputs) }}

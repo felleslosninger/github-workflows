@@ -35,12 +35,14 @@ jobs:
       DOCKLE_HOST: "unix:///var/run/docker.sock"
       TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
     steps:
-      - name: Set IMAGETAG env variable
-        run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
+      - name: Set image tag
+        id: set-image-tag
+        run: echo "image-tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_OUTPUT"
 
-      - name: Set IMAGE-NAME env variable
+      - name: Set image name
+        id: set-image-name
         run: |
-          echo "IMAGE-NAME=${{ inputs.registry-url }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
+          echo "image-name=${{ inputs.registry-url }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout
         uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # pin@v4.1.5
@@ -74,11 +76,26 @@ jobs:
             }]
 
       - name: Build image with Maven (skips tests)
-        run: mvn -DskipTests -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{env.IMAGE-NAME}}:${{env.IMAGETAG}} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}
+        run: mvn -DskipTests -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@d710430a6722f083d3b36b8339ff66b32f22ee55 # pin@v0.19.0
         with:
-          image-ref: "${{env.IMAGE-NAME}}:${{env.IMAGETAG}}"
+          image-ref: "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}"
           exit-code: "1"
           severity: "CRITICAL,HIGH"
+          output: trivy.txt
+
+      - name: Publish Trivy Output to Summary
+        run: |
+          if [[ -s trivy.txt ]]; then
+            {
+              echo "### Trivy Security Results"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```terraform'
+              cat trivy.txt
+              echo '```'
+              echo "</details>"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
