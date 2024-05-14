@@ -77,7 +77,7 @@ jobs:
       - name: Build image
         run: |
           if [ -n "${{ inputs.build-arg }}" ]; then
-            docker build --tag ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} --file docker/Dockerfile --build-arg GIT_PACKAGE_TOKEN=${{ inputs.build-arg }} .
+            docker build --tag ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} --file docker/Dockerfile --build-arg ${{ inputs.build-arg }} .
           else
             docker build --tag ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} --file ${{ inputs.application-path }}/Dockerfile .
           fi
