@@ -119,7 +119,7 @@ jobs:
   run-docker-build:
     needs: input-checks
     if: inputs.application-type == 'docker'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-docker-build-publish-image.yml@add-sbom-generation-to-docker-build
+    uses: felleslosninger/github-workflows/.github/workflows/ci-docker-build-publish-image.yml@main
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
