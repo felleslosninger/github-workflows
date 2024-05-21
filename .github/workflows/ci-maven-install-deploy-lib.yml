@@ -60,7 +60,7 @@ jobs:
       - name: Set artifact id
         id: set-artifact-id
         run: |
-          echo "artifact-id=${{ inputs.artifact-name }}-${{ github.run_number }}-${{ github.run_attempt }}" >> "$GITHUB_OUTPUT"
+          echo "artifact-id=${{ inputs.artifact-name }}-${{ github.run_number }}-${{ github.run_attempt }}.spdx" >> "$GITHUB_OUTPUT"
 
       - uses: anchore/sbom-action@v0
         with:
