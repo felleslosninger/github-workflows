@@ -69,7 +69,7 @@ jobs:
     steps:
       - name: Check PR title
         id: check-pr-title
-        uses: felleslosninger/github-actions/validate-pull-request-title@64581edd1acd1930db337b64e896036c1aa05736 # pin@v0.7.3
+        uses: felleslosninger/github-actions/validate-pull-request-title@bb702913dc7fc7ba16f6a2ce32624ba9eaf54262 # pin@v0.7.4
         with:
           pull-request-title: ${{ inputs.pull-request-title }}
           allowed-prefixes: ${{ inputs.pull-request-allowed-prefixes }}
@@ -78,7 +78,7 @@ jobs:
           case-sensitive-prefix: ${{ inputs.pull-request-case-sensitive-prefix }}
 
       - name: Write to summary
-        uses: felleslosninger/github-actions/json-to-summary@64581edd1acd1930db337b64e896036c1aa05736 # pin@v0.7.3
+        uses: felleslosninger/github-actions/json-to-summary@bb702913dc7fc7ba16f6a2ce32624ba9eaf54262 # pin@v0.7.4
         with:
           json: ${{ toJson(steps.check-pr-title.outputs) }}
           title: "PR title check results"
