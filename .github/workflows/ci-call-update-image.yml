@@ -76,7 +76,7 @@ jobs:
           echo "jira-id=$JIID" >> "$GITHUB_ENV"
 
       - name: Get Labels
-        uses: octokit/request-action@21d174fc38ff59af9cf4d7e07347d29df6dbaa99 #pin@v2.3.0
+        uses: octokit/request-action@872c5c97b3c85c23516a572f02b31401ef82415d #pin@v2.3.1
         id: get-labels
         with:
           route: GET /repos/${{ github.repository }}/commits/${{ github.sha }}/pulls
