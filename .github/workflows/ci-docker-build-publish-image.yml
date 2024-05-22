@@ -83,7 +83,7 @@ jobs:
           fi
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@d710430a6722f083d3b36b8339ff66b32f22ee55 # pin@v0.19.0
+        uses: aquasecurity/trivy-action@b2933f565dbc598b29947660e66259e3c7bc8561 # pin@v0.20.0
         with:
           image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
           exit-code: "1"
@@ -97,7 +97,7 @@ jobs:
           echo "- SBOM: $SBOM_NAME" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run Trivy SBOM generation
-        uses: aquasecurity/trivy-action@d710430a6722f083d3b36b8339ff66b32f22ee55 # pin@v0.19.0
+        uses: aquasecurity/trivy-action@b2933f565dbc598b29947660e66259e3c7bc8561 # pin@v0.20.0
         with:
           scan-type: image
           format: github
