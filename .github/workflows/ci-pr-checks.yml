@@ -135,7 +135,7 @@ jobs:
           name: ${{ inputs.artifact-name }}
           path: ${{ inputs.artifact-path }}
 
-  call-container-scan:
+  call-spring-boot-container-scan:
     if: |
       inputs.enable-trivy-image-scan == true &&
       inputs.application-type == 'spring-boot'
@@ -146,9 +146,25 @@ jobs:
       java-version: ${{ inputs.java-version }}
     secrets: inherit
 
+  call-quarkus-container-scan:
+    if: |
+      inputs.enable-trivy-image-scan == true &&
+      inputs.application-type == 'quarkus'
+    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@main
+    with:
+      image-name: ${{ inputs.image-name }}
+      image-pack: ${{ inputs.image-pack }}
+      java-version: ${{ inputs.java-version }}
+    secrets: inherit
+
   call-auto-merge:
     if: inputs.enable-auto-merge-dependabot == true
-    needs: [build-and-test-spring-boot, call-container-scan]
+    needs:
+      [
+        build-and-test-spring-boot,
+        call-spring-boot-container-scan,
+        call-quarkus-container-scan,
+      ]
     uses: felleslosninger/github-workflows/.github/workflows/misc-approve-and-merge-dependabot-pr.yml@main
     with:
       update-types: ${{ inputs.auto-merge-types }}
