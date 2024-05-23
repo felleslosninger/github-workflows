@@ -55,6 +55,11 @@ on:
         required: false
         type: boolean
 
+      native:
+        required: false
+        type: boolean
+        default: false
+
     outputs:
       image-version:
         description: "Docker image version"
@@ -114,6 +119,7 @@ jobs:
       image-pack: ${{ inputs.image-pack }}
       java-version: ${{ inputs.java-version }}
       slack-channel-id: ${{ inputs.slack-channel-id }}
+      native: ${{ inputs.native }}
     secrets: inherit
 
   run-docker-build:

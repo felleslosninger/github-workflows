@@ -7,35 +7,46 @@ on:
         description: Name of Docker image
         required: false
         type: string
+
       image-pack:
         description: Docker image pack of builder-jammy-tiny, builder-jammy-base or builder-jammy-full
         default: builder-jammy-tiny
         required: false
         type: string
+
       java-version:
         description: Main version of java
         default: "21"
         required: false
         type: string
+
       slack-channel-id:
         description: Team channel id
         default: ""
         required: false
         type: string
+
+      native:
+        description: Build native image
+        required: false
+        type: boolean
+        default: false
+
     outputs:
       image-version:
         description: "Docker image version"
         value: ${{ jobs.build-publish-image.outputs.imagetag }}
+
       image-digest:
         description: "Docker image SHA256 digest"
         value: ${{ jobs.build-publish-image.outputs.imagedigest }}
+
 jobs:
   build-publish-image:
     runs-on: ubuntu-latest
     env:
       REPOSITORY-NAME: ${{ github.event.repository.name }}
       DOCKLE_HOST: "unix:///var/run/docker.sock"
-      #TRIVY_TIMEOUT: "15m"
     outputs:
       imagetag: ${{ steps.output-image-tag.outputs.imagetag }}
       imagedigest: ${{ steps.output-image-digest.outputs.imagedigest }}
@@ -96,7 +107,22 @@ jobs:
         env:
           PACK_VERSION: 0.32.1
 
+      - name: Build native image with Maven/Quarkus
+        if: inputs.native == true
+        run: |
+          pack build ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} \
+            --path . \
+            --buildpack docker://paketobuildpacks/quarkus \
+            --buildpack docker://paketobuildpacks/java-native-image \
+            --builder paketobuildpacks/${{ inputs.image-pack }} \
+            --volume "${HOME}/.m2:/home/cnb/.m2:rw" \
+            --env BP_JVM_VERSION="${{ inputs.java-version }}" \
+            --env BP_MAVEN_POM_FILE="./pom.xml" \
+            --env BP_NATIVE_IMAGE="true" \
+            --creation-time now
+
       - name: Build image with Maven/Quarkus
+        if: inputs.native == false
         run: |
           pack build ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} \
             --path . \
@@ -133,7 +159,7 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: "Push image"
+      - name: Push image
         run: docker push ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
 
       - run: echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"

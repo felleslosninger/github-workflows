@@ -7,25 +7,35 @@ on:
         description: Name of Docker image
         required: false
         type: string
+
       image-pack:
         description: Docker image pack of builder-jammy-tiny, builder-jammy-base or builder-jammy-full
         default: builder-jammy-tiny
         required: false
         type: string
+
       registry-url:
         description: Image/Container Registery URL
         default: "my-local-registery"
         required: false
         type: string
+
       java-version:
         description: Main version of java
         default: "11"
         required: false
         type: string
+
       container-scan-offline-mode:
         description: Container-scan is default download updated CVE definitions via Trivy, enable offline on download problems
         default: false
         type: boolean
+
+      native:
+        description: Build native image
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build-and-scan-image:
@@ -75,7 +85,22 @@ jobs:
         env:
           PACK_VERSION: 0.32.1
 
+      - name: Build native image with Maven/Quarkus
+        if: inputs.native == true
+        run: |
+          pack build ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} \
+            --path . \
+            --buildpack docker://paketobuildpacks/quarkus \
+            --buildpack docker://paketobuildpacks/java-native-image \
+            --builder paketobuildpacks/${{ inputs.image-pack }} \
+            --volume "${HOME}/.m2:/home/cnb/.m2:rw" \
+            --env BP_JVM_VERSION="${{ inputs.java-version }}" \
+            --env BP_MAVEN_POM_FILE="./pom.xml" \
+            --env BP_NATIVE_IMAGE="true" \
+            --creation-time now
+
       - name: Build image with Maven/Quarkus
+        if: inputs.native == false
         run: |
           pack build ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} \
             --path . \
