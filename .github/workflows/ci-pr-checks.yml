@@ -59,6 +59,10 @@ on:
       artifact-path:
         type: string
         required: false
+      native:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   verify-pull-request-title:
@@ -152,11 +156,12 @@ jobs:
     if: |
       inputs.enable-trivy-image-scan == true &&
       inputs.application-type == 'quarkus'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@pf-1255-improve-quarkus-workflows
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
       java-version: ${{ inputs.java-version }}
+      native: ${{ inputs.native }}
     secrets: inherit
 
   call-auto-merge:
