@@ -113,7 +113,7 @@ jobs:
   run-quarkus-build:
     needs: input-checks
     if: inputs.application-type == 'quarkus'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-build-publish-image.yml@pf-1255-improve-quarkus-workflows # TODO: Revert before merge
+    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-build-publish-image.yml@main
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
