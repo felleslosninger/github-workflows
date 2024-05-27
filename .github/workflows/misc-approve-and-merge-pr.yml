@@ -19,15 +19,11 @@ jobs:
 
     steps:
       # Displaying the input values for reference
-      - name: Log inputs
-        run: |
-          {
-            echo "# Inputs"
-            echo "| Key                 | Value                             |"
-            echo "| ------------------- | --------------------------------- |"
-            echo "| pull-request-number | ${{ inputs.pull-request-number }} |"
-            echo "| repository          | ${{ inputs.repository }}          |"
-          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Write inputs to summary
+        uses: felleslosninger/github-actions/json-to-summary@bb702913dc7fc7ba16f6a2ce32624ba9eaf54262 # pin@v0.7.4
+        with:
+          json: ${{ toJson(inputs) }}
+          title: "Inputs"
 
       # Checking out the specified repository
       - name: Checkout repository

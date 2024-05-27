@@ -166,7 +166,11 @@ jobs:
 
   call-auto-merge:
     name: Call auto-merge
-    if: inputs.enable-auto-merge-dependabot == true
+    if: |
+      inputs.enable-auto-merge-dependabot == true &&
+      (needs.build-and-test-spring-boot.result == 'success' || needs.build-and-test-spring-boot.result == 'skipped') &&
+      (needs.call-spring-boot-container-scan.result == 'success' || needs.call-spring-boot-container-scan.result == 'skipped') &&
+      (needs.call-quarkus-container-scan.result == 'success' || needs.call-quarkus-container-scan.result == 'skipped')
     needs:
       [
         build-and-test-spring-boot,
