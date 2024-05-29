@@ -79,6 +79,23 @@ jobs:
         run: mvn -DskipTests -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@d710430a6722f083d3b36b8339ff66b32f22ee55 # pin@v0.19.0
+        uses: aquasecurity/trivy-action@0.21.0
         with:
           image-ref: "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}"
+          exit-code: "1"
+          severity: "CRITICAL,HIGH"
+          output: trivy.txt
+
+      - name: Publish Trivy Output to Summary
+        run: |
+          if [[ -s trivy.txt ]]; then
+            {
+              echo "### Trivy Security Results"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```terraform'
+              cat trivy.txt
+              echo '```'
+              echo "</details>"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
