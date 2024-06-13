@@ -46,7 +46,7 @@ jobs:
         run: |
           echo "IMAGE_NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
 
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # pin@v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin@v4.1.7
 
       - name: Find and replace image version for ${{ env.IMAGETAG }} in version endpoint
         uses: jacobtomlinson/gha-find-replace@a51bbcd94d000df9ca0fcb54ec8be69aad8374b0 # pin@v3
