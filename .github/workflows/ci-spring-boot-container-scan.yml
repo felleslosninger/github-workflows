@@ -84,19 +84,3 @@ jobs:
           image-ref: "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}"
           exit-code: "1"
           severity: "CRITICAL,HIGH"
-          output: trivy.txt
-
-      - name: Publish Trivy Output to Summary
-        if: ${{ always() }}
-        run: |
-          if [[ -s trivy.txt ]]; then
-            {
-              echo "### Trivy Security Results"
-              echo "<details><summary>Click to expand</summary>"
-              echo ""
-              echo '```terraform'
-              cat trivy.txt
-              echo '```'
-              echo "</details>"
-            } >> "$GITHUB_STEP_SUMMARY"
-          fi
