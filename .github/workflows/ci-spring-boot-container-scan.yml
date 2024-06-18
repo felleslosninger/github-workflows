@@ -87,6 +87,7 @@ jobs:
           output: trivy.txt
 
       - name: Publish Trivy Output to Summary
+        if: ${{ always() }}
         run: |
           if [[ -s trivy.txt ]]; then
             {
