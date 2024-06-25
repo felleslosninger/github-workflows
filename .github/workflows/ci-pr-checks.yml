@@ -185,7 +185,7 @@ jobs:
 
   call-build-image:
     name: Call build image
-    if: needs.call-auto-merge.outputs.merged == 'true'
+    if: needs.call-auto-merge.outputs.merged == true
     runs-on: ubuntu-latest
     needs: call-auto-merge
     steps:
