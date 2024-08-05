@@ -185,8 +185,11 @@ jobs:
 
   call-build-image:
     name: Call build image
-    if: needs.call-auto-merge.outputs.merged == true
+    if: ${{ needs.call-auto-merge.outputs.merged == 'true' }}
+    runs-on: ubuntu-latest
     needs: call-auto-merge
-    uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # pin@v3.0.0
-    with:
-      event-type: build-publish-image
+    steps:
+      - name: call-build-publish-image
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # pin@v3.0.0
+        with:
+          event-type: build-publish-image
