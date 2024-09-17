@@ -45,6 +45,12 @@ jobs:
             mvn -B clean install --update-snapshots
           fi
 
+      - name: Decrypt GPG Key
+        run: |
+          echo "${{ secrets.EFM_GPG_PRIVATE_KEY }}" | gpg --batch --import
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.EFM_GPG_PRIVATE_KEY }}
+
       - name: Overwrite m2 settings to publish libs
         run: |
           echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
@@ -52,9 +58,9 @@ jobs:
       - name: Deploy package
         run: |
           if [ -n "${{ inputs.profile }}" ]; then
-            mvn -B deploy -P"${{ inputs.profile }}"
+            mvn -B deploy -P"${{ inputs.profile }}" -Dgpg.passphrase=${{ secrets.EFM_GPG_PASSPHRASE }} -Dossrh.username=${{ secrets.EFM_OSSRH_USERNAME }} -Dossrh.password=${{ secrets.EFM_OSSRH_PASSWORD }}
           else
-            mvn -B deploy
+            mvn -B deploy -Dgpg.passphrase=${{ secrets.EFM_GPG_PASSPHRASE }} -Dossrh.username=${{ secrets.EFM_OSSRH_USERNAME }} -Dossrh.password=${{ secrets.EFM_OSSRH_PASSWORD }}
           fi
 
       - name: Set artifact id
