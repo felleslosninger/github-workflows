@@ -238,7 +238,7 @@ jobs:
           for tag in ${TAGS}; do
             images+="${tag}@${DIGEST} "
           done
-          cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images}
+          cosign sign --yes --key env://COSIGN_PRIVATE_KEY "${images}"
         env:
           TAGS: ${{ steps.docker_meta.outputs.tags }}
           DIGEST: ${{ steps.set-image-digest.outputs.image-digest }}
