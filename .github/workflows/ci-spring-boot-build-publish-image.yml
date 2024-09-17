@@ -232,7 +232,7 @@ jobs:
         uses: sigstore/cosign-installer@4959ce089c160fddf62f7b42464195ba1a56d382 # pin@v3.6.0
 
       - name: Sign image with cosign
-        script: bash
+        shell: bash
         run: |
           images=""
           for tag in ${TAGS}; do
