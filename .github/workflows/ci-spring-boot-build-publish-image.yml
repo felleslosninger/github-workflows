@@ -236,8 +236,10 @@ jobs:
         run: |
           images=""
           for tag in ${TAGS}; do
+            echo "TAG: $tag"
             images+="${tag}@${DIGEST} "
           done
+          echo "Digest: $DIGEST"
           cosign sign --yes --key env://COSIGN_PRIVATE_KEY "${images}"
         env:
           TAGS: ${{ steps.docker_meta.outputs.tags }}
