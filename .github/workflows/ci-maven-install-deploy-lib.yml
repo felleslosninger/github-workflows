@@ -58,9 +58,9 @@ jobs:
       - name: Deploy package
         run: |
           if [ -n "${{ inputs.profile }}" ]; then
-            mvn -B deploy -P"${{ inputs.profile }}" -Dgpg.passphrase=${{ secrets.EFM_GPG_PASSPHRASE }} -Dossrh.username=${{ secrets.EFM_OSSRH_USERNAME }} -Dossrh.password=${{ secrets.EFM_OSSRH_PASSWORD }}
+            mvn -B deploy -P"${{ inputs.profile }}" "-Dgpg.passphrase=${{ secrets.EFM_GPG_PASSPHRASE }}" -Dossrh.username=${{ secrets.EFM_OSSRH_USERNAME }} -Dossrh.password=${{ secrets.EFM_OSSRH_PASSWORD }}
           else
-            mvn -B deploy -Dgpg.passphrase=${{ secrets.EFM_GPG_PASSPHRASE }} -Dossrh.username=${{ secrets.EFM_OSSRH_USERNAME }} -Dossrh.password=${{ secrets.EFM_OSSRH_PASSWORD }}
+            mvn -B deploy "-Dgpg.passphrase=${{ secrets.EFM_GPG_PASSPHRASE }}" -Dossrh.username=${{ secrets.EFM_OSSRH_USERNAME }} -Dossrh.password=${{ secrets.EFM_OSSRH_PASSWORD }}
           fi
 
       - name: Set artifact id
