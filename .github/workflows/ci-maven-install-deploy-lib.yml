@@ -53,7 +53,7 @@ jobs:
 
       - name: Overwrite m2 settings to publish libs
         run: |
-          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server><server><id>ossrh</id><username>${{ secrets.EFM_OSSRH_USERNAME }}</username><password>${{ secrets.EFM_OSSRH_PASSWORD }}</password></server></servers></settings>" > ~/.m2/settings.xml
+          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server><server><id>ossrh</id><username>${{ secrets.EFM_OSSRH_TOKEN_USERNAME }}</username><password>${{ secrets.EFM_OSSRH_TOKEN }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
       - name: Deploy package
         run: |
@@ -72,4 +72,3 @@ jobs:
         with:
           path: ${{ inputs.sbom-path }}
           artifact-name: ${{ steps.set-artifact-id.outputs.artifact-id }}
-          
