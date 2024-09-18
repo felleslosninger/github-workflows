@@ -53,14 +53,14 @@ jobs:
 
       - name: Overwrite m2 settings to publish libs
         run: |
-          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
+          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server><server><id>ossrh</id><username>${{ secrets.EFM_OSSRH_USERNAME }}</username><password>${{ secrets.EFM_OSSRH_PASSWORD }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
       - name: Deploy package
         run: |
           if [ -n "${{ inputs.profile }}" ]; then
-            mvn -B deploy -P"${{ inputs.profile }}" "-Dgpg.passphrase=${{ secrets.EFM_GPG_PASSPHRASE }}" -Dossrh.username=${{ secrets.EFM_OSSRH_USERNAME }} -Dossrh.password=${{ secrets.EFM_OSSRH_PASSWORD }}
+            mvn -B deploy -P"${{ inputs.profile }}" "-Dgpg.passphrase=${{ secrets.EFM_GPG_PASSPHRASE }}"
           else
-            mvn -B deploy "-Dgpg.passphrase=${{ secrets.EFM_GPG_PASSPHRASE }}" -Dossrh.username=${{ secrets.EFM_OSSRH_USERNAME }} -Dossrh.password=${{ secrets.EFM_OSSRH_PASSWORD }}
+            mvn -B deploy "-Dgpg.passphrase=${{ secrets.EFM_GPG_PASSPHRASE }}"
           fi
 
       - name: Set artifact id
@@ -72,3 +72,4 @@ jobs:
         with:
           path: ${{ inputs.sbom-path }}
           artifact-name: ${{ steps.set-artifact-id.outputs.artifact-id }}
+          
