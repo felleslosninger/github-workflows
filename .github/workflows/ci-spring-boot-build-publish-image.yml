@@ -234,16 +234,21 @@ jobs:
       - name: Sign image with cosign
         shell: bash
         run: |
-          images=""
-          for tag in ${TAGS}; do
-            echo "TAG: $tag"
-            images+="${tag}@${DIGEST} "
-          done
+          #images=""
+          #for tag in ${TAGS}; do
+          #  echo "TAG: $tag"
+          #  images+="${tag}@${DIGEST} "
+          #done
           echo "Digest: $DIGEST"
           echo "Images: $images"
-          cosign sign --yes --key env://COSIGN_PRIVATE_KEY "${images}"
+          #cosign sign --yes --key env://COSIGN_PRIVATE_KEY "${images}"
+          cosign sign --yes --key env://COSIGN_PRIVATE_KEY "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
+          #cosign sign --yes --key env://COSIGN_PRIVATE_KEY "***/plattform-test-app@sha256:6dc57cc1e1fc58f15808d87256d1c4259ba697e2813b0bbcc716062f85f26cf3"
+          #cosign sign --yes --key env://COSIGN_PRIVATE_KEY "***/plattform-test-app:2024-09-19-1002-cbe7cc10"
+
+
         env:
-          TAGS: ${{ steps.docker_meta.outputs.tags }}
+          #TAGS: ${{ steps.docker_meta.outputs.tags }}
           DIGEST: ${{ steps.set-image-digest.outputs.image-digest }}
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
