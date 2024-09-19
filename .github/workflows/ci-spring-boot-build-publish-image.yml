@@ -250,7 +250,7 @@ jobs:
         env:
           #TAGS: ${{ steps.docker_meta.outputs.tags }}
           DIGEST: ${{ steps.set-image-digest.outputs.image-digest }}
-          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY_EMIL }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
 
   check-for-cve-suppression-changes:
