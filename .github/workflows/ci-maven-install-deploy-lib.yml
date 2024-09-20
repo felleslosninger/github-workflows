@@ -20,12 +20,19 @@ on:
       artifact-name:
         required: false
         type: string
+      checkout-tags:
+        description: Fetch tags
+        default: false
+        required: false
+        type: boolean
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-tags: ${{ inputs.fetch-tags }}
 
       - uses: actions/setup-java@v3
         with:
