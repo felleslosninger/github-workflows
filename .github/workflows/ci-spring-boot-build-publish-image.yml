@@ -234,7 +234,7 @@ jobs:
       - name: Sign image with cosign - keyless
         shell: bash
         run: |
-          cosign sign --yes --keyless "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
+          cosign sign "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
         env:
           DIGEST: ${{ steps.set-image-digest.outputs.image-digest }}
 
