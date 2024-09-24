@@ -88,12 +88,12 @@ jobs:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: echo "$GITHUB_CONTEXT"
 
-      - name: Dump GitHub context - summary
-        env:
-          GITHUB_CONTEXT_SUMMARY: ${{ toJson(github) }}
-        run: |
-          echo "GITHUB STEP CONTEXT"
-          echo "$GITHUB_CONTEXT_SUMMARY" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: "Write inputs to summary"
+        uses: felleslosninger/github-actions/json-to-summary@bb702913dc7fc7ba16f6a2ce32624ba9eaf54262 # pin@v0.7.4
+        with:
+          json: ${{ toJson(github) }}
+          title: "GitHub Context"
 
       - name: Set image tag
         id: set-image-tag
