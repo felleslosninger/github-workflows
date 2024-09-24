@@ -14,6 +14,12 @@ on:
         required: false
         type: string
 
+      image-signing:
+        description: Flag to toggle image signing/non-signing
+        default: false
+        required: false
+        type: boolean
+
       container-scan-offline-mode:
         description: Container-scan is default download updated CVE definitions via Trivy, enable offline on download problems
         default: false

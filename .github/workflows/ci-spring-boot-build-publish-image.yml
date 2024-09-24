@@ -14,6 +14,12 @@ on:
         required: false
         type: string
 
+      image-signing:
+        description: Flag to toggle image signing/non-signing
+        default: false
+        required: false
+        type: boolean
+
       java-version:
         description: Main version of java
         default: "11"
@@ -232,6 +238,7 @@ jobs:
         uses: sigstore/cosign-installer@4959ce089c160fddf62f7b42464195ba1a56d382 # pin@v3.6.0
 
       - name: Sign image with cosign - keyless
+        if: ${{ inputs.image-signing }} == 'true'
         shell: bash
         run: |
           TOKEN=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://token.actions.githubusercontent.com/token)
