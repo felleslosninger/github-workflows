@@ -234,7 +234,8 @@ jobs:
       - name: Sign image with cosign - keyless
         shell: bash
         run: |
-          cosign sign "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
+          TOKEN=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://token.actions.githubusercontent.com/token)
+          cosign sign --identity-token $TOKEN "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
         env:
           DIGEST: ${{ steps.set-image-digest.outputs.image-digest }}
 
