@@ -83,6 +83,18 @@ jobs:
       image-digest: ${{ steps.set-image-digest.outputs.image-digest }}
 
     steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+
+      - name: Dump GitHub context - summary
+        env:
+          GITHUB_CONTEXT_SUMMARY: ${{ toJson(github) }}
+        run: |
+          echo "GITHUB STEP CONTEXT"
+          echo "$GITHUB_CONTEXT_SUMMARY" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Set image tag
         id: set-image-tag
         run: |
