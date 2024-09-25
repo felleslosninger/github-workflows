@@ -277,6 +277,10 @@ jobs:
         run: |
           echo "OIDC Token: ${OIDC_TOKEN:0:10}..."  # Prints the first 10 characters of the OIDC token
 
+      - name: Check fulcio connectivity
+        run: |
+          curl https://fulcio.sigstore.dev
+
       - name: Sign image with cosign - keyless
         if: ${{ inputs.image-signing }} == 'true'
         shell: bash
