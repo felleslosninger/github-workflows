@@ -257,7 +257,7 @@ jobs:
 
       - name: Debug OIDC Token
         run: |
-          echo "OIDC Token: ${{ env.OIDC_TOKEN:0:10 }}..."
+          echo "OIDC Token: ${OIDC_TOKEN:0:10}..."  # Prints the first 10 characters of the OIDC token
 
       - name: Sign image with cosign - keyless
         if: ${{ inputs.image-signing }} == 'true'
