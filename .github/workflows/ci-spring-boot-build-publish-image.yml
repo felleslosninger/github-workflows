@@ -82,6 +82,10 @@ jobs:
       image-tag: ${{ steps.set-image-tag.outputs.image-tag }}
       image-digest: ${{ steps.set-image-digest.outputs.image-digest }}
 
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
       - name: Dump GitHub context
         env:
