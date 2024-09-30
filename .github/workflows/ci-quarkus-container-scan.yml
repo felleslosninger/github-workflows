@@ -52,7 +52,7 @@ jobs:
         run: |
           echo "IMAGE-NAME=${{ inputs.registry-url }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
 
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 #ping@v4.1.7
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 #ping@v4.2.0
 
       - name: Cache Maven packages
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # pin@v4.0.2
