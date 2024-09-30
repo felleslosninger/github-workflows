@@ -59,7 +59,7 @@ jobs:
           echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
 
       - name: Checkout
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 #ping@v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 #ping@v4.1.7
 
       - name: yaml-lint
         uses: ibiqlik/action-yamllint@2576378a8e339169678f9939646ee3ee325e845c # pin@v3.1.1
@@ -159,13 +159,13 @@ jobs:
           SBOM_NAME=$(echo ${{env.IMAGE-NAME}} | tr '/' '-')
           echo "SBOM_ARTIFACT_ID=$SBOM_NAME" >> "$GITHUB_OUTPUT"
 
-      - uses: anchore/sbom-action@e8d2a6937ecead383dfe75190d104edd1f9c5751 #pin@v0.16.0
+      - uses: anchore/sbom-action@ab9d16d4b419c9d1a02df5213fa0ebe965ca5a57 #pin@v0.17.1
         with:
           image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
           artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
 
       - name: Login to ACR
-        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # pin@v3.1.0
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # pin@v3.3.0
         with:
           registry: ${{ secrets.REGISTRY_URL }}
           username: ${{ secrets.REGISTRY_USERNAME }}
