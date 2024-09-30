@@ -257,9 +257,11 @@ jobs:
           echo "- Image digest: $image_digest" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Install Cosign
+        if: ${{ inputs.image-signing == true }}
         uses: sigstore/cosign-installer@4959ce089c160fddf62f7b42464195ba1a56d382 # pin@v3.6.0
 
       - name: Generate Provenance Metadata
+        if: ${{ inputs.image-signing == true }}
         run: |
           # Generate provenance metadata (adjust the command based on your requirements)
           cat <<EOF > provenance.json

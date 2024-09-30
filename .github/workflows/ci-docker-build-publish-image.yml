@@ -15,7 +15,7 @@ on:
         type: string
 
       image-signing:
-        description: Flag to toggle image signing/non-signing
+        description: Flag to toggle image signing on/off - default off
         default: false
         required: false
         type: boolean
@@ -53,6 +53,7 @@ on:
 jobs:
   build-publish-image:
     runs-on: ubuntu-latest
+
     env:
       REPOSITORY-NAME: ${{ github.event.repository.name }}
       DOCKLE_HOST: "unix:///var/run/docker.sock"
@@ -61,6 +62,10 @@ jobs:
     outputs:
       image-tag: ${{ steps.set-image-tag.outputs.image-tag }}
       image-digest: ${{ steps.set-image-digest.outputs.image-digest }}
+
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - name: Set image tag
@@ -136,6 +141,37 @@ jobs:
             | cut -d ']' -f 1)
           echo "image-digest=$image_digest" >> "$GITHUB_OUTPUT"
           echo "- Image digest: $image_digest" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Install Cosign
+        if: ${{ inputs.image-signing == true }}
+        uses: sigstore/cosign-installer@4959ce089c160fddf62f7b42464195ba1a56d382 # pin@v3.6.0
+
+      - name: Generate Provenance Metadata
+        if: ${{ inputs.image-signing == true }}
+        run: |
+          # Generate provenance metadata (adjust the command based on your requirements)
+          cat <<EOF > provenance.json
+          {
+            "build": {
+              "image": "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}",
+              "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+              "commit": "${{ github.sha }}",
+              "author": "${{ github.actor }}",
+              "job": ${{ github.job }},
+              "repository_owner_id": ${{ github.repository_owner_id }}
+            }
+          }
+          EOF
+          echo "Generated provenance metadata: $(cat provenance.json)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Sign Docker image with cosign - keyless
+        if: ${{ inputs.image-signing == true }}
+        run: |
+          cosign sign --yes "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
+          cosign attest --yes --predicate ./provenance.json "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
+        env:
+          DIGEST: ${{ steps.set-image-digest.outputs.image-digest }}
+
 
   check-for-cve-suppression-changes:
     needs: [build-publish-image]

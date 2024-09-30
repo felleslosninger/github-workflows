@@ -104,7 +104,7 @@ jobs:
   run-spring-boot-build:
     needs: input-checks
     if: inputs.application-type == 'spring-boot'
-    uses: ./.github/workflows/ci-spring-boot-build-publish-image.yml
+    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-build-publish-image.yml@main
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
@@ -124,6 +124,7 @@ jobs:
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
+      image-signing: ${{ inputs.image-signing }}
       java-version: ${{ inputs.java-version }}
       slack-channel-id: ${{ inputs.slack-channel-id }}
       native: ${{ inputs.native }}
@@ -136,6 +137,7 @@ jobs:
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
+      image-signing: ${{ inputs.image-signing }}
       container-scan-offline-mode: ${{ inputs.container-scan-offline-mode }}
       slack-channel-id: ${{ inputs.slack-channel-id }}
       application-path: ${{ inputs.application-path }}
