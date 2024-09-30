@@ -277,7 +277,7 @@ jobs:
           echo "Generated provenance metadata: $(cat provenance.json)" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Sign Docker image with cosign - keyless
-        if: ${{ inputs.image-signing == 'true' }}
+        if: ${{ inputs.image-signing == true }}
         run: |
           cosign sign --yes "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
           cosign attest --yes --predicate ./provenance.json "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
