@@ -222,9 +222,8 @@ jobs:
             }
           }
           EOF
-          echo "Generated provenance metadata: $(cat provenance.json)" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Sign Docker image with cosign - keyless
+      - name: Sign the image
         if: ${{ inputs.image-signing == true }}
         run: |
           cosign sign --yes "${{ env.IMAGE-NAME }}@${DIGEST}"
