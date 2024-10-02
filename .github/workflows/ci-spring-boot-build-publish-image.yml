@@ -259,11 +259,30 @@ jobs:
       - name: Generate Provenance Metadata
         if: ${{ inputs.image-signing == true }}
         run: |
-          # Generate provenance metadata (adjust the command based on your requirements)
+          # Generate provenance data according to spec https://slsa.dev/spec/v1.0/provenance
           cat <<EOF > provenance.json
           {
+            "_type": "https://slsa.dev/provenance/v1",
+            "subject": [
+              {
+                "name": "${{ steps.set-image-name.outputs.image-name }}",
+                "digest": {
+                  "sha256": "${DIGEST}"
+                }
+              }
+            ],
             "builder": {
               "id": "${{ github.workflow_ref }}"
+            },
+            "buildType": "https://github.com/github-actions/build",
+            "invocation": {
+              "configSource": {
+                "uri": "git+https://github.com/${{ github.repository }}.git",
+                "digest": {
+                  "sha1": "${{ github.sha }}"
+                },
+                "entryPoint": "${{ github.workflow }}"
+              }
             },
             "build": {
               "image": "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}",
@@ -272,7 +291,20 @@ jobs:
               "author": "${{ github.actor }}",
               "job": "${{ github.job }}",
               "repository_owner_id": ${{ github.repository_owner_id }}
-            }
+            },
+            "metadata": {
+              "invocationId": "${{ github.run_id }}",
+              "startedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+              "finishedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+            },
+            "materials": [
+              {
+                "uri": "git+https://github.com/${{ github.repository }}.git",
+                "digest": {
+                  "sha1": "${{ github.sha }}"
+                }
+              }
+            ]
           }
           EOF
 
