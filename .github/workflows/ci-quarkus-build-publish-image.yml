@@ -268,7 +268,7 @@ jobs:
         if: ${{ inputs.image-signing == true }}
         run: |
           cosign sign --yes "${{ env.IMAGE-NAME }}@${DIGEST}"
-          cosign attest --yes --predicate ./provenance.json --type slsaprovenance "${{ env.IMAGE-NAME }}@${DIGEST}"
+          cosign attest --yes --predicate ./provenance.json --type slsaprovenance1 "${{ env.IMAGE-NAME }}@${DIGEST}"
         env:
           DIGEST: ${{ env.IMAGE_DIGEST }}
 
