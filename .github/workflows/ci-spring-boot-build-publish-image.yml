@@ -267,18 +267,17 @@ jobs:
               "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
               "commit": "${{ github.sha }}",
               "author": "${{ github.actor }}",
-              "job": ${{ github.job }},
+              "job": "${{ github.job }}",
               "repository_owner_id": ${{ github.repository_owner_id }}
             }
           }
           EOF
-          echo "Generated provenance metadata: $(cat provenance.json)" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Sign Docker image with cosign - keyless
+      - name: Sign the image
         if: ${{ inputs.image-signing == true }}
         run: |
           cosign sign --yes "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
-          cosign attest --yes --predicate ./provenance.json "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
+          cosign attest --yes --predicate ./provenance.json --type slsaprovenance "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
         env:
           DIGEST: ${{ steps.set-image-digest.outputs.image-digest }}
 
