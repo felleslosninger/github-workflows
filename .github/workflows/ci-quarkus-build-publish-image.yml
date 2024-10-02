@@ -78,7 +78,7 @@ jobs:
           echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
 
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 #ping@v4.1.7
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 #ping@v4.2.0
 
       - name: yaml-lint
         uses: ibiqlik/action-yamllint@2576378a8e339169678f9939646ee3ee325e845c # pin@v3.1.1
@@ -179,7 +179,7 @@ jobs:
           SBOM_NAME=$(echo ${{env.IMAGE-NAME}} | tr '/' '-')
           echo "SBOM_ARTIFACT_ID=$SBOM_NAME" >> "$GITHUB_OUTPUT"
 
-      - uses: anchore/sbom-action@ab9d16d4b419c9d1a02df5213fa0ebe965ca5a57 #pin@v0.17.1
+      - uses: anchore/sbom-action@61119d458adab75f756bc0b9e4bde25725f86a7a #pin@v0.17.2
         with:
           image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
           artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
