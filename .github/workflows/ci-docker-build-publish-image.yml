@@ -172,6 +172,9 @@ jobs:
           # Generate provenance metadata (adjust the command based on your requirements)
           cat <<EOF > provenance.json
           {
+            "builder": {
+              "id": "${{ github.workflow_ref }}"
+            },
             "build": {
               "image": "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}",
               "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
