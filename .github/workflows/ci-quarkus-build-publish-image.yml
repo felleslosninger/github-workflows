@@ -210,7 +210,7 @@ jobs:
         if: ${{ inputs.image-signing == true }}
         run: |
           # Generate provenance data according to spec https://slsa.dev/spec/v1.0/provenance
-          cat <<EOF > provenance.json
+          cat <<EOF > ./provenance.json
           {
             "_type": "https://slsa.dev/provenance/v1",
             "subject": [
@@ -257,7 +257,12 @@ jobs:
             ]
           }
           EOF
-
+          
+          if [ -f ./provenance.json ]; then
+            echo "Provenance file exists"
+          else
+            echo "Provenance file does not exist!"
+          fi
 
       - name: Sign the image
         if: ${{ inputs.image-signing == true }}
