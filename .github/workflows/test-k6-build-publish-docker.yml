@@ -49,7 +49,7 @@ jobs:
       - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 #ping@v4.2.0
 
       - name: Find and replace image version for ${{ env.IMAGETAG }} in version endpoint
-        uses: jacobtomlinson/gha-find-replace@099c88fbf2a7da26b083521a8bfa13e4f0886b97 # pin@v3.0.3
+        uses: jacobtomlinson/gha-find-replace@863001a682308a0a2405e69e645cb0899b5ee64b # pin@v3.0.4
         id: update-version
         with:
           find: "DEV-SNAPSHOT"

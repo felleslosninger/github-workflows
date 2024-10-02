@@ -14,6 +14,12 @@ on:
         required: false
         type: string
 
+      image-signing:
+        description: Flag to toggle image signing on/off - default off
+        default: false
+        required: false
+        type: boolean
+
       java-version:
         description: Main version of java
         default: "11"
@@ -76,7 +82,17 @@ jobs:
       image-tag: ${{ steps.set-image-tag.outputs.image-tag }}
       image-digest: ${{ steps.set-image-digest.outputs.image-digest }}
 
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
+      - name: "Write inputs to summary"
+        uses: felleslosninger/github-actions/json-to-summary@bb702913dc7fc7ba16f6a2ce32624ba9eaf54262 # pin@v0.7.4
+        with:
+          json: ${{ toJson(github) }}
+          title: "GitHub Context"
+
       - name: Set image tag
         id: set-image-tag
         run: |
@@ -122,7 +138,7 @@ jobs:
                 level: warning
 
       - name: Set up JDK ${{ inputs.java-version }}
-        uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # pin@v4.2.2
+        uses: actions/setup-java@b36c23c0d998641eff861008f374ee103c25ac73 # pin@v4.4.0
         with:
           distribution: "liberica"
           java-version: ${{ inputs.java-version }}
@@ -179,6 +195,7 @@ jobs:
           exit-code: "1"
           severity: "CRITICAL,HIGH"
           trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
+         
       - name: Run Trivy vulnerability scanner (fallback)
         uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # pin@v0.24.0
         if: steps.trivy-primary.outcome == 'failure'
@@ -210,7 +227,7 @@ jobs:
           github-pat: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload trivy report as a Github artifact
-        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # pin@v4.3.6
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # pin@v4.4.0
         with:
           name: "sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}"
           path: "${{ github.workspace }}/sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}.json"
@@ -234,6 +251,35 @@ jobs:
             | cut -d ']' -f 1)
           echo "image-digest=$image_digest" >> "$GITHUB_OUTPUT"
           echo "- Image digest: $image_digest" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Install Cosign
+        if: ${{ inputs.image-signing == true }}
+        uses: sigstore/cosign-installer@4959ce089c160fddf62f7b42464195ba1a56d382 # pin@v3.6.0
+
+      - name: Generate Provenance Metadata
+        if: ${{ inputs.image-signing == true }}
+        run: |
+          # Generate provenance metadata (adjust the command based on your requirements)
+          cat <<EOF > provenance.json
+          {
+            "build": {
+              "image": "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}",
+              "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+              "commit": "${{ github.sha }}",
+              "author": "${{ github.actor }}",
+              "job": "${{ github.job }}",
+              "repository_owner_id": ${{ github.repository_owner_id }}
+            }
+          }
+          EOF
+
+      - name: Sign the image
+        if: ${{ inputs.image-signing == true }}
+        run: |
+          cosign sign --yes "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
+          cosign attest --yes --predicate ./provenance.json --type slsaprovenance "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
+        env:
+          DIGEST: ${{ steps.set-image-digest.outputs.image-digest }}
 
   check-for-cve-suppression-changes:
     needs: [build-publish-image]
