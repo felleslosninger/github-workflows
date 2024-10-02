@@ -177,7 +177,7 @@ jobs:
               "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
               "commit": "${{ github.sha }}",
               "author": "${{ github.actor }}",
-              "job": ${{ github.job }},
+              "job": "${{ github.job }}",
               "repository_owner_id": ${{ github.repository_owner_id }}
             }
           }
