@@ -27,7 +27,7 @@ on:
         type: boolean
       fetch-depth:
         description: Fetch depth
-        default: 0
+        default: 1
         required: false
         type: number
 
