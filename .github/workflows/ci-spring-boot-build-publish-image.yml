@@ -257,6 +257,7 @@ jobs:
         uses: sigstore/cosign-installer@4959ce089c160fddf62f7b42464195ba1a56d382 # pin@v3.6.0
 
       - name: Generate Provenance Metadata
+        if: ${{ inputs.image-signing == true }}
         run: |
           # Generate provenance data according to spec https://slsa.dev/spec/v1.0/provenance
           cat <<EOF > ./provenance.json
@@ -310,12 +311,6 @@ jobs:
             ]
           }
           EOF
-          
-          if [ -f ./provenance.json ]; then
-            echo "Provenance file exists"
-          else
-            echo "Provenance file does not exist!"
-          fi
 
       - name: Sign the image
         if: ${{ inputs.image-signing == true }}
