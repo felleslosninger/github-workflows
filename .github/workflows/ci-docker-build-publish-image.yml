@@ -194,18 +194,22 @@ jobs:
                 "entryPoint": "${{ github.workflow }}"
               }
             },
-            "build": {
-              "image": "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}",
-              "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-              "commit": "${{ github.sha }}",
-              "author": "${{ github.actor }}",
-              "job": "${{ github.job }}",
-              "repository_owner_id": ${{ github.repository_owner_id }}
+            "buildDefinition": {
+              "buildType": "https://github.com/github-actions/build",
+              "externalParameters": {
+                "image": "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}",
+                "commit": "${{ github.sha }}",
+                "author": "${{ github.actor }}",
+                "job": "${{ github.job }}",
+                "repository_owner_id": "${{ github.repository_owner_id }}"
+              }
             },
-            "metadata": {
-              "invocationId": "${{ github.run_id }}",
-              "startedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-              "finishedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+            "runDetails": {
+              "metadata": {
+                "invocationId": "${{ github.run_id }}",
+                "startedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+                "finishedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+              }
             },
             "materials": [
               {
@@ -217,12 +221,6 @@ jobs:
             ]
           }
           EOF
-          
-          if [ -f ./provenance.json ]; then
-            echo "Provenance file exists"
-          else
-            echo "Provenance file does not exist!"
-          fi
 
       - name: Sign the image
         if: ${{ inputs.image-signing == true }}
