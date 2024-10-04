@@ -45,6 +45,12 @@ on:
         default: "true"
         required: false
         type: string
+      
+      fetch-depth:
+        description: Fetch depth
+        default: 1
+        required: false
+        type: number
 
     outputs:
       image-version:
@@ -93,6 +99,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # pin@v4.1.6
+        with:
+          fetch-depth: ${{ inputs.fetch-depth }}
 
       - name: Check if YAML files exist
         id: yaml-files-exists
