@@ -45,7 +45,7 @@ jobs:
         run: docker build --tag ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} docker/
 
       - name: Run Trivy vulnerability scanner (primary)
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # pin@v0.24.0
+        uses: aquasecurity/trivy-action@f781cce5aab226378ee181d764ab90ea0be3cdd8 # pin@v0.25.0
         id: trivy-primary
         continue-on-error: true
         with:
@@ -53,7 +53,7 @@ jobs:
           exit-code: "1"
           severity: "CRITICAL,HIGH"
       - name: Run Trivy vulnerability scanner (fallback)
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # pin@v0.24.0
+        uses: aquasecurity/trivy-action@f781cce5aab226378ee181d764ab90ea0be3cdd8 # pin@v0.25.0
         if: steps.trivy-primary.outcome == 'failure'
         id: trivy-fallback
         env:
