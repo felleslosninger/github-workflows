@@ -137,7 +137,7 @@ jobs:
           github-pat: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload trivy report as a Github artifact
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # pin@v4.4.0
+        uses: actions/upload-artifact@604373da6381bf24206979c74d06a550515601b9 # pin@v4.4.1
         with:
           name: "sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}"
           path: "${{ github.workspace }}/sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}.json"
