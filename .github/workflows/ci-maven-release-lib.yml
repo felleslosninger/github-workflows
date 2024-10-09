@@ -30,18 +30,12 @@ jobs:
           distribution: 'liberica'
           java-version: ${{ inputs.java-version }}
 
-      - uses: s4u/maven-settings-action@v2.8.0
-        with:
-          servers: |
-            [{
-            "id": "github",
-            "username": "${{ secrets.GH_PACKAGES_READ_USER }}",
-            "password": "${{ secrets.GH_PACKAGES_READ_PAT }}"
-            }]
+      - name: Set m2 settings
+        run: |
+          mkdir -p ~/.m2
+          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
       - name: Deploy to Github Package Registry
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
         run: |
           mvn -B deploy -DaltDeploymentRepository="github::default::https://maven.pkg.github.com/${GITHUB_REPOSITORY}"
 
