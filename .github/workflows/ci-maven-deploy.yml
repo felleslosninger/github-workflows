@@ -1,0 +1,50 @@
+name: Release to github packages
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: Main version of java
+        default: '11'
+        required: false
+        type: string
+      sbom-path:
+        description: Target directory for SBOM generation
+        default: ./target/
+        required: false
+        type: string
+      package-version:
+        description: Version to use for maven package
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK ${{ inputs.java-version }}
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'liberica'
+          java-version: ${{ inputs.java-version }}
+
+      - name: Set m2 settings
+        run: |
+          mkdir -p ~/.m2
+          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
+
+      - name: Deploy to Github Package Registry
+        run: |
+          mvn versions:set -B -DnewVersion="v.1.0.0"
+          mvn -B deploy -DaltDeploymentRepository="github::default::https://maven.pkg.github.com/${GITHUB_REPOSITORY}"
+
+      - uses: anchore/sbom-action@v0
+        with:
+          path: ${{ inputs.sbom-path }}
+        
