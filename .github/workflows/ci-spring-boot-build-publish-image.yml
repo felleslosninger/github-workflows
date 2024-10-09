@@ -271,19 +271,6 @@ jobs:
                 }
               }
             ],
-            "builder": {
-              "id": "${{ github.workflow_ref }}"
-            },
-            "buildType": "https://github.com/github-actions/build",
-            "invocation": {
-              "configSource": {
-                "uri": "git+https://github.com/${{ github.repository }}.git",
-                "digest": {
-                  "sha1": "${{ github.sha }}"
-                },
-                "entryPoint": "${{ github.workflow }}"
-              }
-            },
             "buildDefinition": {
               "buildType": "https://github.com/github-actions/build",
               "externalParameters": {
@@ -291,14 +278,16 @@ jobs:
                 "commit": "${{ github.sha }}",
                 "author": "${{ github.actor }}",
                 "job": "${{ github.job }}",
-                "repository_owner_id": "${{ github.repository_owner_id }}"
+                "repositoryOwnerId": "${{ github.repository_owner_id }}"
               }
             },
             "runDetails": {
+              "builder": {
+                "id": "${{ github.workflow_ref }}"
+              },
               "metadata": {
                 "invocationId": "${{ github.run_id }}",
-                "startedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-                "finishedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+                "startedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
               }
             },
             "materials": [
