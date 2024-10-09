@@ -41,7 +41,7 @@ jobs:
 
       - name: Deploy to Github Package Registry
         run: |
-          mvn versions:set -B -DnewVersion="v.1.0.0"
+          mvn versions:set -B -DnewVersion="${{ inputs.package-version }}"
           mvn -B deploy -DaltDeploymentRepository="github::default::https://maven.pkg.github.com/${GITHUB_REPOSITORY}"
 
       - uses: anchore/sbom-action@v0
