@@ -181,16 +181,6 @@ jobs:
                 }
               }
             ],
-            "buildType": "https://github.com/github-actions/build",
-            "invocation": {
-              "configSource": {
-                "uri": "git+https://github.com/${{ github.repository }}.git",
-                "digest": {
-                  "sha1": "${{ github.sha }}"
-                },
-                "entryPoint": "${{ github.workflow }}"
-              }
-            },
             "buildDefinition": {
               "buildType": "https://github.com/github-actions/build",
               "externalParameters": {
