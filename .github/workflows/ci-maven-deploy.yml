@@ -13,9 +13,18 @@ on:
         default: ./target/
         required: false
         type: string
-      package-version:
+      maven-package-version:
         description: Version to use for maven package
         required: true
+        type: string
+      maven-deployment-repository: 
+        description: Set deployment repo
+        required: false
+        type: string
+      m2-settings:
+        description: Set m2 settings overrides
+        default: ""<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>"
+        required: false
         type: string
 
 jobs:
@@ -37,12 +46,29 @@ jobs:
       - name: Set m2 settings
         run: |
           mkdir -p ~/.m2
-          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
+          echo ${{ inputs.m2-settings }} > ~/.m2/settings.xml
 
-      - name: Deploy to Github Package Registry
+      - name: Set version
         run: |
-          mvn versions:set -B -DnewVersion="${{ inputs.package-version }}"
-          mvn -B deploy -DaltDeploymentRepository="github::default::https://maven.pkg.github.com/${GITHUB_REPOSITORY}"
+          if [ "${{ inputs.update-versions }}" == "true" ]; then
+            mvn versions:set -B -DnewVersion="${{ inputs.package-version }}"
+            echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Deploy to maven repository
+        run: |
+          if [ "${{ inputs.update-versions }}" == "true" ]; then
+            mvn -B deploy -DaltDeploymentRepository="github::default::https://maven.pkg.github.com/${{ inputs.maven-deployment-repository }}"}"
+            echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            mvn -B deploy
+          fi
+
+      - name: Deploy to supplied repository
+        run: |
+          mvn -B deploy -DaltDeploymentRepository="github::default::https://maven.pkg.github.com/${{ inputs.maven-deployment-repository }}"
 
       - uses: anchore/sbom-action@v0
         with:
