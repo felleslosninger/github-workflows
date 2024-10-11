@@ -187,7 +187,7 @@ jobs:
           fi
 
       - name: Run Trivy vulnerability scanner (primary)
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # pin@v0.24.0
+        uses: aquasecurity/trivy-action@5681af892cd0f4997658e2bacc62bd0a894cf564 # pin@v0.27.0
         id: trivy-primary
         continue-on-error: true
         with:
@@ -197,7 +197,7 @@ jobs:
           trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
          
       - name: Run Trivy vulnerability scanner (fallback)
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # pin@v0.24.0
+        uses: aquasecurity/trivy-action@5681af892cd0f4997658e2bacc62bd0a894cf564 # pin@v0.27.0
         if: steps.trivy-primary.outcome == 'failure'
         id: trivy-fallback
         env:
@@ -217,7 +217,7 @@ jobs:
           echo "- SBOM: $SBOM_NAME" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run Trivy SBOM generation
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # pin@v0.24.0
+        uses: aquasecurity/trivy-action@5681af892cd0f4997658e2bacc62bd0a894cf564 # pin@v0.27.0
         continue-on-error: true
         with:
           scan-type: image
