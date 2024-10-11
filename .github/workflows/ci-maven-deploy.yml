@@ -19,11 +19,12 @@ on:
         type: string
       maven-deployment-repository: 
         description: Set deployment repo
+        default: ""
         required: false
         type: string
       m2-settings:
         description: Set m2 settings overrides
-        default: ""<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>"
+        default: "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>"
         required: false
         type: string
 
@@ -50,8 +51,8 @@ jobs:
 
       - name: Set version
         run: |
-          if [ "${{ inputs.update-versions }}" == "true" ]; then
-            mvn versions:set -B -DnewVersion="${{ inputs.package-version }}"
+          if [ "${{ inputs.maven-package-version }}" == "true" ]; then
+            mvn versions:set -B -DnewVersion="${{ inputs.maven-package-version }}"
             echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
@@ -59,16 +60,12 @@ jobs:
 
       - name: Deploy to maven repository
         run: |
-          if [ "${{ inputs.update-versions }}" == "true" ]; then
+          if [ "${{ inputs.maven-deployment-repository: }}" != "" ]; then
             mvn -B deploy -DaltDeploymentRepository="github::default::https://maven.pkg.github.com/${{ inputs.maven-deployment-repository }}"}"
             echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
           else
             mvn -B deploy
           fi
-
-      - name: Deploy to supplied repository
-        run: |
-          mvn -B deploy -DaltDeploymentRepository="github::default::https://maven.pkg.github.com/${{ inputs.maven-deployment-repository }}"
 
       - uses: anchore/sbom-action@v0
         with:
