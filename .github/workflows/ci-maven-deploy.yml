@@ -16,7 +16,7 @@ on:
       package-version:
         description: Version to use for maven package
         default: ""
-        required: true
+        required: false
         type: string
       deployment-repository: 
         description: Set deployment repo
