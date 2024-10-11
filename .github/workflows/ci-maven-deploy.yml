@@ -13,11 +13,11 @@ on:
         default: ./target/
         required: false
         type: string
-      maven-package-version:
+      package-version:
         description: Version to use for maven package
         required: true
         type: string
-      maven-deployment-repository: 
+      deployment-repository: 
         description: Set deployment repo
         default: ""
         required: false
@@ -51,8 +51,8 @@ jobs:
 
       - name: Set version
         run: |
-          if [ "${{ inputs.maven-package-version }}" == "true" ]; then
-            mvn versions:set -B -DnewVersion="${{ inputs.maven-package-version }}"
+          if [ "${{ inputs.package-version }}" == "true" ]; then
+            mvn versions:set -B -DnewVersion="${{ inputs.package-version }}"
             echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
@@ -60,8 +60,8 @@ jobs:
 
       - name: Deploy to maven repository
         run: |
-          if [ "${{ inputs.maven-deployment-repository }}" != "" ]; then
-            mvn -B deploy -DaltDeploymentRepository="github::default::https://maven.pkg.github.com/${{ inputs.maven-deployment-repository }}"}"
+          if [ "${{ inputs.deployment-repository }}" != "" ]; then
+            mvn -B deploy -DaltDeploymentRepository="github::default::https://maven.pkg.github.com/${{ inputs.deployment-repository }}"}"
             echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
           else
             mvn -B deploy
