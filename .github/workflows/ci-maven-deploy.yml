@@ -60,7 +60,7 @@ jobs:
 
       - name: Deploy to maven repository
         run: |
-          if [ "${{ inputs.maven-deployment-repository: }}" != "" ]; then
+          if [ "${{ inputs.maven-deployment-repository }}" != "" ]; then
             mvn -B deploy -DaltDeploymentRepository="github::default::https://maven.pkg.github.com/${{ inputs.maven-deployment-repository }}"}"
             echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
           else
