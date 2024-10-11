@@ -24,7 +24,7 @@ on:
         type: string
       m2-settings:
         description: Set m2 settings overrides
-        default: \"<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>\"
+        default: '"<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>"'
         required: false
         type: string
 
