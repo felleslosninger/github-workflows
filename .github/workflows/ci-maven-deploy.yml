@@ -15,6 +15,7 @@ on:
         type: string
       package-version:
         description: Version to use for maven package
+        default: ""
         required: true
         type: string
       deployment-repository: 
@@ -51,7 +52,7 @@ jobs:
 
       - name: Set version
         run: |
-          if [ "${{ inputs.package-version }}" == "true" ]; then
+          if [ "${{ inputs.package-version }}" != "" ]; then
             mvn versions:set -B -DnewVersion="${{ inputs.package-version }}"
             echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
           else
