@@ -48,7 +48,7 @@ jobs:
       - name: Set m2 settings
         run: |
           mkdir -p ~/.m2
-          echo ${{ inputs.m2-settings }} > ~/.m2/settings.xml
+          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
       - name: Set version
         run: |
