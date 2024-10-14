@@ -72,11 +72,11 @@ jobs:
         run: |
           MAVEN_CMD="mvn -B deploy"
           
-          if [ -n "${{ inputs.profile }}" ]; then
+          if [ "${{ inputs.profile }}" != "" ]; then
             MAVEN_CMD="$MAVEN_CMD -P${{ inputs.profile }}"
           fi
 
-          if [ -n "${{ inputs.deployment-repository }}" ]; then
+          if [ "${{ inputs.deployment-repository }}" != "" ]; then
             MAVEN_CMD="$MAVEN_CMD -DaltDeploymentRepository="github::default::https://maven.pkg.github.com/${{ inputs.deployment-repository }}""
           fi
           
