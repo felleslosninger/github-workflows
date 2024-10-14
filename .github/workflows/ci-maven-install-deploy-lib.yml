@@ -17,6 +17,16 @@ on:
         description: Maven profile to use
         required: false
         type: string
+      package-version:
+        description: Version to use for maven package
+        default: ""
+        required: false
+        type: string
+      deployment-repository: 
+        description: Set deployment repo
+        default: ""
+        required: false
+        type: string
       artifact-name:
         required: false
         type: string
@@ -49,13 +59,28 @@ jobs:
         run: |
           echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
+      - name: Set version
+        run: |
+          if [ "${{ inputs.package-version }}" != "" ]; then
+            mvn versions:set -B -DnewVersion="${{ inputs.package-version }}"
+            echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Maven deploy
         run: |
+          MAVEN_CMD="mvn -B deploy"
+          
           if [ -n "${{ inputs.profile }}" ]; then
-            mvn -B deploy -P"${{ inputs.profile }}"
-          else
-            mvn -B deploy
+            MAVEN_CMD="$MAVEN_CMD -P${{ inputs.profile }}"
           fi
+
+          if [ -n "${{ inputs.deployment-repository }}" ]; then
+            MAVEN_CMD="$MAVEN_CMD -DaltDeploymentRepository="github::default::https://maven.pkg.github.com/${{ inputs.deployment-repository }}"
+          fi
+          
+          $MAVEN_CMD
 
       - name: Set artifact id
         id: set-artifact-id
