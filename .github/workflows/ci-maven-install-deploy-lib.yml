@@ -77,7 +77,7 @@ jobs:
           fi
 
           if [ -n "${{ inputs.deployment-repository }}" ]; then
-            MAVEN_CMD="$MAVEN_CMD -DaltDeploymentRepository="github::default::https://maven.pkg.github.com/${{ inputs.deployment-repository }}"
+            MAVEN_CMD="$MAVEN_CMD -DaltDeploymentRepository="github::default::https://maven.pkg.github.com/${{ inputs.deployment-repository }}""
           fi
           
           $MAVEN_CMD
