@@ -20,18 +20,6 @@ on:
       artifact-name:
         required: false
         type: string
-      m2-settings-install:
-        description: Set m2 settings overrides for installation
-        default: '"<settings><servers><server><id>github</id><username>${{ secrets.GH_PACKAGES_READ_USER }}</username><password>${{ secrets.GH_PACKAGES_READ_PAT }}</password></server></servers></settings>"'
-        required: false
-        type: string
-      m2-settings-deploy:
-        description: Set m2 settings overrides for deployment
-        default: '"<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>"'
-        required: false
-        type: string
-
-
 
 jobs:
   build:
@@ -47,7 +35,7 @@ jobs:
       - name: Set m2 settings to read organization packages
         run: |
           mkdir -p ~/.m2
-          echo ${{ inputs.m2-settings-install }} > ~/.m2/settings.xml
+          echo "<settings><servers><server><id>github</id><username>${{ secrets.GH_PACKAGES_READ_USER }}</username><password>${{ secrets.GH_PACKAGES_READ_PAT }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
       - name: Maven install
         run: |
@@ -59,7 +47,7 @@ jobs:
 
       - name: Overwrite m2 settings to publish libs
         run: |
-          echo ${{ inputs.m2-settings-deploy }} > ~/.m2/settings.xml
+          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
       - name: Maven deploy
         run: |
