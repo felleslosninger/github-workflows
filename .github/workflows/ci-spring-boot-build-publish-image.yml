@@ -108,7 +108,7 @@ jobs:
           echo "- Image name: $image_name" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Checkout repository
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 #ping@v4.2.0
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 #ping@v4.2.1
 
       - name: Check if YAML files exist
         id: yaml-files-exists
@@ -227,7 +227,7 @@ jobs:
           github-pat: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload trivy report as a Github artifact
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # pin@v4.4.0
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # pin@v4.4.3
         with:
           name: "sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}"
           path: "${{ github.workspace }}/sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}.json"
@@ -271,19 +271,6 @@ jobs:
                 }
               }
             ],
-            "builder": {
-              "id": "${{ github.workflow_ref }}"
-            },
-            "buildType": "https://github.com/github-actions/build",
-            "invocation": {
-              "configSource": {
-                "uri": "git+https://github.com/${{ github.repository }}.git",
-                "digest": {
-                  "sha1": "${{ github.sha }}"
-                },
-                "entryPoint": "${{ github.workflow }}"
-              }
-            },
             "buildDefinition": {
               "buildType": "https://github.com/github-actions/build",
               "externalParameters": {
@@ -291,14 +278,16 @@ jobs:
                 "commit": "${{ github.sha }}",
                 "author": "${{ github.actor }}",
                 "job": "${{ github.job }}",
-                "repository_owner_id": "${{ github.repository_owner_id }}"
+                "repositoryOwnerId": "${{ github.repository_owner_id }}"
               }
             },
             "runDetails": {
+              "builder": {
+                "id": "${{ github.workflow_ref }}"
+              },
               "metadata": {
                 "invocationId": "${{ github.run_id }}",
-                "startedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-                "finishedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+                "startedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
               }
             },
             "materials": [
