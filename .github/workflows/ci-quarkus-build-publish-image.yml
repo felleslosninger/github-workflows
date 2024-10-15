@@ -179,7 +179,7 @@ jobs:
           SBOM_NAME=$(echo ${{env.IMAGE-NAME}} | tr '/' '-')
           echo "SBOM_ARTIFACT_ID=$SBOM_NAME" >> "$GITHUB_OUTPUT"
 
-      - uses: anchore/sbom-action@61119d458adab75f756bc0b9e4bde25725f86a7a #pin@v0.17.2
+      - uses: anchore/sbom-action@f5e124a5e5e1d497a692818ae907d3c45829d033 #pin@v0.17.3
         with:
           image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
           artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
@@ -221,35 +221,23 @@ jobs:
                 }
               }
             ],
-            "builder": {
-              "id": "${{ github.workflow_ref }}"
-            },
-            "buildType": "https://github.com/github-actions/build",
-            "invocation": {
-              "configSource": {
-                "uri": "git+https://github.com/${{ github.repository }}.git",
-                "digest": {
-                  "sha1": "${{ github.sha }}"
-                },
-                "entryPoint": "${{ github.workflow }}"
-              }
-            },
             "buildDefinition": {
               "buildType": "https://github.com/github-actions/build",
               "externalParameters": {
                 "image": "${{ env.IMAGE-NAME }}:${{ env.IMAGETAG }}",
-                "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
                 "commit": "${{ github.sha }}",
                 "author": "${{ github.actor }}",
                 "job": "${{ github.job }}",
-                "repository_owner_id": ${{ github.repository_owner_id }}
+                "repositoryOwnerId": "${{ github.repository_owner_id }}"
               }
             },
             "runDetails": {
+              "builder": {
+                "id": "${{ github.workflow_ref }}"
+              },
               "metadata": {
                 "invocationId": "${{ github.run_id }}",
-                "startedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-                "finishedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+                "startedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
               }
             },
             "materials": [
@@ -262,7 +250,6 @@ jobs:
             ]
           }
           EOF
-          
 
       - name: Sign the image
         if: ${{ inputs.image-signing == true }}
