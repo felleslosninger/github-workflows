@@ -33,7 +33,7 @@ jobs:
         run: |
           echo "IMAGE-NAME=${{ env.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
 
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 #ping@v4.2.0
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 #ping@v4.2.1
 
       - name: Copy k6-tests to docker temp
         run: |
@@ -44,22 +44,14 @@ jobs:
       - name: Build the tagged Docker image
         run: docker build --tag ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} docker/
 
-      - name: Run Trivy vulnerability scanner (primary)
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # pin@v0.24.0
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@5681af892cd0f4997658e2bacc62bd0a894cf564 # pin@v0.27.0
         id: trivy-primary
-        continue-on-error: true
-        with:
-          image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
-      - name: Run Trivy vulnerability scanner (fallback)
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # pin@v0.24.0
-        if: steps.trivy-primary.outcome == 'failure'
-        id: trivy-fallback
         env:
-          TRIVY_DB_REPOSITORY: "public.ecr.aws/aquasecurity/trivy-db"
-          TRIVY_JAVA_DB_REPOSITORY: "public.ecr.aws/aquasecurity/trivy-java-db:1"
+          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
+          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
         with:
           image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
           exit-code: "1"
           severity: "CRITICAL,HIGH"
+

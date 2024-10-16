@@ -78,7 +78,7 @@ jobs:
           echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
 
       - name: Checkout
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 #ping@v4.2.0
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 #ping@v4.2.1
 
       - name: yaml-lint
         uses: ibiqlik/action-yamllint@2576378a8e339169678f9939646ee3ee325e845c # pin@v3.1.1
@@ -93,7 +93,7 @@ jobs:
                 level: warning
 
       - name: Cache Maven packages
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # pin@v4.0.2
+        uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # pin@v4.1.1
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -153,21 +153,12 @@ jobs:
             --env BP_MAVEN_POM_FILE="./pom.xml" \
             --creation-time now
 
-      - name: Run Trivy vulnerability scanner (primary)
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # pin@v0.24.0
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@5681af892cd0f4997658e2bacc62bd0a894cf564 # pin@v0.27.0
         id: trivy-primary
-        continue-on-error: true
-        with:
-          image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
-      - name: Run Trivy vulnerability scanner (fallback)
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # pin@v0.24.0
-        if: steps.trivy-primary.outcome == 'failure'
-        id: trivy-fallback
         env:
-          TRIVY_DB_REPOSITORY: "public.ecr.aws/aquasecurity/trivy-db"
-          TRIVY_JAVA_DB_REPOSITORY: "public.ecr.aws/aquasecurity/trivy-java-db:1"
+          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
+          TRIVY_JAVA_DB_REPOSITORY: "ghcr.io/aquasecurity/trivy-java-db:1, public.ecr.aws/aquasecurity/trivy-java-db:1"
         with:
           image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
           exit-code: "1"
@@ -179,7 +170,7 @@ jobs:
           SBOM_NAME=$(echo ${{env.IMAGE-NAME}} | tr '/' '-')
           echo "SBOM_ARTIFACT_ID=$SBOM_NAME" >> "$GITHUB_OUTPUT"
 
-      - uses: anchore/sbom-action@61119d458adab75f756bc0b9e4bde25725f86a7a #pin@v0.17.2
+      - uses: anchore/sbom-action@f5e124a5e5e1d497a692818ae907d3c45829d033 #pin@v0.17.3
         with:
           image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
           artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
@@ -204,7 +195,7 @@ jobs:
 
       - name: Install Cosign
         if: ${{ inputs.image-signing == true }}
-        uses: sigstore/cosign-installer@4959ce089c160fddf62f7b42464195ba1a56d382 # pin@v3.6.0
+        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # pin@v3.7.0
 
       - name: Generate Provenance Metadata
         if: ${{ inputs.image-signing == true }}
@@ -221,35 +212,23 @@ jobs:
                 }
               }
             ],
-            "builder": {
-              "id": "${{ github.workflow_ref }}"
-            },
-            "buildType": "https://github.com/github-actions/build",
-            "invocation": {
-              "configSource": {
-                "uri": "git+https://github.com/${{ github.repository }}.git",
-                "digest": {
-                  "sha1": "${{ github.sha }}"
-                },
-                "entryPoint": "${{ github.workflow }}"
-              }
-            },
             "buildDefinition": {
               "buildType": "https://github.com/github-actions/build",
               "externalParameters": {
                 "image": "${{ env.IMAGE-NAME }}:${{ env.IMAGETAG }}",
-                "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
                 "commit": "${{ github.sha }}",
                 "author": "${{ github.actor }}",
                 "job": "${{ github.job }}",
-                "repository_owner_id": ${{ github.repository_owner_id }}
+                "repositoryOwnerId": "${{ github.repository_owner_id }}"
               }
             },
             "runDetails": {
+              "builder": {
+                "id": "${{ github.workflow_ref }}"
+              },
               "metadata": {
                 "invocationId": "${{ github.run_id }}",
-                "startedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-                "finishedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+                "startedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
               }
             },
             "materials": [
@@ -262,7 +241,6 @@ jobs:
             ]
           }
           EOF
-          
 
       - name: Sign the image
         if: ${{ inputs.image-signing == true }}
