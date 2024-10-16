@@ -1,0 +1,69 @@
+name: Release to github packages
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: Main version of java
+        default: '11'
+        required: false
+        type: string
+      sbom-path:
+        description: Target directory for SBOM generation
+        default: ./target/
+        required: false
+        type: string
+      package-version:
+        description: Version to use for maven package
+        default: ""
+        required: false
+        type: string
+      deployment-repository: 
+        description: Set deployment repo
+        default: ""
+        required: false
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 #ping@v4.2.0
+      - name: Set up JDK ${{ inputs.java-version }}
+        uses: actions/setup-java@b36c23c0d998641eff861008f374ee103c25ac73 # pin@v4.4.0
+        with:
+          distribution: 'liberica'
+          java-version: ${{ inputs.java-version }}
+
+      - name: Set m2 settings
+        run: |
+          mkdir -p ~/.m2
+          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
+
+      - name: Set version
+        run: |
+          if [ "${{ inputs.package-version }}" != "" ]; then
+            mvn versions:set -B -DnewVersion="${{ inputs.package-version }}"
+            echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Deploy to maven repository
+        run: |
+          if [ "${{ inputs.deployment-repository }}" != "" ]; then
+            mvn -B deploy -DaltDeploymentRepository="github::default::https://maven.pkg.github.com/${{ inputs.deployment-repository }}"
+            echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            mvn -B deploy
+          fi
+
+      - uses: anchore/sbom-action@v0
+        with:
+          path: ${{ inputs.sbom-path }}
+        

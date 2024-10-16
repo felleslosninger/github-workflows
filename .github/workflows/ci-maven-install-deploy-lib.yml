@@ -1,0 +1,93 @@
+name: Release to github packages
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: Main version of java
+        default: "11"
+        required: false
+        type: string
+      sbom-path:
+        description: Target directory for SBOM generation
+        default: ./target/
+        required: false
+        type: string
+      profile:
+        description: Maven profile to use
+        required: false
+        type: string
+      package-version:
+        description: Version to use for maven package
+        default: ""
+        required: false
+        type: string
+      deployment-repository: 
+        description: Set deployment repo
+        default: ""
+        required: false
+        type: string
+      artifact-name:
+        required: false
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 #ping@v4.2.0
+
+      - uses: actions/setup-java@b36c23c0d998641eff861008f374ee103c25ac73 # pin@v4.4.0
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: "liberica"
+
+      - name: Set m2 settings to read organization packages
+        run: |
+          mkdir -p ~/.m2
+          echo "<settings><servers><server><id>github</id><username>${{ secrets.GH_PACKAGES_READ_USER }}</username><password>${{ secrets.GH_PACKAGES_READ_PAT }}</password></server></servers></settings>" > ~/.m2/settings.xml
+
+      - name: Maven install
+        run: |
+          if [ -n "${{ inputs.profile }}" ]; then
+            mvn -B clean install --update-snapshots -P"${{ inputs.profile }}"
+          else
+            mvn -B clean install --update-snapshots
+          fi
+
+      - name: Overwrite m2 settings to publish libs
+        run: |
+          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
+
+      - name: Set version
+        run: |
+          if [ "${{ inputs.package-version }}" != "" ]; then
+            mvn versions:set -B -DnewVersion="${{ inputs.package-version }}"
+            echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Maven deploy
+        run: |
+          MAVEN_CMD="mvn -B deploy"
+          
+          if [ "${{ inputs.profile }}" != "" ]; then
+            MAVEN_CMD="$MAVEN_CMD -P${{ inputs.profile }}"
+          fi
+
+          if [ "${{ inputs.deployment-repository }}" != "" ]; then
+            MAVEN_CMD="$MAVEN_CMD -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/${{ inputs.deployment-repository }}"
+          fi
+          
+          $MAVEN_CMD
+
+      - name: Set artifact id
+        id: set-artifact-id
+        run: |
+          echo "artifact-id=${{ inputs.artifact-name }}-${{ github.run_number }}-${{ github.run_attempt }}.spdx" >> "$GITHUB_OUTPUT"
+
+      - uses: anchore/sbom-action@v0
+        with:
+          path: ${{ inputs.sbom-path }}
+          artifact-name: ${{ steps.set-artifact-id.outputs.artifact-id }}
