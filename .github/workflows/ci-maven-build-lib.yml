@@ -19,7 +19,7 @@ jobs:
     if: ${{ github.event_name == 'pull_request'}}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea #pin@v7.0.1
         with:
           script: |
             const REGEX = new RegExp("^[^…]+$");  // Title must match this regex
@@ -94,6 +94,6 @@ jobs:
       - name: Build with Maven
         run: |
           mvn -B clean install --update-snapshots
-      - uses: anchore/sbom-action@v0
+      - uses: anchore/sbom-action@8d0a6505bf28ced3e85154d13dc6af83299e13f1 # pin@v0.17.4
         with:
           path: ${{ inputs.sbom-path }}

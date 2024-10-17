@@ -93,7 +93,7 @@ jobs:
 
       - name: "update Kubernetes for new version of image ${{env.IMAGE-NAME}} (Dependabot)"
         if: ${{ env.DEPENDABOT == 'true' }}
-        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # pin@v3.0.0
         with:
           token: ${{ steps.token.outputs.token }}
           event-type: ${{ inputs.kubernetes-repo-event }}
@@ -102,7 +102,7 @@ jobs:
 
       - name: "update Kubernetes for new version of image ${{env.IMAGE-NAME}}"
         if: ${{ env.DEPENDABOT == 'false' }}
-        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # pin@v3.0.0
         with:
           token: ${{ steps.token.outputs.token }}
           event-type: ${{ inputs.kubernetes-repo-event }}

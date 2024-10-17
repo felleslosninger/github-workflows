@@ -63,7 +63,7 @@ jobs:
             mvn -B deploy
           fi
 
-      - uses: anchore/sbom-action@v0
+      - uses: anchore/sbom-action@8d0a6505bf28ced3e85154d13dc6af83299e13f1 # pin@v0.17.4
         with:
           path: ${{ inputs.sbom-path }}
         
