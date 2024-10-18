@@ -52,7 +52,7 @@ jobs:
         run: |
           echo "IMAGE-NAME=${{ inputs.registry-url }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
 
-      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 #ping@v4.2.1
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # pin@v4.2.1
 
       - name: Cache Maven packages
         uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # pin@v4.1.1
@@ -118,7 +118,7 @@ jobs:
           SBOM_NAME=$(echo ${{env.IMAGE-NAME}} | tr '/' '-')
           echo "SBOM_ARTIFACT_ID=$SBOM_NAME" >> "$GITHUB_OUTPUT"
 
-      - uses: anchore/sbom-action@f5e124a5e5e1d497a692818ae907d3c45829d033 #pin@v0.17.3
+      - uses: anchore/sbom-action@8d0a6505bf28ced3e85154d13dc6af83299e13f1 # pin@v0.17.4
         with:
           image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
           artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
