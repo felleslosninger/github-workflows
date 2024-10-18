@@ -207,11 +207,6 @@ jobs:
           DIGEST: ${{ steps.set-image-digest.outputs.image-digest }}
 
 
-  check-for-cve-suppression-changes:
-    needs: [build-publish-image]
-    uses: felleslosninger/github-workflows/.github/workflows/ci-check-for-cve-suppression-changes.yml@main
-    secrets: inherit
-
   notify-on-errors:
     runs-on: ubuntu-latest
     needs: [build-publish-image]
