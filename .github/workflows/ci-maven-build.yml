@@ -8,7 +8,6 @@ on:
         default: "11"
         required: false
         type: string
-
       setup-npm-auth:
         description: Configure private NPM registry authentication
         default: false
