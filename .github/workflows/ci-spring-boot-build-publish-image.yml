@@ -52,6 +52,12 @@ on:
         required: false
         type: string
 
+      setup-npm-auth:
+        description: Configure private NPM registry authentication
+        default: false
+        required: false
+        type: boolean
+
     outputs:
       image-version:
         description: "Docker image version"
@@ -162,6 +168,16 @@ jobs:
           else
             echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
           fi
+
+      - name: Configure private NPM registry authentication
+        if: ${{ inputs.setup-npm-auth == true }}
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # pin@v4.0.4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@felleslosninger'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build image with Maven/Spring Boot
         run: |

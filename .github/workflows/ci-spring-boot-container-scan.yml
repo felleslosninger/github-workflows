@@ -26,6 +26,11 @@ on:
         description: Container-scan is default download updated CVE definitions via Trivy, enable offline on download problems
         default: false
         type: boolean
+      setup-npm-auth:
+        description: Configure private NPM registry authentication
+        default: false
+        required: false
+        type: boolean
 
 jobs:
   build-and-scan-image:
@@ -52,6 +57,16 @@ jobs:
         with:
           distribution: "liberica"
           java-version: ${{ inputs.java-version }}
+
+      - name: Configure private NPM registry authentication
+        if: ${{ inputs.setup-npm-auth == true }}
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # pin@v4.0.4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@felleslosninger'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Cache Maven packages
         uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # pin@v4.1.1
