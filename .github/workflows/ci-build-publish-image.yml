@@ -75,6 +75,11 @@ on:
         description: "Docker image SHA256 digest"
         value: ${{ jobs.run-spring-boot-build.outputs.image-digest || jobs.run-quarkus-build.outputs.image-digest || jobs.run-docker-build.outputs.image-digest }}
 
+permissions:
+  id-token: write
+  contents: read
+  packages: read
+
 jobs:
   inputs-to-summary:
     runs-on: ubuntu-latest
