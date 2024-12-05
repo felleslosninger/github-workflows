@@ -226,6 +226,7 @@ jobs:
           format: github
           image-ref: "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}"
           output: "sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}.json"
+          trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
           github-pat: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload trivy report as a Github artifact
