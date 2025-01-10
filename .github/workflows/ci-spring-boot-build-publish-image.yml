@@ -83,6 +83,7 @@ jobs:
     env:
       DOCKLE_HOST: "unix:///var/run/docker.sock"
       TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
+      DOCKER_CONTENT_TRUST: 1
 
     outputs:
       image-tag: ${{ steps.set-image-tag.outputs.image-tag }}
