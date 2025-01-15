@@ -120,7 +120,7 @@ jobs:
   run-quarkus-build:
     needs: input-checks
     if: inputs.application-type == 'quarkus'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-build-publish-image.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-build-publish-image.yml@fc-docker-quarkus-testk6
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
