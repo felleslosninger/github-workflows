@@ -31,6 +31,10 @@ on:
         default: false
         required: false
         type: boolean
+      application-path:
+        default: "./"
+        required: false
+        type: string
 
 jobs:
   build-and-scan-image:
@@ -91,7 +95,7 @@ jobs:
             }]
 
       - name: Build image with Maven (skips tests)
-        run: mvn -DskipTests -B spring-boot:build-image --file pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}
+        run: mvn -DskipTests -B spring-boot:build-image --file ${{ inputs.application-path }}pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # pin@v0.28.0
