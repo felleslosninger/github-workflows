@@ -212,13 +212,6 @@ jobs:
           vuln-type: "os"
           image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
 
-      - name: Check vulnerability count (copa)
-        id: vuln_count
-        run: |
-          report_file="report.json"
-          vuln_count=$(jq 'if .Results then [.Results[] | select(.Class=="os-pkgs" and .Vulnerabilities!=null) | .Vulnerabilities[]] | length else 0 end' "$report_file")
-          echo "vuln_count=$vuln_count" >> $GITHUB_OUTPUT
-
       - name: Run Copa action
         #if: steps.vuln_count.outputs.vuln_count != '0'
         id: copa
