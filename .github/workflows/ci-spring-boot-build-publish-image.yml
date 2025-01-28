@@ -197,20 +197,13 @@ jobs:
             echo "- Trivy ignore path: $trivyignore_path" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Run Trivy vulnerability scanner
+    
+      - name: Generate Trivy Report (copa) 
         uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # pin@v0.28.0
         id: trivy-primary
         env:
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
           TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
-        with:
-          image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
-          trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
-      
-      - name: Generate Trivy Report (copa) 
-        uses: aquasecurity/trivy-action@d43c1f16c00cfd3978dde6c07f4bbcf9eb6993ca # 0.16.1
         with:
           scan-type: "image"
           format: "json"
@@ -233,7 +226,7 @@ jobs:
         with:
           image: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
           image-report: "report.json"
-          patched-tag: "patched"
+          patched-tag: ${{ steps.set-image-name.outputs.image-name }}:patched-latest
                 
       - name: Create SBOM artifact name
         id: sbom-name
@@ -274,8 +267,7 @@ jobs:
           ACR_NAME: ${{ vars.ACR_NAME }}
 
       - name: Push image
-      # run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
-        run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.copa.outputs.patched-tag }}
+        run: docker push ${{ steps.set-image-name.outputs.image-name }}:patched-latest
       
       - name: Set image digest
         id: set-image-digest
