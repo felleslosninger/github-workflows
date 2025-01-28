@@ -226,7 +226,7 @@ jobs:
         with:
           image: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
           image-report: "report.json"
-          patched-tag: ${{ steps.set-image-name.outputs.image-name }}:patched-latest
+          patched-tag: ${{ steps.set-image-name.outputs.image-name }}:"patched-latest"
                 
       - name: Create SBOM artifact name
         id: sbom-name
@@ -267,7 +267,7 @@ jobs:
           ACR_NAME: ${{ vars.ACR_NAME }}
 
       - name: Push image
-        run: docker push ${{ steps.set-image-name.outputs.image-name }}:patched-latest
+        run: docker push ${{ steps.set-image-name.outputs.image-name }}:"patched-latest"
       
       - name: Set image digest
         id: set-image-digest
