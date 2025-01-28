@@ -227,7 +227,7 @@ jobs:
           echo "vuln_count=$vuln_count" >> $GITHUB_OUTPUT
 
       - name: Run Copa action
-        if: steps.vuln_count.outputs.vuln_count != '0'
+        #if: steps.vuln_count.outputs.vuln_count != '0'
         id: copa
         uses: project-copacetic/copa-action@main
         with:
@@ -274,7 +274,8 @@ jobs:
           ACR_NAME: ${{ vars.ACR_NAME }}
 
       - name: Push image
-        run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+      # run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+        run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.copa.outputs.patched-tag }}
       
       - name: Set image digest
         id: set-image-digest
