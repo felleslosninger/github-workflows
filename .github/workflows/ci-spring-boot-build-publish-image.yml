@@ -317,7 +317,7 @@ jobs:
       - name: Push patched image
         if: steps.vuln_count.outputs.vuln_count != '0'
         run: |
-          docker tag ${{ steps.copa.outputs.patched-image }} ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+          #docker tag ${{ steps.copa.outputs.patched-image }} ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
           docker push ${{ steps.copa.outputs.patched-image }}
           
       - name: Set image digest
