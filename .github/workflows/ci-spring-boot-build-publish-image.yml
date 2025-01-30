@@ -288,6 +288,12 @@ jobs:
           echo "SOCKET=$socket_path" >> "$GITHUB_ENV"
           echo "Docker Socket Path: $socket_path"
 
+      - name: Pull Docker image
+        run: docker pull ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+
+      - name: List Docker images
+        run: docker images
+        
       - name: Run Copa action
         id: copa
         uses: project-copacetic/copa-action@v1.2.1
@@ -299,8 +305,8 @@ jobs:
           
       - name: Push patched image
         run: |
-          docker tag ${{ steps.copa.outputs.patched-image }} creiddev.azurecr.io/${{ steps.copa.outputs.patched-image }}
-          docker push creiddev.azurecr.io/${{ steps.copa.outputs.patched-image }}
+          #docker tag ${{ steps.copa.outputs.patched-image }} creiddev.azurecr.io/${{ steps.copa.outputs.patched-image }}
+          docker push ${{ steps.copa.outputs.patched-image }}
           
       - name: Set image digest
         id: set-image-digest
