@@ -209,6 +209,20 @@ jobs:
           severity: "CRITICAL,HIGH"
           trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
 
+      - name: Run Trivy vulnerability scanner for Copa
+        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # pin@v0.28.0
+        id: trivy-copa
+        env:
+          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
+          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+        with:
+          scan-type: "image"
+          format: "json"
+          output: "report.json"
+          ignore-unfixed: true
+          vuln-type: "os"
+          image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+
       - name: Create SBOM artifact name
         id: sbom-name
         run: |
@@ -250,6 +264,19 @@ jobs:
       - name: Push image
         run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
 
+      - name: Run Copa Action
+        id: copa
+        uses: project-copacetic/copa-action@main
+        with:
+          image: creiddev.azurecr.io/${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+          image-report: "report.json"
+          patched-tag: "patched"
+
+      - name: Push patched image
+        run: |
+          docker tag ${{ steps.copa.outputs.patched-image }} creiddev.azurecr.io/${{ steps.copa.outputs.patched-image }}
+          docker push creiddev.azurecr.io/${{ steps.copa.outputs.patched-image }}
+          
       - name: Set image digest
         id: set-image-digest
         run: |
