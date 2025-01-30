@@ -223,16 +223,6 @@ jobs:
           vuln-type: "os"
           image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
 
-      - name: Verify Trivy Report Output for Copa
-        run: |
-          if [ -f "report.json" ]; then
-            echo "Trivy report successfully generated."
-            cat report.json | jq '.'
-          else
-            echo "Trivy report is missing!"
-            exit 1
-          fi
-
       - name: Create SBOM artifact name
         id: sbom-name
         run: |
