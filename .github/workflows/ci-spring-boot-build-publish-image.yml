@@ -293,8 +293,19 @@ jobs:
 
       - name: List Docker images
         run: docker images
+
+      - name: Display report.json content
+        run: cat report.json
         
+      - name: Check vulnerability count
+        id: vuln_count
+        run: |
+          report_file="report.json"
+          vuln_count=$(jq 'if .Results then [.Results[] | select(.Class=="os-pkgs" and .Vulnerabilities!=null) | .Vulnerabilities[]] | length else 0 end' "$report_file")
+          echo "vuln_count=$vuln_count" >> $GITHUB_OUTPUT
+          
       - name: Run Copa action
+        if: steps.vuln_count.outputs.vuln_count != '0'
         id: copa
         uses: project-copacetic/copa-action@v1.2.1
         with:
