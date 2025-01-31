@@ -188,35 +188,6 @@ jobs:
             -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} \
             -Dspring-boot.build-image.createdDate=now
 
-      ## Copa config starts here# 
-      - name: Set up Docker
-        uses: docker/setup-docker-action@v4
-        with:
-          daemon-config: |
-            {
-              "debug": true,
-              "experimental": true,
-              "features": {
-                "containerd-snapshotter": true
-              }
-            }
-      - name: Install jq
-        run: sudo apt-get install -y jq      
-      - name: Get socket path
-        id: get-socket-path
-        run: |
-          url=$(docker context inspect | jq -r '.[0].Endpoints.docker.Host')
-          socket_path=$(echo "$url" | awk -F// '{print $2}')
-          echo "$socket_path"
-          echo "SOCKET=$socket_path" >> "$GITHUB_ENV"
-          echo "Docker Socket Path: $socket_path"
-
-        # name: Pull Docker image
-        # run: docker pull ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
-  
-        #- name: List Docker images
-        #  run: docker images      
-
       - name: Run Trivy vulnerability scanner for Copa
         uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # pin@v0.28.0
         id: trivy-copa
@@ -240,9 +211,7 @@ jobs:
           report_file="report.json"
           vuln_count=$(jq 'if .Results then [.Results[] | select(.Class=="os-pkgs" and .Vulnerabilities!=null) | .Vulnerabilities[]] | length else 0 end' "$report_file")
           echo "vuln_count=$vuln_count" >> "$GITHUB_OUTPUT"
-          
-
-          
+                    
       - name: Set trivyignore env if file exists
         id: set-trivyignore-path
         run: |
