@@ -180,6 +180,14 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
  
+      - name: Build image with Maven/Spring Boot
+        run: |
+          mvn -B spring-boot:build-image \
+            --file ${{ inputs.application-path }}pom.xml \
+            -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
+            -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} \
+            -Dspring-boot.build-image.createdDate=now
+
       ## Copa config starts here# 
       - name: Set up Docker
         uses: docker/setup-docker-action@v4
@@ -203,20 +211,11 @@ jobs:
           echo "SOCKET=$socket_path" >> "$GITHUB_ENV"
           echo "Docker Socket Path: $socket_path"
 
-      # name: Pull Docker image
-      # run: docker pull ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
-
-      #- name: List Docker images
-      #  run: docker images      
-
-
-      - name: Build image with Maven/Spring Boot
-        run: |
-          mvn -B spring-boot:build-image \
-            --file ${{ inputs.application-path }}pom.xml \
-            -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
-            -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} \
-            -Dspring-boot.build-image.createdDate=now
+        # name: Pull Docker image
+        # run: docker pull ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+  
+        #- name: List Docker images
+        #  run: docker images      
 
       - name: Run Trivy vulnerability scanner for Copa
         uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # pin@v0.28.0
