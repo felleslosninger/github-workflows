@@ -241,15 +241,7 @@ jobs:
           vuln_count=$(jq 'if .Results then [.Results[] | select(.Class=="os-pkgs" and .Vulnerabilities!=null) | .Vulnerabilities[]] | length else 0 end' "$report_file")
           echo "vuln_count=$vuln_count" >> "$GITHUB_OUTPUT"
           
-      - name: Run Copa action
-        if: steps.vuln_count.outputs.vuln_count != '0'
-        id: copa
-        uses: project-copacetic/copa-action@v1.2.1
-        with:
-          image: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
-          image-report: "report.json"
-          patched-tag: "patched"
-          custom-socket: $SOCKET
+
           
       - name: Set trivyignore env if file exists
         id: set-trivyignore-path
