@@ -141,6 +141,7 @@ jobs:
             --env BP_JVM_VERSION="${{ inputs.java-version }}" \
             --env BP_MAVEN_POM_FILE="./pom.xml" \
             --env BP_NATIVE_IMAGE="true" \
+            --env LANG="C.UTF-8" \
             --creation-time now
 
       - name: Build image with Maven/Quarkus
