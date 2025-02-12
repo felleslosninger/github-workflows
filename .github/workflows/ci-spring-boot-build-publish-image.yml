@@ -16,7 +16,7 @@ on:
 
       image-signing:
         description: Flag to toggle image signing on/off - default off
-        default: false
+        default: true
         required: false
         type: boolean
 
@@ -83,14 +83,14 @@ jobs:
     env:
       DOCKLE_HOST: "unix:///var/run/docker.sock"
       TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
-
+      
     outputs:
       image-tag: ${{ steps.set-image-tag.outputs.image-tag }}
       image-digest: ${{ steps.set-image-digest.outputs.image-digest }}
 
     permissions:
       id-token: write
-      contents: read
+      contents: write
       packages: read
 
     steps:
@@ -226,6 +226,7 @@ jobs:
           format: github
           image-ref: "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}"
           output: "sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}.json"
+          trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
           github-pat: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload trivy report as a Github artifact
@@ -234,12 +235,17 @@ jobs:
           name: "sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}"
           path: "${{ github.workspace }}/sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}.json"
 
-      - name: Login to ACR
-        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # pin@v3.3.0
+      - name: Login to Azure
+        uses: azure/login@v2
         with:
-          registry: ${{ secrets.REGISTRY_URL }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to Azure Container Registry
+        run: az acr login --name "$ACR_NAME"
+        env:
+          ACR_NAME: ${{ vars.ACR_NAME }}
 
       - name: Push image
         run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
