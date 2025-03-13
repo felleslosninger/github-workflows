@@ -35,6 +35,11 @@ on:
         default: false
         required: false
         type: boolean
+      fetch-depth:
+        description: Fetch depth
+        default: 1
+        required: false
+        type: number
 
 jobs:
   build:
