@@ -46,11 +46,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4.2.2
+        with:
+          fetch-depth: ${{ inputs.fetch-depth }}
+
 
       - uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # pin@v4.7.0
         with:
           java-version: ${{ inputs.java-version }}
           distribution: "liberica"
+          
 
       - name: Configure private NPM registry authentication
         if: ${{ inputs.setup-npm-auth == true }}
