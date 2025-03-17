@@ -44,6 +44,13 @@ jobs:
         with:
           java-version: ${{ inputs.java-version }}
           distribution: "liberica"
+          
+      - name: Cache Maven packages
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # pin@v4.2.0
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
 
       - name: Set m2 settings to read organization packages
         run: |
