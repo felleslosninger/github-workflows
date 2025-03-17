@@ -1,0 +1,87 @@
+name: Release to github packages
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: Main version of java
+        default: "21"
+        required: false
+        type: string
+      sbom-path:
+        description: Target directory for SBOM generation
+        default: ./target/
+        required: false
+        type: string
+      profile:
+        description: Maven profile to use
+        required: false
+        type: string
+      artifact-name:
+        required: false
+        type: string
+      checkout-tags:
+        description: Fetch tags
+        default: false
+        required: false
+        type: boolean
+      fetch-depth:
+        description: Fetch depth
+        default: 1
+        required: false
+        type: number
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-tags: ${{ inputs.fetch-tags }}
+          fetch-depth: ${{ inputs.fetch-depth }}
+
+      - uses: actions/setup-java@v3
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: "liberica"
+
+      - name: Set m2 settings to read organization packages
+        run: |
+          mkdir -p ~/.m2
+          echo "<settings><servers><server><id>github</id><username>${{ secrets.GH_PACKAGES_READ_USER }}</username><password>${{ secrets.GH_PACKAGES_READ_PAT }}</password></server></servers></settings>" > ~/.m2/settings.xml
+
+      - name: Build with Maven
+        run: |
+          if [ -n "${{ inputs.profile }}" ]; then
+            mvn -B clean install --update-snapshots -P"${{ inputs.profile }}"
+          else
+            mvn -B clean install --update-snapshots
+          fi
+
+      - name: Decrypt GPG Key
+        run: |
+          echo "${{ secrets.EFM_GPG_PRIVATE_KEY }}" | gpg --batch --import
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.EFM_GPG_PRIVATE_KEY }}
+
+      - name: Overwrite m2 settings to publish libs
+        run: |
+          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server><server><id>ossrh</id><username>${{ secrets.EFM_OSSRH_TOKEN_USERNAME }}</username><password>${{ secrets.EFM_OSSRH_TOKEN }}</password></server></servers></settings>" > ~/.m2/settings.xml
+
+      - name: Deploy package
+        run: |
+          if [ -n "${{ inputs.profile }}" ]; then
+            mvn -B deploy -P"${{ inputs.profile }}" "-Dgpg.passphrase=${{ secrets.EFM_GPG_PASSPHRASE }}"
+          else
+            mvn -B deploy "-Dgpg.passphrase=${{ secrets.EFM_GPG_PASSPHRASE }}"
+          fi
+
+      - name: Set artifact id
+        id: set-artifact-id
+        run: |
+          echo "artifact-id=${{ inputs.artifact-name }}-${{ github.run_number }}-${{ github.run_attempt }}.spdx" >> "$GITHUB_OUTPUT"
+
+      - uses: anchore/sbom-action@v0
+        with:
+          path: ${{ inputs.sbom-path }}
+          artifact-name: ${{ steps.set-artifact-id.outputs.artifact-id }}
