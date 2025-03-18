@@ -17,6 +17,10 @@ on:
         default: "./"
         required: false
         type: string
+      cache-path:
+        default: "**/pom.xml"
+        required: false
+        type: string
 
 
 jobs:
@@ -109,13 +113,8 @@ jobs:
         with:
           distribution: "liberica"
           java-version: ${{ inputs.java-version }}
-
-      - name: Cache Maven packages
-        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # pin@v4.2.0
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
+          cache: maven
+          cache-dependency-path: ${{ inputs.cache-path }}
 
       - uses: s4u/maven-settings-action@64e42c454dbd42ef6370ac8539685755aedd205b # pin@v3.1.0
         with:
