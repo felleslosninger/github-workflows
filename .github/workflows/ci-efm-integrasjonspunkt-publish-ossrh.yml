@@ -20,11 +20,6 @@ on:
       artifact-name:
         required: false
         type: string
-      checkout-tags:
-        description: Fetch tags
-        default: false
-        required: false
-        type: boolean
       fetch-depth:
         description: Fetch depth
         default: 1
@@ -37,7 +32,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-tags: ${{ inputs.fetch-tags }}
           fetch-depth: ${{ inputs.fetch-depth }}
 
       - uses: actions/setup-java@v3
