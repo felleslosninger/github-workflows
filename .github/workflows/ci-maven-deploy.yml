@@ -23,6 +23,10 @@ on:
         default: ""
         required: false
         type: string
+      cache-path:
+        default: "**/pom.xml"
+        required: false
+        type: string
 
 jobs:
   build:
@@ -37,8 +41,10 @@ jobs:
       - name: Set up JDK ${{ inputs.java-version }}
         uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # pin@v4.7.0
         with:
-          distribution: 'liberica'
+          distribution: "liberica"
           java-version: ${{ inputs.java-version }}
+          cache: maven
+          cache-dependency-path: ${{ inputs.cache-path }}
 
       - name: Set m2 settings
         run: |
