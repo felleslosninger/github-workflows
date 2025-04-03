@@ -69,6 +69,13 @@ jobs:
             mvn -B deploy "-Dgpg.passphrase=${{ secrets.EFM_GPG_PASSPHRASE }}"
           fi
 
+      - name: Upload built JAR as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: integrasjonspunkt-cache
+          path: integrasjonspunkt/target/*.jar
+
+
       - name: Set artifact id
         id: set-artifact-id
         run: |

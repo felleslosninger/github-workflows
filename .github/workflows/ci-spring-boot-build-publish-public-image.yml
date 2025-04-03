@@ -180,13 +180,21 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build image with Maven/Spring Boot
+      - name: Download built JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: integrasjonspunkt-cache
+          path: integrasjonspunkt/target/
+  
+
+      - name: Build image with bre-built jar 
         run: |
           mvn -B spring-boot:build-image \
             --file ${{ inputs.application-path }}pom.xml \
             -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
             -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} \
             -Dspring-boot.build-image.createdDate=now
+            -Dspring-boot.build-image.jar=target/*.jar
 
       - name: Set trivyignore env if file exists
         id: set-trivyignore-path
