@@ -73,7 +73,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: integrasjonspunkt-cache
-          path: target/*.jar
+          path: integrasjonspunkt/target/*.jar
 
 
       - name: Set artifact id
