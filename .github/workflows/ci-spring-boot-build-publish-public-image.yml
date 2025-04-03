@@ -184,7 +184,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: integrasjonspunkt-cache
-          path: ${{ inputs.application-path }}/target/
+          path: ${{ inputs.application-path }}target/
   
 
       - name: Build image with bre-built jar 
