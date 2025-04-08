@@ -188,7 +188,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
 
-      - name: Build image with bre-built jar 
+      - name: Build image
         run: |
           mvn -B spring-boot:build-image \
             --file ${{ inputs.application-path }}pom.xml \
