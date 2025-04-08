@@ -1,0 +1,337 @@
+name: Build and publish Docker image
+
+on:
+  workflow_call:
+    inputs:
+      image-name:
+        description: Name of Docker image
+        required: false
+        type: string
+
+      image-pack:
+        description: Docker image pack of builder-jammy-tiny, builder-jammy-base or builder-jammy-full
+        default: builder-jammy-tiny
+        required: false
+        type: string
+
+      image-signing:
+        description: Flag to toggle image signing on/off - default off
+        default: true
+        required: false
+        type: boolean
+
+      java-version:
+        description: Main version of java
+        default: "21"
+        required: false
+        type: string
+
+      container-scan-offline-mode:
+        description: Container-scan is default download updated CVE definitions via Trivy, enable offline on download problems
+        default: false
+        type: boolean
+
+      slack-channel-id:
+        description: Team channel id
+        default: ""
+        required: false
+        type: string
+
+      application-path:
+        default: "./"
+        required: false
+        type: string
+
+      cache-path:
+        default: "**/pom.xml"
+        required: false
+        type: string
+
+      update-versions:
+        default: "true"
+        required: false
+        type: string
+
+      setup-npm-auth:
+        description: Configure private NPM registry authentication
+        default: false
+        required: false
+        type: boolean
+
+      fetch-depth:
+        description: Fetch depth
+        default: 1
+        required: false
+        type: number
+
+    outputs:
+      image-version:
+        description: "Docker image version"
+        value: ${{ jobs.build-publish-image.outputs.image-tag }}
+
+      image-digest:
+        description: "Docker image SHA256 digest"
+        value: ${{ jobs.build-publish-image.outputs.image-digest }}
+
+jobs:
+  inputs-to-summary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Write inputs to summary"
+        uses: felleslosninger/github-actions/json-to-summary@bb702913dc7fc7ba16f6a2ce32624ba9eaf54262 # pin@v0.7.4
+        with:
+          json: ${{ toJson(inputs) }}
+          title: "Inputs"
+
+  build-publish-image:
+    runs-on: ubuntu-latest
+
+    env:
+      DOCKLE_HOST: "unix:///var/run/docker.sock"
+      TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
+      
+    outputs:
+      image-tag: ${{ steps.set-image-tag.outputs.image-tag }}
+      image-digest: ${{ steps.set-image-digest.outputs.image-digest }}
+
+    permissions:
+      id-token: write
+      contents: write
+      packages: read
+
+    steps:
+      - name: Set image tag
+        id: set-image-tag
+        run: |
+          image_tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}
+          echo "image-tag=$image_tag" >> "$GITHUB_OUTPUT"
+          echo "- Image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Set image name
+        id: set-image-name
+        run: |
+          image_name=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || github.event.repository.name }}
+          echo "image-name=$image_name" >> "$GITHUB_OUTPUT"
+          echo "- Image name: $image_name" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4.2.2
+        with:
+          fetch-depth: ${{ inputs.fetch-depth }}
+
+      - name: Check if YAML files exist
+        id: yaml-files-exists
+        run: |
+          if [ -f "${{ inputs.application-path }}src/main/resources/application*.y*ml" ]; then
+            echo "file-exists=true" >> "$GITHUB_OUTPUT"
+            echo "- \`${{ inputs.application-path }}src/main/resources/application*.y*ml\` file exists :white_check_mark:" >> "$GITHUB_STEP_SUMMARY"            
+          else
+            echo "file-exists=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "- \`${{ inputs.application-path }}src/main/resources/application*.y*ml\` file exists :x:"
+              echo "  - Skipping yamllint"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Run yamllint
+        if: steps.yaml-files-exists.outputs.file_exists == 'true'
+        uses: ibiqlik/action-yamllint@2576378a8e339169678f9939646ee3ee325e845c # pin@v3.1.1
+        with:
+          file_or_dir: ${{ inputs.application-path }}src/main/resources/application*.y*ml
+          config_data: |
+            extends: default
+            rules:
+              empty-lines: disable
+              line-length:
+                max: 150
+                level: warning
+
+      - name: Set up JDK ${{ inputs.java-version }}
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # pin@v4.7.0
+        with:
+          distribution: "liberica"
+          java-version: ${{ inputs.java-version }}
+          cache: maven
+          cache-dependency-path: ${{ inputs.cache-path }}
+
+      - name: Maven environment setup
+        uses: s4u/maven-settings-action@64e42c454dbd42ef6370ac8539685755aedd205b # pin@v3.1.0
+        with:
+          servers: |
+            [{
+                "id": "github-oidc-sdk",
+                "username": "${{ secrets.GH_PACKAGES_READ_USER }}",
+                "password": "${{ secrets.GH_PACKAGES_READ_PAT }}"
+            },
+            {
+              "id": "github",
+              "username": "${{ secrets.GH_PACKAGES_READ_USER }}",
+              "password": "${{ secrets.GH_PACKAGES_READ_PAT }}"
+            }]
+
+      - name: Maven update version used in application.yaml
+        run: |
+          if [ "${{ inputs.update-versions }}" == "true" ]; then
+            mvn versions:set -B -DnewVersion="${{ steps.set-image-tag.outputs.image-tag }}"
+            echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Configure private NPM registry authentication
+        if: ${{ inputs.setup-npm-auth == true }}
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # pin@v4.2.0
+        with:
+          node-version: '20.x'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@felleslosninger'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
+
+      - name: Build image with bre-built jar 
+        run: |
+          mvn -B spring-boot:build-image \
+            --file ${{ inputs.application-path }}pom.xml \
+            -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
+            -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} \
+            -Dspring-boot.build-image.createdDate=now
+
+      - name: Set trivyignore env if file exists
+        id: set-trivyignore-path
+        run: |
+          if [ -f "${{ inputs.application-path }}.trivyignore" ]; then
+            trivyignore_path=${{ inputs.application-path }}.trivyignore
+            echo "trivyignore-path=$trivyignore_path" >> "$GITHUB_OUTPUT"
+            echo "- Trivy ignore path: $trivyignore_path" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # pin@v0.29.0
+        id: trivy-primary
+        env:
+          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
+          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+        with:
+          image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+          exit-code: "1"
+          severity: "CRITICAL,HIGH"
+          trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
+
+      - name: Create SBOM artifact name
+        id: sbom-name
+        run: |
+          SBOM_NAME=$(echo ${{ steps.set-image-name.outputs.image-name }} | tr '/' '-')
+          echo "sbom-artifact-id=$SBOM_NAME" >> "$GITHUB_OUTPUT"
+          echo "- SBOM: $SBOM_NAME" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run Trivy SBOM generation
+        uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # pin@v0.29.0
+        env:
+          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
+          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+        with:
+          scan-type: image
+          format: github
+          image-ref: "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}"
+          output: "sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}.json"
+          trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload trivy report as a Github artifact
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # pin@v4.6.0
+        with:
+          name: "sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}"
+          path: "${{ github.workspace }}/sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}.json"
+
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push image
+        run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+
+      - name: Set image digest
+        id: set-image-digest
+        run: |
+          image_digest=$(docker inspect \
+            --format='{{.RepoDigests}}' ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
+            | cut -d '@' -f 2 \
+            | cut -d ']' -f 1)
+          echo "image-digest=$image_digest" >> "$GITHUB_OUTPUT"
+          echo "- Image digest: $image_digest" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Install Cosign
+        if: ${{ inputs.image-signing == true }}
+        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # pin@v3.7.0
+
+      - name: Generate Provenance Metadata
+        if: ${{ inputs.image-signing == true }}
+        run: |
+          # Generate provenance data according to spec https://slsa.dev/spec/v1.0/provenance
+          cat <<EOF > ./provenance.json
+          {
+            "_type": "https://slsa.dev/provenance/v1",
+            "subject": [
+              {
+                "name": "${{ steps.set-image-name.outputs.image-name }}",
+                "digest": {
+                  "sha256": "${DIGEST}"
+                }
+              }
+            ],
+            "buildDefinition": {
+              "buildType": "https://github.com/github-actions/build",
+              "externalParameters": {
+                "image": "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}",
+                "commit": "${{ github.sha }}",
+                "author": "${{ github.actor }}",
+                "job": "${{ github.job }}",
+                "repositoryOwnerId": "${{ github.repository_owner_id }}"
+              }
+            },
+            "runDetails": {
+              "builder": {
+                "id": "${{ github.workflow_ref }}"
+              },
+              "metadata": {
+                "invocationId": "${{ github.run_id }}",
+                "startedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+              }
+            },
+            "materials": [
+              {
+                "uri": "git+https://github.com/${{ github.repository }}.git",
+                "digest": {
+                  "sha1": "${{ github.sha }}"
+                }
+              }
+            ]
+          }
+          EOF
+
+      - name: Sign the image
+        if: ${{ inputs.image-signing == true }}
+        run: |
+          cosign sign --yes "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
+          cosign attest --yes --predicate ./provenance.json --type slsaprovenance1 "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
+        env:
+          DIGEST: ${{ steps.set-image-digest.outputs.image-digest }}
+
+  notify-on-errors:
+    runs-on: ubuntu-latest
+    needs: [build-publish-image]
+    if: always() && contains(needs.*.result, 'failure')
+    strategy:
+      matrix:
+        slack-channel: ["${{ inputs.slack-channel-id }}", "C05G4B8R2GG"]
+    steps:
+      - name: Send Slack notification
+        uses: felleslosninger/github-actions/send-slack-notification@bb702913dc7fc7ba16f6a2ce32624ba9eaf54262 # pin@v0.7.4
+        with:
+          slack-channel-id: ${{ matrix.slack-channel }}
+          slack-bot-token: ${{ secrets.SLACK_CICD_NOTIFICATION_TOKEN }}
+          failed: "true"
