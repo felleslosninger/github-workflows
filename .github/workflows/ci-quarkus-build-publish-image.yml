@@ -38,6 +38,12 @@ on:
         type: boolean
         default: false
 
+      container-registry:
+        description: Azure Container Registry name
+        default: "creiddev.azurecr.io"
+        required: false
+        type: string
+
     outputs:
       image-version:
         description: "Docker image version"
@@ -78,7 +84,7 @@ jobs:
 
       - name: Set IMAGE-NAME env variable
         run: |
-          echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
+          echo "IMAGE-NAME=${{ inputs.container-registry }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
 
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4.2.2

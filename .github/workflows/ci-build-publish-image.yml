@@ -66,6 +66,11 @@ on:
         type: boolean
         default: false
 
+      lifecycle:
+        required: false
+        default: "deployment"
+        type: string
+
     outputs:
       image-version:
         description: "Docker image version"
@@ -73,7 +78,7 @@ on:
 
       image-digest:
         description: "Docker image SHA256 digest"
-        value: ${{ jobs.run-spring-boot-build.outputs.image-digest || jobs.run-quarkus-build.outputs.image-digest || jobs.run-docker-build.outputs.image-digest }}
+        value: ${{ jobs.run-spring-boot-build.outputs.image-digest || jobs.run-quarkus-build.outputs.image-digest || jobs.run-docker-build.outputs.image-digest }} 
 
 jobs:
   inputs-to-summary:
@@ -89,8 +94,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DOCKLE_HOST: "unix:///var/run/docker.sock"
-      TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
+      DEPLOYMENT_CR: "creiddev.azurecr.io"
+      DEVELOPMENT_CR: "crutvikling.azurecr.io"
 
     steps:
       - name: Check for supported application-type
@@ -99,6 +104,17 @@ jobs:
           if [[ ${{ inputs.application-type }} != "spring-boot" && ${{ inputs.application-type }} != "quarkus" && ${{ inputs.application-type }} != "docker" ]]; then
             echo "Invalid application type. Supported types are: \`spring-boot\`, \`quarkus\` and \`docker\`" >> "$GITHUB_STEP_SUMMARY"
             exit 1
+          fi
+
+      - name: Set container registry
+        id: set-container-registry
+        run: |
+          if [[ "${{ inputs.lifecycle }}" == "deployment" ]]; then
+            echo "container-registry=$DEPLOYMENT_CR" >> $GITHUB_OUTPUT
+          elif [[ "${{ inputs.lifecycle }}" == "development" ]]; then
+            echo "container-registry=$DEVELOPMENT_CR" >> $GITHUB_OUTPUT
+          else
+            echo "Invalid lifecycle type. Supported types are: \`deployment\`, and \`development\`" >> "$GITHUB_STEP_SUMMARY"
           fi
 
   run-spring-boot-build:
@@ -115,6 +131,7 @@ jobs:
       application-path: ${{ inputs.application-path }}
       cache-path: ${{ inputs.cache-path }}
       update-versions: ${{ inputs.update-versions }}
+      container-registry: ${{ steps.set-container-registry.outputs.container-registry }}
     secrets: inherit
 
   run-quarkus-build:
@@ -128,6 +145,7 @@ jobs:
       java-version: ${{ inputs.java-version }}
       slack-channel-id: ${{ inputs.slack-channel-id }}
       native: ${{ inputs.native }}
+      container-registry: ${{ steps.set-container-registry.outputs.container-registry }}
     secrets: inherit
 
   run-docker-build:
@@ -142,4 +160,5 @@ jobs:
       slack-channel-id: ${{ inputs.slack-channel-id }}
       application-path: ${{ inputs.application-path }}
       add-git-package-token: ${{ inputs.add-git-package-token }}
+      container-registry: ${{ steps.set-container-registry.outputs.container-registry }}
     secrets: inherit

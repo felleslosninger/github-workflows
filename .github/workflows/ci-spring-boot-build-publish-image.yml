@@ -57,6 +57,11 @@ on:
         default: false
         required: false
         type: boolean
+      container-registry:
+        description: Azure Container Registry name
+        default: "creiddev.azurecr.io"
+        required: false
+        type: string
 
     outputs:
       image-version:
@@ -79,11 +84,6 @@ jobs:
 
   build-publish-image:
     runs-on: ubuntu-latest
-
-    env:
-      DOCKLE_HOST: "unix:///var/run/docker.sock"
-      TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
-      
     outputs:
       image-tag: ${{ steps.set-image-tag.outputs.image-tag }}
       image-digest: ${{ steps.set-image-digest.outputs.image-digest }}
@@ -104,7 +104,7 @@ jobs:
       - name: Set image name
         id: set-image-name
         run: |
-          image_name=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || github.event.repository.name }}
+          image_name=${{ inputs.container-registry }}/${{ inputs.image-name || github.event.repository.name }}
           echo "image-name=$image_name" >> "$GITHUB_OUTPUT"
           echo "- Image name: $image_name" >> "$GITHUB_STEP_SUMMARY"
 
