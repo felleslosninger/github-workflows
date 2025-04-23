@@ -39,6 +39,10 @@ on:
         required: false
         type: string
         default: "5.0.3"
+      lifecycle:
+        required: false
+        default: "deployment"
+        type: string
 
 jobs:
   # Job to prepare payload and set outputs
@@ -94,6 +98,17 @@ jobs:
         run: |
           echo "dependabot=${{ contains(steps.set-pr-labels-and-number.outputs.pr-labels, 'dependencies') }}" >> "$GITHUB_OUTPUT"
 
+      - name: Set container registry
+        id: set-container-registry
+        run: |
+          if [[ "${{ inputs.lifecycle }}" == "deployment" ]]; then
+            echo "container-registry=$DEPLOYMENT_CR" >> $GITHUB_OUTPUT
+          elif [[ "${{ inputs.lifecycle }}" == "development" ]]; then
+            echo "container-registry=$DEVELOPMENT_CR" >> $GITHUB_OUTPUT
+          else
+            echo "Invalid lifecycle type. Supported types are: \`deployment\`, and \`development\`" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Set Dependabot As Jira ID
         id: output-dependabot
         if: |
@@ -123,6 +138,9 @@ jobs:
             echo "author-name=${actor_name}"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Set container registry
+        run: echo "cr.azure.io/image-name:image-tag" | cut -d'/' -f1 
+
       - name: Set Outputs
         id: set-outputs
         run: |
@@ -132,7 +150,7 @@ jobs:
             echo "author-username=${{ steps.set-author-info.outputs.author-username }}"
             echo "dependabot=${{ steps.check-dependabot.outputs.dependabot }}"
             echo "image-name=${{ inputs.image-name }}"
-            echo "image=${{ inputs.image-name }}:${{ inputs.image-version }}@${{ inputs.image-digest }}"
+            echo "image=${{ inputs.container-registry }}/${{ inputs.image-name }}:${{ inputs.image-version }}@${{ inputs.image-digest }}"
             echo "pr-labels=${{ steps.set-pr-labels-and-number.outputs.pr-labels }}"
             echo "pr-number=${{ steps.set-pr-labels-and-number.outputs.pr-number }}"
             echo "repository=${{ github.repository }}"
@@ -189,7 +207,7 @@ jobs:
                 "image-digest": "${{ inputs.image-digest }}",
                 "image-name": "${{ steps.set-outputs.outputs.image-name }}",
                 "image-version": "${{ inputs.image-version }}",
-                "image": "${{ steps.set-outputs.outputs.image-name }}:${{inputs.image-version}}@${{inputs.image-digest}}",
+                "image": "${{ steps.set-container-registry.outputs.container-registry }}/${{ steps.set-outputs.outputs.image-name }}:${{inputs.image-version}}@${{inputs.image-digest}}",
                 "jira-id": "${{ env.jira-id }}",
                 "kubernetes-repo": "${{ inputs.kubernetes-repo }}",
                 "pr-labels": "${{ steps.set-outputs.outputs.pr-labels }}",
