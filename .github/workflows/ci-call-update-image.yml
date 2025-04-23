@@ -44,6 +44,10 @@ on:
         default: "deployment"
         type: string
 
+env:
+  DEPLOYMENT_CR: "creiddev.azurecr.io"
+  DEVELOPMENT_CR: "crutvikling.azurecr.io"
+
 jobs:
   # Job to prepare payload and set outputs
   prepare-payload:
@@ -137,9 +141,6 @@ jobs:
             echo "author-email=${actor_email}@users.noreply.github.com"
             echo "author-name=${actor_name}"
           } >> "$GITHUB_OUTPUT"
-
-      - name: Set container registry
-        run: echo "cr.azure.io/image-name:image-tag" | cut -d'/' -f1 
 
       - name: Set Outputs
         id: set-outputs
