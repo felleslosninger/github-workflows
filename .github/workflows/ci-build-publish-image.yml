@@ -92,6 +92,8 @@ jobs:
 
   input-checks:
     runs-on: ubuntu-latest
+    outputs:
+      container-registry: ${{ steps.set-container-registry.outputs.container-registry }}
 
     env:
       DEPLOYMENT_CR: "creiddev.azurecr.io"
@@ -131,7 +133,7 @@ jobs:
       application-path: ${{ inputs.application-path }}
       cache-path: ${{ inputs.cache-path }}
       update-versions: ${{ inputs.update-versions }}
-      container-registry: ${{ steps.set-container-registry.outputs.container-registry }}
+      container-registry: ${{ job.input-checks.outputs.container-registry }}
     secrets: inherit
 
   run-quarkus-build:
