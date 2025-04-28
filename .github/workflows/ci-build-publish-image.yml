@@ -133,7 +133,7 @@ jobs:
       application-path: ${{ inputs.application-path }}
       cache-path: ${{ inputs.cache-path }}
       update-versions: ${{ inputs.update-versions }}
-      container-registry: ${{ job.input-checks.outputs.container-registry }}
+      container-registry: ${{ needs.input-checks.outputs.container-registry }}
     secrets: inherit
 
   run-quarkus-build:
@@ -147,7 +147,7 @@ jobs:
       java-version: ${{ inputs.java-version }}
       slack-channel-id: ${{ inputs.slack-channel-id }}
       native: ${{ inputs.native }}
-      container-registry: ${{ steps.set-container-registry.outputs.container-registry }}
+      container-registry: ${{ needs.input-checks.outputs.container-registry }}
     secrets: inherit
 
   run-docker-build:
@@ -162,5 +162,5 @@ jobs:
       slack-channel-id: ${{ inputs.slack-channel-id }}
       application-path: ${{ inputs.application-path }}
       add-git-package-token: ${{ inputs.add-git-package-token }}
-      container-registry: ${{ steps.set-container-registry.outputs.container-registry }}
+      container-registry: ${{ needs.input-checks.outputs.container-registry }}
     secrets: inherit
