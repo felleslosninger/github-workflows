@@ -78,8 +78,6 @@ jobs:
         with:
           distribution: "liberica"
           java-version: ${{ inputs.java-version }}
-          cache: maven
-          cache-dependency-path: ${{ inputs.cache-path }}   
 
       - name: Set image tag from pom.xml
         id: set-image-tag
