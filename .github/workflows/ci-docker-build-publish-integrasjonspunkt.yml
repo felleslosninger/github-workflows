@@ -3,14 +3,15 @@ name: Build/publish Docker image
 on:
   workflow_call:
     inputs:
-      image-name:
-        description: Name of Docker image
+
+      java-version:
+        description: Main version of java
+        default: "21"
         required: false
         type: string
 
-      image-pack:
-        description: Docker image pack of builder-jammy-tiny, builder-jammy-base or builder-jammy-full
-        default: builder-jammy-tiny
+      image-name:
+        description: Name of Docker image
         required: false
         type: string
 
@@ -66,12 +67,39 @@ jobs:
     permissions:
       id-token: write
       contents: write
+      packages: write
 
     steps:
-      - name: Set image tag
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4.2.2
+
+      - name: Set up JDK ${{ inputs.java-version }}
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # pin@v4.7.0
+        with:
+          distribution: "liberica"
+          java-version: ${{ inputs.java-version }}
+          cache: maven
+          cache-dependency-path: ${{ inputs.cache-path }}   
+
+      - name: Set image tag from pom.xml
         id: set-image-tag
         run: |
-          image_tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}
+          # Extract version from pom.xml
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout -f ${{ inputs.application-path }}/pom.xml)
+          
+          if [ -n "$VERSION" ] && [ "$VERSION" != "null" ]; then
+            # Use the version from pom.xml
+            image_tag="${VERSION}"
+            
+            # Remove -SNAPSHOT if present for production builds
+            if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.ref }}" =~ ^refs/tags/ ]]; then
+              image_tag=${image_tag/-SNAPSHOT/}
+            fi
+          else
+            # Fallback to date-based tag if version not found
+            image_tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}
+          fi
+          
           echo "image-tag=$image_tag" >> "$GITHUB_OUTPUT"
           echo "- Image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
 
@@ -81,9 +109,6 @@ jobs:
           image_name=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || github.event.repository.name }}
           echo "image-name=$image_name" >> "$GITHUB_OUTPUT"
           echo "- Image name: $image_name" >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4.2.2
 
       - name: Build image
         run: |
@@ -129,17 +154,12 @@ jobs:
           name: "sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}"
           path: "${{ github.workspace }}/sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}.json"
 
-      - name: Login to ACR
-        uses: azure/login@v2
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # pin@v3.4.0
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Login to Azure Container Registry
-        run: az acr login --name "$ACR_NAME"
-        env:
-          ACR_NAME: ${{ vars.ACR_NAME }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Push image"
         run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
