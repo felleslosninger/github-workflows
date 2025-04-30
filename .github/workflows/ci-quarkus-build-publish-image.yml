@@ -200,7 +200,7 @@ jobs:
       - name: Login to Azure Container Registry
         run: az acr login --name "$ACR_NAME"
         env:
-          ACR_NAME: ${{ vars.ACR_NAME }}
+          ACR_NAME: ${{ inputs.container-registry }}
 
       - name: Push image
         run: docker push ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
