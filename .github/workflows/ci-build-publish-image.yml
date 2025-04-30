@@ -94,6 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       container-registry: ${{ steps.set-container-registry.outputs.container-registry }}
+      sp-container-registry-client-id: ${{ steps.set-container-registry.outputs.sp-container-registry-client-id }}
 
     env:
       DEPLOYMENT_CR: "creiddev.azurecr.io"
