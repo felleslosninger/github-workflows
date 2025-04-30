@@ -46,6 +46,7 @@ on:
 
       sp-container-registry-client-id:
         required: true
+        type: string
         description: Service Principal used for container registry in inputs
 
     outputs:
