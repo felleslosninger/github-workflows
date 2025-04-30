@@ -47,6 +47,10 @@ on:
         required: false
         type: string
 
+      sp-container-registry-client-id:
+        required: true
+        description: Service Principal used for container registry in inputs
+
     outputs:
       image-version:
         description: "Docker image version"
@@ -133,7 +137,7 @@ jobs:
       - name: Login to ACR
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          client-id: ${{ inputs.sp-container-registry-client-id }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 

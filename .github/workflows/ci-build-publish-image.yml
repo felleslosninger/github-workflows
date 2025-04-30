@@ -112,8 +112,10 @@ jobs:
         id: set-container-registry
         run: |
           if [[ "${{ inputs.lifecycle }}" == "deployment" ]]; then
+            echo "sp-container-registry-client-id=${{ secrets.AZURE_CLIENT_ID }}" >> $GITHUB_OUTPUT
             echo "container-registry=$DEPLOYMENT_CR" >> $GITHUB_OUTPUT
           elif [[ "${{ inputs.lifecycle }}" == "development" ]]; then
+            echo "sp-container-registry-client-id=${{ secrets.SP_ACR_CRUTVIKLING_CLIENT_ID }}" >> $GITHUB_OUTPUT
             echo "container-registry=$DEVELOPMENT_CR" >> $GITHUB_OUTPUT
           else
             echo "Invalid lifecycle type. Supported types are: \`deployment\`, and \`development\`" >> "$GITHUB_STEP_SUMMARY"
@@ -134,6 +136,7 @@ jobs:
       cache-path: ${{ inputs.cache-path }}
       update-versions: ${{ inputs.update-versions }}
       container-registry: ${{ needs.input-checks.outputs.container-registry }}
+      sp-container-registry-client-id: ${{ needs.input-checks.outputs.sp-container-registry-client-id }}
     secrets: inherit
 
   run-quarkus-build:
@@ -148,6 +151,7 @@ jobs:
       slack-channel-id: ${{ inputs.slack-channel-id }}
       native: ${{ inputs.native }}
       container-registry: ${{ needs.input-checks.outputs.container-registry }}
+      sp-container-registry-client-id: ${{ needs.input-checks.outputs.sp-container-registry-client-id }}
     secrets: inherit
 
   run-docker-build:
@@ -163,4 +167,5 @@ jobs:
       application-path: ${{ inputs.application-path }}
       add-git-package-token: ${{ inputs.add-git-package-token }}
       container-registry: ${{ needs.input-checks.outputs.container-registry }}
+      sp-container-registry-client-id: ${{ needs.input-checks.outputs.sp-container-registry-client-id }}
     secrets: inherit
