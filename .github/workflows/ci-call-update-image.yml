@@ -35,10 +35,11 @@ on:
       deployment-environment:
         required: true
         type: string
+      # Default should follow ArgoCD version
       kustomize-version:
         required: false
+        default: 5.4.3
         type: string
-        default: "5.0.3"
 
 jobs:
   # Job to prepare payload and set outputs
@@ -97,7 +98,7 @@ jobs:
       - name: Set Dependabot As Jira ID
         id: output-dependabot
         if: |
-          steps.find-jira-id.outputs.match == '' && 
+          steps.find-jira-id.outputs.match == '' &&
           steps.check-dependabot.outputs.dependabot == 'true'
         run: echo "jira-id=Dependabot" >> "$GITHUB_ENV"
 
