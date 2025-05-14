@@ -147,4 +147,4 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build with Maven
-        run: mvn ${{ github.event.inputs.maven-lifecycle }}
+        run: mvn ${{ inputs.maven-lifecycle }}
