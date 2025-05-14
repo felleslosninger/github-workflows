@@ -146,7 +146,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Maven Lifecycle
+      - name: Run mvn {{ inputs.maven-lifecycle }}
         run: |
           LIFECYCLE="${{ inputs.maven-lifecycle }}"
           case "$LIFECYCLE" in 
