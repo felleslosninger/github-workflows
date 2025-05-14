@@ -21,6 +21,11 @@ on:
         default: "**/pom.xml"
         required: false
         type: string
+      maven-lifecycle:
+        description: 'Maven lifecycle phase (test, package, verify, install)'
+        type: string
+        required: false
+        default: 'test'
 
 
 jobs:
@@ -141,5 +146,15 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build with Maven
-        run: mvn -B test
+      - name: Run mvn ${{ inputs.maven-lifecycle }}
+        run: |
+          LIFECYCLE="${{ inputs.maven-lifecycle }}"
+          case "$LIFECYCLE" in 
+            test|package|verify|install)
+              mvn -B "$LIFECYCLE"
+              ;;
+            *)
+              echo "Invalid Maven lifecycle: $LIFECYCLE"
+              exit 1
+              ;;
+          esac
