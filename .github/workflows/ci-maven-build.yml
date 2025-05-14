@@ -21,6 +21,10 @@ on:
         default: "**/pom.xml"
         required: false
         type: string
+      maven-lifecycle:
+        description: 'Maven lifecycle phase'
+        required: false
+        default: 'test'
 
 
 jobs:
@@ -142,4 +146,4 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build with Maven
-        run: mvn -B test
+        run: mvn ${{ github.event.inputs.maven-lifecycle }}
