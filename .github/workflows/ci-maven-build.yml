@@ -23,6 +23,7 @@ on:
         type: string
       maven-lifecycle:
         description: 'Maven lifecycle phase'
+        type: string
         required: false
         default: 'test'
 
