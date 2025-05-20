@@ -148,7 +148,7 @@ jobs:
             echo "author-username=${{ steps.set-author-info.outputs.author-username }}"
             echo "dependabot=${{ steps.check-dependabot.outputs.dependabot }}"
             echo "image-name=${{ inputs.image-name }}"
-            echo "image=${{ inputs.container-registry }}/${{ inputs.image-name }}:${{ inputs.image-version }}@${{ inputs.image-digest }}"
+            echo "image=${{ steps.set-container-registry.outputs.container-registry }}/${{ inputs.image-name }}:${{ inputs.image-version }}@${{ inputs.image-digest }}"
             echo "pr-labels=${{ steps.set-pr-labels-and-number.outputs.pr-labels }}"
             echo "pr-number=${{ steps.set-pr-labels-and-number.outputs.pr-number }}"
             echo "repository=${{ github.repository }}"
