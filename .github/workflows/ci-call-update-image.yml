@@ -103,9 +103,9 @@ jobs:
         id: set-container-registry
         run: |
           if [[ "${{ inputs.lifecycle }}" == "deployment" ]]; then
-            echo "container-registry=${{ vars.CR_DEPLOYMENT_URL }}" >> $GITHUB_OUTPUT
+            echo "container-registry=${{ vars.CR_DEPLOYMENT_URL }}" >> "$GITHUB_OUTPUT"
           elif [[ "${{ inputs.lifecycle }}" == "development" ]]; then
-            echo "container-registry=${{ vars.CR_DEV_URL }}" >> $GITHUB_OUTPUT
+            echo "container-registry=${{ vars.CR_DEV_URL }}" >> "$GITHUB_OUTPUT"
           else
             echo "Invalid lifecycle type. Supported types are: \`deployment\`, and \`development\`" >> "$GITHUB_STEP_SUMMARY"
           fi

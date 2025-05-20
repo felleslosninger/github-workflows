@@ -109,11 +109,11 @@ jobs:
         id: set-container-registry
         run: |
           if [[ "${{ inputs.lifecycle }}" == "deployment" ]]; then
-            echo "sp-container-registry-client-id=AZURE_CLIENT_ID" >> $GITHUB_OUTPUT
-            echo "container-registry=${{ vars.CR_DEPLOYMENT_URL }}" >> $GITHUB_OUTPUT
+            echo "sp-container-registry-client-id=AZURE_CLIENT_ID" >> "$GITHUB_OUTPUT"
+            echo "container-registry=${{ vars.CR_DEPLOYMENT_URL }}" >> "$GITHUB_OUTPUT"
           elif [[ "${{ inputs.lifecycle }}" == "development" ]]; then
-            echo "sp-container-registry-client-id=CR_DEV_USERNAME" >> $GITHUB_OUTPUT
-            echo "container-registry=${{ vars.CR_DEV_URL }}" >> $GITHUB_OUTPUT
+            echo "sp-container-registry-client-id=CR_DEV_USERNAME" >> "$GITHUB_OUTPUT"
+            echo "container-registry=${{ vars.CR_DEV_URL }}" >> "$GITHUB_OUTPUT"
           else
             echo "Invalid lifecycle type. Supported types are: \`deployment\`, and \`development\`" >> "$GITHUB_STEP_SUMMARY"
           fi

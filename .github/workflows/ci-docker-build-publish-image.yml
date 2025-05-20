@@ -48,7 +48,8 @@ on:
         type: string
 
       sp-container-registry-client-id:
-        required: true
+        required: false
+        default: "AZURE_CLIENT_ID"
         type: string
         description: Service Principal used for container registry in inputs
 
