@@ -78,7 +78,7 @@ on:
 
       image-digest:
         description: "Docker image SHA256 digest"
-        value: ${{ jobs.run-spring-boot-build.outputs.image-digest || jobs.run-quarkus-build.outputs.image-digest || jobs.run-docker-build.outputs.image-digest }} 
+        value: ${{ jobs.run-spring-boot-build.outputs.image-digest || jobs.run-quarkus-build.outputs.image-digest || jobs.run-docker-build.outputs.image-digest }}
 
 jobs:
   inputs-to-summary:
