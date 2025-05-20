@@ -35,10 +35,11 @@ on:
       deployment-environment:
         required: true
         type: string
+      # Default should follow ArgoCD version
       kustomize-version:
         required: false
+        default: 5.4.3
         type: string
-        default: "5.0.3"
       lifecycle:
         required: false
         default: "deployment"
@@ -76,7 +77,7 @@ jobs:
           GIT_MSG: ${{ github.event.head_commit.message }}
         run: |
           JIID=$(echo "$GIT_MSG" | head -1 |
-          grep -Eo '^([a-zA-Z]{2,6}-[0-9]+)') || JIID=''
+          grep -Eo '([a-zA-Z]{2,6}-[0-9]+)') || JIID=''
           echo "jira-id=$JIID" >> "$GITHUB_ENV"
 
       - name: Get Labels
@@ -112,7 +113,7 @@ jobs:
       - name: Set Dependabot As Jira ID
         id: output-dependabot
         if: |
-          steps.find-jira-id.outputs.match == '' && 
+          steps.find-jira-id.outputs.match == '' &&
           steps.check-dependabot.outputs.dependabot == 'true'
         run: echo "jira-id=Dependabot" >> "$GITHUB_ENV"
 

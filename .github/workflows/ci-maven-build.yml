@@ -17,6 +17,15 @@ on:
         default: "./"
         required: false
         type: string
+      cache-path:
+        default: "**/pom.xml"
+        required: false
+        type: string
+      maven-lifecycle:
+        description: 'Maven lifecycle phase (test, package, verify, install)'
+        type: string
+        required: false
+        default: 'test'
 
 
 jobs:
@@ -30,7 +39,7 @@ jobs:
             const REGEX = new RegExp("^[^…]+$");  // Title must match this regex
             const MIN_LENGTH = 10;                 // Min length of the title
             const MAX_LENGTH = 100;                // Max length of the title (-1 is no max)
-            const ALLOWED_PREFIXES = ['Bump','ID-','MIN-','PBLEID-','MP-','KRR-','PF-','AOS-','SP-','EIN-','EUW-'];          // Title must start with one of these prefixes
+            const ALLOWED_PREFIXES = ['Bump','ID-','MIN-','PBLEID-','MP-','KRR-','PF-','AOS-','SP-','EIN-','EUW-','MOVE-'];          // Title must start with one of these prefixes
             const PREFIX_CASE_SENSITIVE = false;  // Whether the prefix is case sensitive
 
             const validateTitlePrefix = (title, prefix) =>
@@ -109,13 +118,8 @@ jobs:
         with:
           distribution: "liberica"
           java-version: ${{ inputs.java-version }}
-
-      - name: Cache Maven packages
-        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # pin@v4.2.0
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
+          cache: maven
+          cache-dependency-path: ${{ inputs.cache-path }}
 
       - uses: s4u/maven-settings-action@64e42c454dbd42ef6370ac8539685755aedd205b # pin@v3.1.0
         with:
@@ -142,5 +146,15 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build with Maven
-        run: mvn -B test
+      - name: Run mvn ${{ inputs.maven-lifecycle }}
+        run: |
+          LIFECYCLE="${{ inputs.maven-lifecycle }}"
+          case "$LIFECYCLE" in 
+            test|package|verify|install)
+              mvn -B "$LIFECYCLE"
+              ;;
+            *)
+              echo "Invalid Maven lifecycle: $LIFECYCLE"
+              exit 1
+              ;;
+          esac
