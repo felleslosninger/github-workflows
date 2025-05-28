@@ -41,6 +41,18 @@ on:
         required: false
         type: boolean
 
+      container-registry:
+        description: Azure Container Registry name
+        default: "creiddev.azurecr.io"
+        required: false
+        type: string
+
+      sp-container-registry-client-id:
+        required: false
+        default: "AZURE_CLIENT_ID"
+        type: string
+        description: Service Principal used for container registry in inputs
+
     outputs:
       image-version:
         description: "Docker image version"
@@ -53,11 +65,6 @@ on:
 jobs:
   build-publish-image:
     runs-on: ubuntu-latest
-
-    env:
-      REPOSITORY-NAME: ${{ github.event.repository.name }}
-      DOCKLE_HOST: "unix:///var/run/docker.sock"
-      TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
 
     outputs:
       image-tag: ${{ steps.set-image-tag.outputs.image-tag }}
@@ -78,7 +85,7 @@ jobs:
       - name: Set image name
         id: set-image-name
         run: |
-          image_name=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || github.event.repository.name }}
+          image_name=${{ inputs.container-registry }}/${{ inputs.image-name || github.event.repository.name }}
           echo "image-name=$image_name" >> "$GITHUB_OUTPUT"
           echo "- Image name: $image_name" >> "$GITHUB_STEP_SUMMARY"
 
@@ -132,14 +139,14 @@ jobs:
       - name: Login to ACR
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          client-id: ${{ secrets[inputs.sp-container-registry-client-id] }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Login to Azure Container Registry
         run: az acr login --name "$ACR_NAME"
         env:
-          ACR_NAME: ${{ vars.ACR_NAME }}
+          ACR_NAME: ${{ inputs.container-registry }}
 
       - name: "Push image"
         run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}

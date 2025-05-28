@@ -35,10 +35,15 @@ on:
       deployment-environment:
         required: true
         type: string
+      # Default should follow ArgoCD version
       kustomize-version:
         required: false
+        default: 5.4.3
         type: string
-        default: "5.0.3"
+      lifecycle:
+        required: false
+        default: "deployment"
+        type: string
 
 jobs:
   # Job to prepare payload and set outputs
@@ -94,10 +99,21 @@ jobs:
         run: |
           echo "dependabot=${{ contains(steps.set-pr-labels-and-number.outputs.pr-labels, 'dependencies') }}" >> "$GITHUB_OUTPUT"
 
+      - name: Set container registry
+        id: set-container-registry
+        run: |
+          if [[ "${{ inputs.lifecycle }}" == "deployment" ]]; then
+            echo "container-registry=${{ vars.CR_DEPLOYMENT_URL }}" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ inputs.lifecycle }}" == "development" ]]; then
+            echo "container-registry=${{ vars.CR_DEV_URL }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "Invalid lifecycle type. Supported types are: \`deployment\`, and \`development\`" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Set Dependabot As Jira ID
         id: output-dependabot
         if: |
-          steps.find-jira-id.outputs.match == '' && 
+          steps.find-jira-id.outputs.match == '' &&
           steps.check-dependabot.outputs.dependabot == 'true'
         run: echo "jira-id=Dependabot" >> "$GITHUB_ENV"
 
@@ -131,8 +147,8 @@ jobs:
             echo "author-name=${{ steps.set-author-info.outputs.author-name }}"
             echo "author-username=${{ steps.set-author-info.outputs.author-username }}"
             echo "dependabot=${{ steps.check-dependabot.outputs.dependabot }}"
-            echo "image-name=${{ vars.REGISTRY_URL }}/${{ inputs.image-name }}"
-            echo "image=${{ vars.REGISTRY_URL }}/${{ inputs.image-name }}:${{ inputs.image-version }}@${{ inputs.image-digest }}"
+            echo "image-name=${{ inputs.image-name }}"
+            echo "image=${{ steps.set-container-registry.outputs.container-registry }}/${{ inputs.image-name }}:${{ inputs.image-version }}@${{ inputs.image-digest }}"
             echo "pr-labels=${{ steps.set-pr-labels-and-number.outputs.pr-labels }}"
             echo "pr-number=${{ steps.set-pr-labels-and-number.outputs.pr-number }}"
             echo "repository=${{ github.repository }}"
@@ -189,7 +205,7 @@ jobs:
                 "image-digest": "${{ inputs.image-digest }}",
                 "image-name": "${{ steps.set-outputs.outputs.image-name }}",
                 "image-version": "${{ inputs.image-version }}",
-                "image": "${{ steps.set-outputs.outputs.image-name }}:${{inputs.image-version}}@${{inputs.image-digest}}",
+                "image": "${{ steps.set-container-registry.outputs.container-registry }}/${{ steps.set-outputs.outputs.image-name }}:${{inputs.image-version}}@${{inputs.image-digest}}",
                 "jira-id": "${{ env.jira-id }}",
                 "kubernetes-repo": "${{ inputs.kubernetes-repo }}",
                 "pr-labels": "${{ steps.set-outputs.outputs.pr-labels }}",
