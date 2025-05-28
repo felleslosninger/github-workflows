@@ -66,6 +66,11 @@ on:
         type: boolean
         default: false
 
+      lifecycle:
+        required: false
+        default: "deployment"
+        type: string
+
     outputs:
       image-version:
         description: "Docker image version"
@@ -87,10 +92,9 @@ jobs:
 
   input-checks:
     runs-on: ubuntu-latest
-
-    env:
-      DOCKLE_HOST: "unix:///var/run/docker.sock"
-      TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
+    outputs:
+      container-registry: ${{ steps.set-container-registry.outputs.container-registry }}
+      sp-container-registry-client-id: ${{ steps.set-container-registry.outputs.sp-container-registry-client-id }}
 
     steps:
       - name: Check for supported application-type
@@ -99,6 +103,19 @@ jobs:
           if [[ ${{ inputs.application-type }} != "spring-boot" && ${{ inputs.application-type }} != "quarkus" && ${{ inputs.application-type }} != "docker" ]]; then
             echo "Invalid application type. Supported types are: \`spring-boot\`, \`quarkus\` and \`docker\`" >> "$GITHUB_STEP_SUMMARY"
             exit 1
+          fi
+
+      - name: Set container registry
+        id: set-container-registry
+        run: |
+          if [[ "${{ inputs.lifecycle }}" == "deployment" ]]; then
+            echo "sp-container-registry-client-id=AZURE_CLIENT_ID" >> "$GITHUB_OUTPUT"
+            echo "container-registry=${{ vars.CR_DEPLOYMENT_URL }}" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ inputs.lifecycle }}" == "development" ]]; then
+            echo "sp-container-registry-client-id=CR_DEV_USERNAME" >> "$GITHUB_OUTPUT"
+            echo "container-registry=${{ vars.CR_DEV_URL }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "Invalid lifecycle type. Supported types are: \`deployment\`, and \`development\`" >> "$GITHUB_STEP_SUMMARY"
           fi
 
   run-spring-boot-build:
@@ -115,6 +132,8 @@ jobs:
       application-path: ${{ inputs.application-path }}
       cache-path: ${{ inputs.cache-path }}
       update-versions: ${{ inputs.update-versions }}
+      container-registry: ${{ needs.input-checks.outputs.container-registry }}
+      sp-container-registry-client-id: ${{ needs.input-checks.outputs.sp-container-registry-client-id }}
     secrets: inherit
 
   run-quarkus-build:
@@ -128,6 +147,8 @@ jobs:
       java-version: ${{ inputs.java-version }}
       slack-channel-id: ${{ inputs.slack-channel-id }}
       native: ${{ inputs.native }}
+      container-registry: ${{ needs.input-checks.outputs.container-registry }}
+      sp-container-registry-client-id: ${{ needs.input-checks.outputs.sp-container-registry-client-id }}
     secrets: inherit
 
   run-docker-build:
@@ -142,4 +163,6 @@ jobs:
       slack-channel-id: ${{ inputs.slack-channel-id }}
       application-path: ${{ inputs.application-path }}
       add-git-package-token: ${{ inputs.add-git-package-token }}
+      container-registry: ${{ needs.input-checks.outputs.container-registry }}
+      sp-container-registry-client-id: ${{ needs.input-checks.outputs.sp-container-registry-client-id }}
     secrets: inherit

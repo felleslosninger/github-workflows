@@ -38,6 +38,18 @@ on:
         type: boolean
         default: false
 
+      container-registry:
+        description: Azure Container Registry name
+        default: "creiddev.azurecr.io"
+        required: false
+        type: string
+
+      sp-container-registry-client-id:
+        required: false
+        default: "AZURE_CLIENT_ID"
+        type: string
+        description: Service Principal used for container registry in inputs
+
     outputs:
       image-version:
         description: "Docker image version"
@@ -78,7 +90,7 @@ jobs:
 
       - name: Set IMAGE-NAME env variable
         run: |
-          echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
+          echo "IMAGE-NAME=${{ inputs.container-registry }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
 
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4.2.2
@@ -182,14 +194,14 @@ jobs:
       - name: Login to ACR
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          client-id: ${{ secrets[inputs.sp-container-registry-client-id] }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Login to Azure Container Registry
         run: az acr login --name "$ACR_NAME"
         env:
-          ACR_NAME: ${{ vars.ACR_NAME }}
+          ACR_NAME: ${{ inputs.container-registry }}
 
       - name: Push image
         run: docker push ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
