@@ -39,6 +39,11 @@ on:
         default: "**/pom.xml"
         required: false
         type: string
+      fetch-depth:
+        description: Fetch depth
+        default: 1
+        required: false
+        type: number
 
 
 jobs:
@@ -46,7 +51,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4.2.2
-
+        with:
+          fetch-depth: ${{ inputs.fetch-depth }}
       - name: Set up JDK ${{ inputs.java-version }}
         uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # pin@v4.7.0
         with:
