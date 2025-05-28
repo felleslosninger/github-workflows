@@ -10,6 +10,12 @@ on:
         required: false
         type: string
 
+      registry-url:
+        description: URL of the Docker container registry (e.g., ghcr.io)
+        default: "ghcr.io/felleslosninger"
+        required: false
+        type: string    
+
       image-name:
         description: Name of Docker image
         required: false
@@ -104,7 +110,7 @@ jobs:
       - name: Set image name
         id: set-image-name
         run: |
-          image_name=ghcr.io/${{ inputs.image-name || github.event.repository.name }}
+          image_name=${{ inputs.registry-url }}/${{ inputs.image-name || github.event.repository.name }}
           echo "image-name=$image_name" >> "$GITHUB_OUTPUT"
           echo "- Image name: $image_name" >> "$GITHUB_STEP_SUMMARY"
 
