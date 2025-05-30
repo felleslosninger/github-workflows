@@ -107,10 +107,6 @@ jobs:
         run: |
           mvn -B clean install --update-snapshots
 
-      - uses: anchore/sbom-action@f325610c9f50a54015d37c8d16cb3b0e2c8f4de0 # pin@v0.18.0
-        with:
-          path: ${{ inputs.sbom-path }}
-
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # pin@v0.29.0
         id: trivy-maven
@@ -122,11 +118,7 @@ jobs:
           scan-ref: '.'
           exit-code: "1"
           severity: "CRITICAL,HIGH"
-          format: 'sarif'
-          output: 'trivy-results.sarif'
 
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@ff0a06e83cb2de871e5a09832bc6a81e7276941f # pin@v3.28.18
-        if: always()
+      - uses: anchore/sbom-action@f325610c9f50a54015d37c8d16cb3b0e2c8f4de0 # pin@v0.18.0
         with:
-          sarif_file: 'trivy-results.sarif'
+          path: ${{ inputs.sbom-path }}
