@@ -117,7 +117,7 @@ jobs:
           scan-type: 'fs'
           scan-ref: '.'
           exit-code: "1"
-          severity: "CRITICAL,HIGH"
+          severity: "CRITICAL,HIGH,MEDIUM,LOW"
 
       - uses: anchore/sbom-action@f325610c9f50a54015d37c8d16cb3b0e2c8f4de0 # pin@v0.18.0
         with:
