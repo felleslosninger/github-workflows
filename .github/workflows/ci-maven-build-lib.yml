@@ -22,6 +22,10 @@ on:
         default: "**/pom.xml"
         required: false
         type: string
+      application-path:
+        default: "./"
+        required: false
+        type: string
 
 jobs:
   verify-pull-request-title:
@@ -107,6 +111,15 @@ jobs:
         run: |
           mvn -B clean install --update-snapshots
 
+      - name: Set trivyignore env if file exists
+        id: set-trivyignore-path
+        run: |
+          if [ -f "${{ inputs.application-path }}.trivyignore" ]; then
+            trivyignore_path=${{ inputs.application-path }}.trivyignore
+            echo "trivyignore-path=$trivyignore_path" >> "$GITHUB_OUTPUT"
+            echo "- Trivy ignore path: $trivyignore_path" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # pin@v0.29.0
         id: trivy-maven
@@ -118,6 +131,7 @@ jobs:
           scan-ref: '.'
           exit-code: "1"
           severity: "CRITICAL,HIGH"
+          trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
 
       - uses: anchore/sbom-action@f325610c9f50a54015d37c8d16cb3b0e2c8f4de0 # pin@v0.18.0
         with:
