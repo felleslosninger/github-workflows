@@ -138,7 +138,7 @@ jobs:
           fi
 
       - name: Run yamllint
-        if: steps.yaml-files-exists.outputs.file_exists == 'true'
+        if: steps.yaml-files-exists.outputs.file-exists == 'true'
         uses: ibiqlik/action-yamllint@2576378a8e339169678f9939646ee3ee325e845c # pin@v3.1.1
         with:
           file_or_dir: ${{ inputs.application-path }}src/main/resources/application*.y*ml
