@@ -121,13 +121,18 @@ jobs:
       - name: Check if YAML files exist
         id: yaml-files-exists
         run: |
-          if [ -f "${{ inputs.application-path }}src/main/resources/application*.y*ml" ]; then
+          FILE_PATTERN="${{ inputs.application-path }}src/main/resources/application*.y*ml"
+
+          # 'ls' will exit with a non-zero code if no files match the glob
+          # pattern. Output (stdout and stderr) is redirected to /dev/null to
+          # keep logs clean, as we only care about the exit status.
+          if ls $FILE_PATTERN >/dev/null 2>&1; then
             echo "file-exists=true" >> "$GITHUB_OUTPUT"
-            echo "- \`${{ inputs.application-path }}src/main/resources/application*.y*ml\` file exists :white_check_mark:" >> "$GITHUB_STEP_SUMMARY"            
+            echo "- :white_check_mark: Found one or more files matching \`$FILE_PATTERN\`" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "file-exists=false" >> "$GITHUB_OUTPUT"
             {
-              echo "- \`${{ inputs.application-path }}src/main/resources/application*.y*ml\` file exists :x:"
+              echo "- :x: No files found matching \`$FILE_PATTERN\`"
               echo "  - Skipping yamllint"
             } >> "$GITHUB_STEP_SUMMARY"
           fi
