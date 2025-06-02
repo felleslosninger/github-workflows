@@ -89,7 +89,7 @@ jobs:
           TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
         with:
           scan-type: 'fs'
-          scan-ref: '.'
+          scan-ref: '${{ inputs.application-path }}'
           exit-code: "1"
           severity: "CRITICAL,HIGH"
           trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
