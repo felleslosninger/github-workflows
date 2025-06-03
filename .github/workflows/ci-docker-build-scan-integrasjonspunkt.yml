@@ -1,4 +1,4 @@
-name: Build/publish Docker image
+name: Build and scan Docker image
 
 on:
   workflow_call:
