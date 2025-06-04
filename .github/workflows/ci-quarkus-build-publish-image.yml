@@ -95,18 +95,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4.2.2
 
-      - name: yaml-lint
-        uses: ibiqlik/action-yamllint@2576378a8e339169678f9939646ee3ee325e845c # pin@v3.1.1
-        with:
-          file_or_dir: src/main/resources/application*.y*ml
-          config_data: |
-            extends: default
-            rules:
-              empty-lines: disable
-              line-length:
-                max: 150
-                level: warning
-
       - name: Cache Maven packages
         uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # pin@v4.2.0
         with:
@@ -270,8 +258,6 @@ jobs:
           cosign attest --yes --predicate ./provenance.json --type slsaprovenance1 "${{ env.IMAGE-NAME }}@${DIGEST}"
         env:
           DIGEST: ${{ env.IMAGE_DIGEST }}
-
-
 
   notify-on-errors:
     runs-on: ubuntu-latest

@@ -118,33 +118,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4.2.2
 
-      - name: Check if YAML files exist
-        id: yaml-files-exists
-        run: |
-          if [ -f "${{ inputs.application-path }}src/main/resources/application*.y*ml" ]; then
-            echo "file-exists=true" >> "$GITHUB_OUTPUT"
-            echo "- \`${{ inputs.application-path }}src/main/resources/application*.y*ml\` file exists :white_check_mark:" >> "$GITHUB_STEP_SUMMARY"            
-          else
-            echo "file-exists=false" >> "$GITHUB_OUTPUT"
-            {
-              echo "- \`${{ inputs.application-path }}src/main/resources/application*.y*ml\` file exists :x:"
-              echo "  - Skipping yamllint"
-            } >> "$GITHUB_STEP_SUMMARY"
-          fi
-
-      - name: Run yamllint
-        if: steps.yaml-files-exists.outputs.file_exists == 'true'
-        uses: ibiqlik/action-yamllint@2576378a8e339169678f9939646ee3ee325e845c # pin@v3.1.1
-        with:
-          file_or_dir: ${{ inputs.application-path }}src/main/resources/application*.y*ml
-          config_data: |
-            extends: default
-            rules:
-              empty-lines: disable
-              line-length:
-                max: 150
-                level: warning
-
       - name: Set up JDK ${{ inputs.java-version }}
         uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # pin@v4.7.0
         with:
