@@ -113,7 +113,7 @@ jobs:
             MAVEN_CMD="$MAVEN_CMD -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/${{ inputs.deployment-repository }}"
           fi
           
-          cd ${{ inputs.application-path }} # Move into module if multi module project, default is "./" so no operation if not specified.
+          cd ${{ inputs.application-path }} # Move into module path if multi module project, default is "./" so no operation if not specified.
           $MAVEN_CMD
 
       - name: Set artifact id
