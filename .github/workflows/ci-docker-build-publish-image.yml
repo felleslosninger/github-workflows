@@ -163,7 +163,7 @@ jobs:
 
       - name: Install Cosign
         if: ${{ inputs.image-signing == true }}
-        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # pin@v3.7.0
+        uses: sigstore/cosign-installer@fb28c2b6339dcd94da6e4cbcbc5e888961f6f8c3 # pin@v3.9.0
 
       - name: Generate Provenance Metadata
         if: ${{ inputs.image-signing == true }}
