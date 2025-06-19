@@ -71,6 +71,14 @@ jobs:
             echo "| kustomize-version       | ${{ inputs.kustomize-version }}       |"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Check important image inputs
+        if: |
+          inputs.image-version == '' ||
+          inputs.image-digest == ''
+        run: |
+          echo "One or more empty image inputs detected. Exiting" >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
       - name: Find Jira ID
         id: find-jira-id
         env:
