@@ -119,8 +119,8 @@ jobs:
           docker build \
             --tag ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
             --file ${{ inputs.application-path }}/docker/Dockerfile \
-            --build-arg GIT_PACKAGE_TOKEN=${{ secrets.GITHUB_TOKEN }} \
-            --build-arg GIT_PACKAGE_USERNAME=${{ github.actor }} \
+            --build-arg GIT_PACKAGE_TOKEN=${{ secrets.GH_PACKAGES_READ_PAT }} \
+            --build-arg GIT_PACKAGE_USERNAME=${{ secrets.GH_PACKAGES_READ_USER }} \
             .
 
       - name: Run Trivy vulnerability scanner
