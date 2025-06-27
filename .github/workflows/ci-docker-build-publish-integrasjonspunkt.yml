@@ -116,11 +116,12 @@ jobs:
 
       - name: Build image
         run: |
-          if [ "${{ inputs.add-git-package-token }}" = "true" ]; then
-            docker build --tag ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} --file ${{ inputs.application-path }}/docker/Dockerfile --build-arg GIT_PACKAGE_TOKEN=${{ secrets.GITHUB_TOKEN }} .
-          else
-            docker build --tag ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} --file ${{ inputs.application-path }}/docker/Dockerfile .
-          fi
+          docker build \
+            --tag ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
+            --file ${{ inputs.application-path }}/docker/Dockerfile \
+            --build-arg GIT_PACKAGE_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+            --build-arg GIT_PACKAGE_USERNAME=${{ github.actor }} \
+            .
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # pin@v0.29.0
