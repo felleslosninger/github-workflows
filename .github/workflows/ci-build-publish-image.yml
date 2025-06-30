@@ -52,6 +52,12 @@ on:
         required: false
         type: string
 
+      setup-npm-auth:
+        description: Configure private NPM registry authentication
+        default: false
+        required: false
+        type: boolean
+
       application-type:
         default: "spring-boot"
         required: false
@@ -134,6 +140,7 @@ jobs:
       update-versions: ${{ inputs.update-versions }}
       container-registry: ${{ needs.input-checks.outputs.container-registry }}
       sp-container-registry-client-id: ${{ needs.input-checks.outputs.sp-container-registry-client-id }}
+      setup-npm-auth: ${{ inputs.setup-npm-auth }}
     secrets: inherit
 
   run-quarkus-build:

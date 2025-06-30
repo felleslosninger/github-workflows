@@ -22,7 +22,7 @@ on:
         default: ""
         required: false
         type: string
-      deployment-repository: 
+      deployment-repository:
         description: Set deployment repo
         default: ""
         required: false
@@ -48,7 +48,6 @@ on:
         default: "./"
         required: false
         type: string
-
 
 jobs:
   build:
@@ -104,7 +103,7 @@ jobs:
       - name: Maven deploy
         run: |
           MAVEN_CMD="mvn -B deploy"
-          
+
           if [ "${{ inputs.profile }}" != "" ]; then
             MAVEN_CMD="$MAVEN_CMD -P${{ inputs.profile }}"
           fi
@@ -114,12 +113,35 @@ jobs:
           fi
           
           cd ${{ inputs.application-path }} # Move into module path if multi module project, default is "./" so no operation if not specified.
+
           $MAVEN_CMD
 
       - name: Set artifact id
         id: set-artifact-id
         run: |
           echo "artifact-id=${{ inputs.artifact-name }}-${{ github.run_number }}-${{ github.run_attempt }}.spdx" >> "$GITHUB_OUTPUT"
+
+      - name: Set trivyignore env if file exists
+        id: set-trivyignore-path
+        run: |
+          if [ -f "${{ inputs.application-path }}.trivyignore" ]; then
+            trivyignore_path=${{ inputs.application-path }}.trivyignore
+            echo "trivyignore-path=$trivyignore_path" >> "$GITHUB_OUTPUT"
+            echo "- Trivy ignore path: $trivyignore_path" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # pin@v0.29.0
+        id: trivy-maven
+        env:
+          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
+          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+        with:
+          scan-type: 'fs'
+          scan-ref: '${{ inputs.application-path }}'
+          exit-code: "1"
+          severity: "CRITICAL,HIGH"
+          trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
 
       - uses: anchore/sbom-action@f325610c9f50a54015d37c8d16cb3b0e2c8f4de0 # pin@v0.18.0
         with:
