@@ -246,7 +246,7 @@ jobs:
         slack-channel: ["${{ inputs.slack-channel-id }}", "C05G4B8R2GG"]
     steps:
       - name: Send Slack notification
-        uses: felleslosninger/github-actions/send-slack-notification@bb702913dc7fc7ba16f6a2ce32624ba9eaf54262 # pin@v0.7.4
+        uses: felleslosninger/github-actions/send-slack-notification@e4ba7c675762d5e9d3eeb48d6b75042e3dd325d3 # pin@v0.7.5
         with:
           slack-channel-id: ${{ matrix.slack-channel }}
           slack-bot-token: ${{ secrets.SLACK_CICD_NOTIFICATION_TOKEN }}
