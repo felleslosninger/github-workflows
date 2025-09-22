@@ -33,7 +33,7 @@ jobs:
         run: |
           echo "IMAGE-NAME=${{ env.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
 
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # pin@v5.0.0
 
       - name: Copy k6-tests to docker temp
         run: |
