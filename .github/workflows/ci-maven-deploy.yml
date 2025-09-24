@@ -49,6 +49,15 @@ jobs:
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
 
+      - name: Set trivyignore env if file exists
+        id: set-trivyignore-path
+        run: |
+          if [ -f "${{ inputs.application-path }}.trivyignore" ]; then
+            trivyignore_path=${{ inputs.application-path }}.trivyignore
+            echo "trivyignore-path=$trivyignore_path" >> "$GITHUB_OUTPUT"
+            echo "- Trivy ignore path: $trivyignore_path" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # pin@v0.33.1
         id: trivy-maven
@@ -83,15 +92,6 @@ jobs:
             echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
           else
             mvn -B deploy
-          fi
-
-      - name: Set trivyignore env if file exists
-        id: set-trivyignore-path
-        run: |
-          if [ -f "${{ inputs.application-path }}.trivyignore" ]; then
-            trivyignore_path=${{ inputs.application-path }}.trivyignore
-            echo "trivyignore-path=$trivyignore_path" >> "$GITHUB_OUTPUT"
-            echo "- Trivy ignore path: $trivyignore_path" >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # pin@v0.20.6
