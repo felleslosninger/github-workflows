@@ -143,7 +143,7 @@ jobs:
         run: |
           echo "artifact-id=${{ inputs.artifact-name }}-${{ github.run_number }}-${{ github.run_attempt }}.spdx" >> "$GITHUB_OUTPUT"
 
-      - uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # pin@v0.20.6
+      - uses: anchore/sbom-action@aa0e114b2e19480f157109b9922bda359bd98b90 # pin@v0.20.8
         with:
           path: ${{ inputs.sbom-path }}
           artifact-name: ${{ steps.set-artifact-id.outputs.artifact-id }}
