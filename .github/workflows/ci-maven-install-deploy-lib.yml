@@ -27,9 +27,6 @@ on:
         default: ""
         required: false
         type: string
-      artifact-name:
-        required: false
-        type: string
       setup-npm-auth:
         description: Configure private NPM registry authentication
         default: false
@@ -133,17 +130,11 @@ jobs:
           if [ "${{ inputs.deployment-repository }}" != "" ]; then
             MAVEN_CMD="$MAVEN_CMD -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/${{ inputs.deployment-repository }}"
           fi
-          
+
           cd ${{ inputs.application-path }} # Move into module path if multi module project, default is "./" so no operation if not specified.
 
           $MAVEN_CMD
 
-      - name: Set artifact id
-        id: set-artifact-id
-        run: |
-          echo "artifact-id=${{ inputs.artifact-name }}-${{ github.run_number }}-${{ github.run_attempt }}.spdx" >> "$GITHUB_OUTPUT"
-
       - uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # pin@v0.20.6
         with:
           path: ${{ inputs.sbom-path }}
-          artifact-name: ${{ steps.set-artifact-id.outputs.artifact-id }}
