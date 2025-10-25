@@ -296,6 +296,35 @@ jobs:
           cosign attest --yes --predicate ./provenance.json --type slsaprovenance1 "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
         env:
           DIGEST: ${{ steps.set-image-digest.outputs.image-digest }}
+          
+      # --- Install slsa-verifier ---
+      - name: Install slsa-verifier
+        if: ${{ inputs.image-signing == true }}
+        uses: slsa-framework/slsa-verifier/actions/installer@v2.7.1
+
+      # --- Verify SLSA provenance for the signed image ---
+      - name: Verify SLSA provenance (slsa-verifier)
+        if: ${{ inputs.image-signing == true }}
+        env:
+          IMAGE_NAME: ${{ steps.set-image-name.outputs.image-name }}
+          IMAGE_DIGEST: ${{ steps.set-image-digest.outputs.image-digest }}
+        run: |
+          IMAGE="${IMAGE_NAME}@${IMAGE_DIGEST}"
+          echo "🔍 Verifying SLSA provenance for $IMAGE"
+      
+          # Download the provenance attestation stored in the registry by cosign attest
+          cosign download attestation "$IMAGE" \
+            --predicate-type "https://slsa.dev/provenance/v1" \
+            > provenance.att
+      
+          # Decode base64 payload from the attestation to JSON
+          cat provenance.att | jq -r '.payload | @base64d' > provenance.json
+      
+          # Verify that the provenance matches the image and source
+          slsa-verifier verify-image "$IMAGE" \
+            --provenance-path provenance.json \
+            --source-uri "github.com/${{ github.repository }}" \
+            --source-tag "${{ github.ref_name }}"
 
   notify-on-errors:
     runs-on: ubuntu-latest
