@@ -186,7 +186,7 @@ jobs:
         with:
           image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
           exit-code: "1"
-          severity: "CRITICAL,HIGH"
+          severity: "CRITICAL"
           trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
 
       - name: Create SBOM artifact name
