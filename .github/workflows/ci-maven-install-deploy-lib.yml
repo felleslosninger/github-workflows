@@ -78,6 +78,15 @@ jobs:
         run: |
           mkdir -p ~/.m2
           echo "<settings><servers><server><id>github</id><username>${{ secrets.GH_PACKAGES_READ_USER }}</username><password>${{ secrets.GH_PACKAGES_READ_PAT }}</password></server></servers></settings>" > ~/.m2/settings.xml
+      
+      - name: Set version
+        run: |
+          if [ "${{ inputs.package-version }}" != "" ]; then
+            mvn versions:set -B -DnewVersion="${{ inputs.package-version }}"
+            echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Maven install
         run: |
@@ -112,15 +121,6 @@ jobs:
       - name: Overwrite m2 settings to publish libs
         run: |
           echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
-
-      - name: Set version
-        run: |
-          if [ "${{ inputs.package-version }}" != "" ]; then
-            mvn versions:set -B -DnewVersion="${{ inputs.package-version }}"
-            echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
-          fi
 
       - name: Maven deploy
         run: |
