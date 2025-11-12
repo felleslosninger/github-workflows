@@ -241,11 +241,11 @@ jobs:
           echo "- Image digest: $image_digest" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Image signing
+        if: ${{ inputs.image-signing == true }}
         uses: felleslosninger/github-workflows-internal/image-signing@image-signing-as-composite-action
         with:
-          image-signing: ${{ inputs.image-signing }}
-          image-name: ${{ inputs.image-name }}
-          image-tag: ${{ inputs.image-tag }}
+          image: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}"
+          subject: ${{ github.event.repository.name }}
 
   notify-on-errors:
     runs-on: ubuntu-latest
