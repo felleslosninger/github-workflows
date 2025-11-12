@@ -246,6 +246,8 @@ jobs:
         with:
           image: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}"
           subject: ${{ github.event.repository.name }}
+          digest: ${{ jobs.build-publish-image.outputs.image-digest }}
+
 
   notify-on-errors:
     runs-on: ubuntu-latest
