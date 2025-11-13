@@ -22,6 +22,16 @@ on:
         default: "libs"
         required: false
         type: string
+      k6-jwt-folder:
+        description: jwtbearer once everything is ok this can be removed
+        default: "jwtbearer"
+        required: false
+        type: string
+      k6-docker-folder:
+        description: docker folder ,once everything is ok this can be removed
+        default: "docker-new"
+        required: false
+        type: string
     outputs:
       image-version:
         description: "Docker image version"
@@ -67,7 +77,10 @@ jobs:
           cp -R ${{ inputs.k6-folder }}/* docker/k6-tests/
           mkdir docker/${{ inputs.k6-libs-folder }}
           cp -R ${{ inputs.k6-libs-folder }}/* docker/${{ inputs.k6-libs-folder }}/
-
+          mkdir docker/${{ inputs.k6-jwt-folder }}
+          cp -R ${{ inputs.k6-jwt-folder }}/* docker/${{ inputs.k6-jwt-folder }}/
+          mkdir docker/${{ inputs.k6-docker-folder }}
+          cp -R ${{ inputs.k6-docker-folder }}/* docker/${{ inputs.k6-docker-folder }}/
       - name: Build the tagged Docker image
         run: docker build --tag ${{env.IMAGE_NAME}}:${{env.IMAGETAG}} docker/
 
