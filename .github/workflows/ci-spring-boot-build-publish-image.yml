@@ -244,10 +244,8 @@ jobs:
         if: ${{ inputs.image-signing == true }}
         uses: felleslosninger/github-workflows-internal/image-signing@main
         with:
-          image: ${{ steps.set-image-name.outputs.image-name }}
+          image: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}@${{ steps.set-image-digest.outputs.image-digest }}
           subject: ${{ github.event.repository.name }}
-          digest: ${{ steps.set-image-digest.outputs.image-digest }}
-
 
   notify-on-errors:
     runs-on: ubuntu-latest
