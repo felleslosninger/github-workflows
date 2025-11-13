@@ -242,7 +242,7 @@ jobs:
 
       - name: Image signing
         if: ${{ inputs.image-signing == true }}
-        uses: felleslosninger/github-workflows-internal/image-signing@image-signing-as-composite-action
+        uses: felleslosninger/github-workflows-internal/image-signing@main
         with:
           image: ${{ steps.set-image-name.outputs.image-name }}
           subject: ${{ github.event.repository.name }}
