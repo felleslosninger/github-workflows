@@ -84,6 +84,10 @@ jobs:
       - name: Build the tagged Docker image
         run: docker build --tag ${{env.IMAGE_NAME}}:${{env.IMAGETAG}} docker/
 
+      - name: Build the tagged Docker image for ny image
+        run: docker build --tag ${{env.IMAGE_NAME}}:${{env.IMAGETAG}} docker-new/
+
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # pin@v0.33.1
         id: trivy-primary
