@@ -89,7 +89,7 @@ jobs:
 
       # Build docker/ for everything else
       - name: Build the tagged Docker image
-        if: "!contains(env.IMAGE_NAME, 'new-maskinporten-tests')"
+        if: ${{ !contains(env.IMAGE_NAME, 'new-maskinporten-tests') }}
         run: docker build --tag "${{ env.IMAGE_NAME }}:${{ env.IMAGETAG }}" docker/
 
       - name: Run Trivy vulnerability scanner
