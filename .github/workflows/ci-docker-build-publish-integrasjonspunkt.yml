@@ -179,62 +179,11 @@ jobs:
           echo "image-digest=$image_digest" >> "$GITHUB_OUTPUT"
           echo "- Image digest: $image_digest" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Install Cosign
+      - name: Image signing
         if: ${{ inputs.image-signing == true }}
-        uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # pin@v3.10.0
-
-      - name: Generate Provenance Metadata
-        if: ${{ inputs.image-signing == true }}
-        run: |
-          # Generate provenance data according to spec https://slsa.dev/spec/v1.0/provenance
-          cat <<EOF > ./provenance.json
-          {
-            "_type": "https://slsa.dev/provenance/v1",
-            "subject": [
-              {
-                "name": "${{ steps.set-image-name.outputs.image-name }}",
-                "digest": {
-                  "sha256": "${DIGEST}"
-                }
-              }
-            ],
-            "buildDefinition": {
-              "buildType": "https://github.com/github-actions/build",
-              "externalParameters": {
-                "image": "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}",
-                "commit": "${{ github.sha }}",
-                "author": "${{ github.actor }}",
-                "job": "${{ github.job }}",
-                "repositoryOwnerId": "${{ github.repository_owner_id }}"
-              }
-            },
-            "runDetails": {
-              "builder": {
-                "id": "${{ github.workflow_ref }}"
-              },
-              "metadata": {
-                "invocationId": "${{ github.run_id }}",
-                "startedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-              }
-            },
-            "materials": [
-              {
-                "uri": "git+https://github.com/${{ github.repository }}.git",
-                "digest": {
-                  "sha1": "${{ github.sha }}"
-                }
-              }
-            ]
-          }
-          EOF
-
-      - name: Sign the image
-        if: ${{ inputs.image-signing == true }}
-        run: |
-          cosign sign --yes "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
-          cosign attest --yes --predicate ./provenance.json --type slsaprovenance1 "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
-        env:
-          DIGEST: ${{ steps.set-image-digest.outputs.image-digest }}
+        uses: felleslosninger/github-workflows-internal/image-signing@image-signing-as-composite-action
+        with:
+          image: ${{ steps.set-image-name.outputs.image-name }}:${{ inputs.package-version }}@${{ steps.set-image-digest.outputs.image-digest }}  
 
 
   notify-on-errors:
