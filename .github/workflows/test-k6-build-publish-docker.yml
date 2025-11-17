@@ -91,7 +91,8 @@ jobs:
           mkdir ${{ inputs.docker-context }}/${{ inputs.k6-jwt-folder }}
           cp -R ${{ inputs.k6-jwt-folder }}/* ${{ inputs.docker-context }}/${{ inputs.k6-jwt-folder }}/
       - name: Build the tagged Docker image
-        run: docker buildx build \
+        run: | 
+          docker buildx build \
           --file "${{ inputs.docker-context }}/${{ inputs.dockerfile }}" \
           --tag "${{ env.IMAGE-NAME}}:${{ env.IMAGETAG }}" \
           --load \
