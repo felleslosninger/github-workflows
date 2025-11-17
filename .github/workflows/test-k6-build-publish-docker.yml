@@ -104,7 +104,7 @@ jobs:
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
           TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
         with:
-          image-ref: ${{env.IMAGE_NAME}}:${{env.IMAGETAG}}
+          image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
           exit-code: "1"
           severity: "CRITICAL,HIGH"
 
@@ -122,12 +122,12 @@ jobs:
 
       - name: "Build the tagged Docker image"
         run: |
-          docker push ${{env.IMAGE_NAME}}:${{env.IMAGETAG}}
-          docker image tag ${{env.IMAGE_NAME}}:${{env.IMAGETAG}} ${{env.IMAGE_NAME}}:latest && docker push ${{env.IMAGE_NAME}}:latest
+          docker push ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
+          docker image tag ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} ${{env.IMAGE-NAME}}:latest && docker push ${{env.IMAGE-NAME}}:latest
 
       - name: "Set image digest"
         run: |
-          echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE_NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
+          echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
 
       - id: output-image-tag
         run: echo "imagetag=${{env.IMAGETAG}}" >> "$GITHUB_OUTPUT"
