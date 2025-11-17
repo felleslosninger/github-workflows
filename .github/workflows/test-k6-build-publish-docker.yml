@@ -94,6 +94,7 @@ jobs:
         run: docker build \
           --file "${{ inputs.docker-context }}/${{ inputs.dockerfile }}" \
           --tag "${{ env.IMAGE-NAME }}:${{ env.IMAGETAG }}" \
+          --load \
           "${{ inputs.docker-context }}"
 
       - name: Run Trivy vulnerability scanner
