@@ -67,9 +67,9 @@ jobs:
       - name: Set imagetag as env variable
         run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
 
-      - name: Set IMAGE_NAME env variable
+      - name: Set IMAGE-NAME env variable
         run: |
-          echo "IMAGE_NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.IMAGE_NAME || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
+          echo "IMAGE-NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.IMAGE-NAME || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
 
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # pin@v5.0.0
 
@@ -93,7 +93,7 @@ jobs:
       - name: Build the tagged Docker image
         run: docker buildx build \
           --file "${{ inputs.docker-context }}/${{ inputs.dockerfile }}" \
-          --tag "${{ env.IMAGE_NAME}}:${{ env.IMAGETAG }}" \
+          --tag "${{ env.IMAGE-NAME}}:${{ env.IMAGETAG }}" \
           --load \
           "${{ inputs.docker-context }}"
 
