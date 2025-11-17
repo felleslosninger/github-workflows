@@ -32,6 +32,16 @@ on:
         default: "docker-new"
         required: false
         type: string
+      docker-context:
+        description: Path to Docker build context
+        default: "docker"
+        required: false
+        type: string
+      dockerfile:
+        description: Path to Dockerfile (relative to docker-context)
+        default: "Dockerfile"
+        required: false
+        type: string
     outputs:
       image-version:
         description: "Docker image version"
@@ -74,15 +84,17 @@ jobs:
 
       - name: Copy k6-tests to docker temp
         run: |
-          cp -R ${{ inputs.k6-folder }}/* docker/k6-tests/
-          mkdir docker/${{ inputs.k6-libs-folder }}
-          cp -R ${{ inputs.k6-libs-folder }}/* docker/${{ inputs.k6-libs-folder }}/
-          mkdir docker/${{ inputs.k6-jwt-folder }}
-          cp -R ${{ inputs.k6-jwt-folder }}/* docker/${{ inputs.k6-jwt-folder }}/
-          mkdir docker/${{ inputs.k6-docker-folder }}
-          cp -R ${{ inputs.k6-docker-folder }}/* docker/${{ inputs.k6-docker-folder }}/
+          mkdir -p ${{ inputs.docker-context }}/k6-tests
+          cp -R ${{ inputs.k6-folder }}/* ${{ inputs.docker-context }}/k6-tests/
+          mkdir ${{ inputs.docker-context }}/${{ inputs.k6-libs-folder }}
+          cp -R ${{ inputs.k6-libs-folder }}/* ${{ inputs.docker-context }}/${{ inputs.k6-libs-folder }}/
+          mkdir ${{ inputs.docker-context }}/${{ inputs.k6-jwt-folder }}
+          cp -R ${{ inputs.k6-jwt-folder }}/* ${{ inputs.docker-context }}/${{ inputs.k6-jwt-folder }}/
       - name: Build the tagged Docker image
-        run: docker build --tag ${{env.IMAGE_NAME}}:${{env.IMAGETAG}} docker/
+        run: docker build \
+          --file "${{ inputs.docker-context }}/${{ inputs.dockerfile }}" \
+          --tag "${{ env.IMAGE-NAME }}:${{ env.IMAGETAG }}" \
+          "${{ inputs.docker-context }}"
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # pin@v0.33.1
