@@ -8,6 +8,11 @@ on:
         default: "11"
         required: false
         type: string
+      java-distribution:
+        description: Java distribution to use
+        default: "liberica"
+        required: false
+        type: string
       sbom-path:
         description: Target directory for SBOM generation
         default: ./target/
@@ -59,7 +64,7 @@ jobs:
       - name: Set up JDK ${{ inputs.java-version }}
         uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # pin@v5.0.0
         with:
-          distribution: "liberica"
+          distribution: "${{ inputs.java-distribution }}"
           java-version: ${{ inputs.java-version }}
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
@@ -78,7 +83,7 @@ jobs:
         run: |
           mkdir -p ~/.m2
           echo "<settings><servers><server><id>github</id><username>${{ secrets.GH_PACKAGES_READ_USER }}</username><password>${{ secrets.GH_PACKAGES_READ_PAT }}</password></server></servers></settings>" > ~/.m2/settings.xml
-      
+
       - name: Set version
         run: |
           if [ "${{ inputs.package-version }}" != "" ]; then
@@ -133,7 +138,7 @@ jobs:
           if [ "${{ inputs.deployment-repository }}" != "" ]; then
             MAVEN_CMD="$MAVEN_CMD -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/${{ inputs.deployment-repository }}"
           fi
-          
+
           cd ${{ inputs.application-path }} # Move into module path if multi module project, default is "./" so no operation if not specified.
 
           $MAVEN_CMD

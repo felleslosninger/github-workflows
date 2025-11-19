@@ -8,6 +8,11 @@ on:
         default: "11"
         required: false
         type: string
+      java-distribution:
+        description: Java distribution to use
+        default: "liberica"
+        required: false
+        type: string
       setup-npm-auth:
         description: Configure private NPM registry authentication
         default: false
@@ -26,7 +31,6 @@ on:
         type: string
         required: false
         default: 'test'
-
 
 jobs:
   verify-pull-request-title:
@@ -89,7 +93,7 @@ jobs:
       - name: Set up JDK ${{ inputs.java-version }}
         uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # pin@v5.0.0
         with:
-          distribution: "liberica"
+          distribution: "${{ inputs.java-distribution }}"
           java-version: ${{ inputs.java-version }}
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
