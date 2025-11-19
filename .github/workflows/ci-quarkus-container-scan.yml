@@ -119,7 +119,7 @@ jobs:
           SBOM_NAME=$(echo ${{env.IMAGE-NAME}} | tr '/' '-')
           echo "SBOM_ARTIFACT_ID=$SBOM_NAME" >> "$GITHUB_OUTPUT"
 
-      - uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # pin@v0.20.6
+      - uses: anchore/sbom-action@fbfd9c6c189226748411491745178e0c2017392d # pin@v0.20.10
         with:
           image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
           artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
