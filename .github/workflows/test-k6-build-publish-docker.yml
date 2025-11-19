@@ -81,8 +81,16 @@ jobs:
           cp -R ${{ inputs.k6-jwt-folder }}/* docker/${{ inputs.k6-jwt-folder }}/
           mkdir docker/${{ inputs.k6-docker-folder }}
           cp -R ${{ inputs.k6-docker-folder }}/* docker/${{ inputs.k6-docker-folder }}/
+
+      # Build docker-new/ only when IMAGE_NAME contains "new-maskinporten-tests"
+      - name: Build the tagged Docker image for new-demo-tests
+        if: contains(env.IMAGE_NAME, 'new-maskinporten-tests')
+        run: docker build --tag "${{ env.IMAGE_NAME }}:${{ env.IMAGETAG }}" docker-new/
+
+      # Build docker/ for everything else
       - name: Build the tagged Docker image
-        run: docker build --tag ${{env.IMAGE_NAME}}:${{env.IMAGETAG}} docker/
+        if: ${{ !contains(env.IMAGE_NAME, 'new-maskinporten-tests') }}
+        run: docker build --tag "${{ env.IMAGE_NAME }}:${{ env.IMAGETAG }}" docker/
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # pin@v0.33.1
