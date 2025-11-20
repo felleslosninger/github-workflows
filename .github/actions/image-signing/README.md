@@ -46,7 +46,7 @@ jobs:
     steps:
       <other-steps-including-image-build-and-push>
       - name: Image signing
-        uses: felleslosninger/github-workflows/actions/image-signing@main
+        uses: felleslosninger/github-workflows/.github/actions/image-signing@main
         with:
           image: <image_string>
       <other-steps>
