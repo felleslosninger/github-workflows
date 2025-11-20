@@ -33,9 +33,7 @@ Example inputs that should work
 | :--- | :--- | :--- |
 | `image` | Valid image string for signing | true |
 
-## Example Usage (external)
-
-If you want to use this directly, you can do
+## Example Usage
 
 ```yaml
 name: Some workflow that build and push container images
@@ -47,25 +45,6 @@ jobs:
       <other-steps-including-image-build-and-push>
       - name: Image signing
         uses: felleslosninger/github-workflows/.github/actions/image-signing@main
-        with:
-          image: <image_string>
-      <other-steps>
-```
-
-## Example Usage (internal)
-
-If you want to use this within this repository, you can do
-
-```yaml
-name: Some workflow in this repository that build and push container images
-
-jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
-    steps:
-      <other-steps-including-image-build-and-push>
-      - name: Image signing
-        uses: ./.github/actions/image-signing
         with:
           image: <image_string>
       <other-steps>
