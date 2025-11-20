@@ -1,0 +1,115 @@
+name: Image signing
+description: Composite action for image signing using Cosign
+author: Digdir Platform Team
+
+inputs:
+  image:
+    description: Valid image string for signing
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Log image signing inputs
+      shell: bash
+      run: |
+        {
+          echo "### Image signing"
+
+          echo "#### Image signing inputs"
+          echo "| Key                 | Value |"
+          echo "| ------------------- | ----- |"
+          echo "| image | ${{ inputs.image }} |"
+        } >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Install Cosign
+      uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # pin@v3.10.0
+
+    - name: Extract metadata from image input
+      id: set-signing-metadata
+      shell: bash
+      env:
+        IMAGE: ${{ inputs.image }}
+      run: |
+        # Get digest from image inspection
+        IMAGE_DIGEST_NORMALIZED=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE")
+
+        if [[ -z "$IMAGE_DIGEST_NORMALIZED" ]]; then
+          echo "::error title=Could not resolve repo digest::Could not resolve RepoDigest for $IMAGE. The image might not be pushed to a registry yet."
+          exit 1
+        fi
+
+        # Extract pure digest
+        IMAGE_DIGEST="${IMAGE_DIGEST_NORMALIZED##*sha256:}"
+
+        # Extract subject name from input
+        # Strip potential digest to leave subject name and potential tag
+        SUBJECT_NAME_TAG="${IMAGE%%@*}"
+
+        # Strip tag to leave subject name
+        SUBJECT_NAME="${SUBJECT_NAME_TAG%:*}"
+
+        # Set outputs
+        echo "image-digest-normalized=$IMAGE_DIGEST_NORMALIZED" >> "$GITHUB_OUTPUT"
+        echo "image-digest=$IMAGE_DIGEST" >> "$GITHUB_OUTPUT"
+        echo "subject-name=$SUBJECT_NAME" >> "$GITHUB_OUTPUT"
+
+        {
+          echo "#### Extracted image signing metadata"
+          echo "| Key                 | Value |"
+          echo "| ------------------- | ----- |"
+          echo "| Digest (normalized) | $IMAGE_DIGEST_NORMALIZED |"
+          echo "| Digest (cleaned) | $IMAGE_DIGEST |"
+          echo "| Subject | $SUBJECT_NAME |"
+        } >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Generate provenance metadata
+      shell: bash
+      run: |
+        # Generate according to spec https://slsa.dev/spec/v1.0/provenance
+        cat <<EOF > ./provenance.json
+        {
+          "_type": "https://slsa.dev/provenance/v1",
+          "subject": [
+            {
+              "name": "${{ steps.set-signing-metadata.outputs.subject-name }}",
+              "digest": {
+                "sha256": "${{ steps.set-signing-metadata.outputs.image-digest }}"
+              }
+            }
+          ],
+          "buildDefinition": {
+            "buildType": "https://github.com/github-actions/build",
+            "externalParameters": {
+              "image": "${{ steps.set-signing-metadata.outputs.image-digest-normalized }}",
+              "commit": "${{ github.sha }}",
+              "author": "${{ github.actor }}",
+              "job": "${{ github.job }}",
+              "repositoryOwnerId": "${{ github.repository_owner_id }}"
+            }
+          },
+          "runDetails": {
+            "builder": {
+              "id": "${{ github.workflow_ref }}"
+            },
+            "metadata": {
+              "invocationId": "${{ github.run_id }}",
+              "startedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+            }
+          },
+          "materials": [
+            {
+              "uri": "git+https://github.com/${{ github.repository }}.git",
+              "digest": {
+                "sha1": "${{ github.sha }}"
+              }
+            }
+          ]
+        }
+        EOF
+
+    - name: Sign the image
+      shell: bash
+      run: |
+        cosign sign --yes "${{ steps.set-signing-metadata.outputs.image-digest-normalized }}"
+        cosign attest --yes --predicate ./provenance.json --type slsaprovenance1 "${{ steps.set-signing-metadata.outputs.image-digest-normalized }}"
