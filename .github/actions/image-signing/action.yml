@@ -111,6 +111,6 @@ runs:
     - name: Sign the image
       shell: bash
       run: |
-        cosign sign --yes --registry-referrers-mode=legacy "${{ steps.set-signing-metadata.outputs.image-digest-normalized }}"
+        cosign sign --yes "${{ steps.set-signing-metadata.outputs.image-digest-normalized }}"
         cosign attest --yes --predicate ./provenance.json --type slsaprovenance1 "${{ steps.set-signing-metadata.outputs.image-digest-normalized }}"
         cosign tree "${{ steps.set-signing-metadata.outputs.image-digest-normalized }}"
