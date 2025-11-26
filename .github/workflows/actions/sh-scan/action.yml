@@ -1,0 +1,46 @@
+name: Shai-Hulud files scan
+description: Scans for malicious files related to Shai-Hulud supply chain attack
+author: Digdir Platform Team
+
+runs:
+  using: composite
+  steps:
+    - name: SH scan
+      shell: bash
+      run: |
+          echo ""
+          echo "════════════════════════════════════════"
+          echo " Building with --ignore-scripts"
+          echo "════════════════════════════════════════"
+
+          [[ -f "yarn.lock" ]] && PM="yarn" || PM="npm"
+          
+          if [[ "$PM" == "yarn" ]]; then
+            yarn install --frozen-lockfile --ignore-scripts
+          else
+            npm ci --ignore-scripts
+          fi
+          
+          echo ""
+          echo "════════════════════════════════════════"
+          echo " Scanning for malicious files..."
+          echo "════════════════════════════════════════"
+          
+          echo "[1/2] Checking for malicious loader files..."
+          LOADERS=$(find . -name "setup_bun.js" -o -name "bun_environment.js" 2>/dev/null || true)
+          if [[ -n "$LOADERS" ]]; then
+            echo "::error::Malicious loader detected: $LOADERS"
+            exit 1
+          fi
+          echo "  ✓ No malicious loaders found"
+          
+          echo "[2/2] Checking preinstall hooks..."
+          if grep -rq '"preinstall".*setup_bun' --include="package.json" . 2>/dev/null; then
+            echo "::error::Malicious preinstall hook detected"
+            exit 1
+          fi
+          echo "  ✓ No malicious preinstall hooks found"
+          
+          echo "════════════════════════════════════════"
+          echo " Scan complete - no malicious files detected"
+          echo "════════════════════════════════════════"
