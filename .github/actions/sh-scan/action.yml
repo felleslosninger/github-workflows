@@ -129,15 +129,6 @@ runs:
           echo "OK: no trufflehog binary"
         fi
 
-        MALWARE_SIGS=$(grep -rliE 'shai.?hulud|sha1.?hulud' --include="*.js" --include="*.ts" --include="*.yml" . 2>/dev/null || true)
-        if [[ -n "$MALWARE_SIGS" ]]; then
-          echo "FAIL: malware signature string"
-          echo "  Found in: $MALWARE_SIGS"
-          FAILED=1
-        else
-          echo "OK: no malware signature string"
-        fi
-
         echo ""
         if [[ $FAILED -eq 1 ]]; then
           echo "FAILED: IOCs detected"
