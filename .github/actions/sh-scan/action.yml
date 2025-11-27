@@ -14,17 +14,19 @@ runs:
         echo "Installing dependencies with --ignore-scripts..."
         [[ -f "yarn.lock" ]] && yarn install --frozen-lockfile --ignore-scripts || npm install --ignore-scripts
 
+        FAILED=0
+
         echo ""
         echo "--- Wave 1 ---"
 
         if grep -rqE '"postinstall".*(shai|hulud|webhook\.site)' --include="package.json" . 2>/dev/null; then
-          echo "FAIL: malicious postinstall hook" && exit 1
+          echo "FAIL: malicious postinstall hook" && FAILED=1
         else
           echo "OK: no malicious postinstall hook"
         fi
 
         if [[ -f .github/workflows/shai-hulud-workflow.yml ]]; then
-          echo "FAIL: shai-hulud workflow file" && exit 1
+          echo "FAIL: shai-hulud workflow file" && FAILED=1
         else
           echo "OK: no shai-hulud workflow file"
         fi
@@ -33,43 +35,43 @@ runs:
         echo "--- Wave 2 ---"
 
         if grep -rqE '"preinstall".*(setup_bun|bun_environment)' --include="package.json" . 2>/dev/null; then
-          echo "FAIL: malicious preinstall hook" && exit 1
+          echo "FAIL: malicious preinstall hook" && FAILED=1
         else
           echo "OK: no malicious preinstall hook"
         fi
 
         if find . -type f \( -name "setup_bun.js" -o -name "bun_environment.js" \) 2>/dev/null | grep -q .; then
-          echo "FAIL: malicious loader file" && exit 1
+          echo "FAIL: malicious loader file" && FAILED=1
         else
           echo "OK: no malicious loader file"
         fi
 
         if find . -type f -name "*.js" -size +10M 2>/dev/null | grep -q .; then
-          echo "FAIL: oversized js payload" && exit 1
+          echo "FAIL: oversized js payload" && FAILED=1
         else
           echo "OK: no oversized js payload"
         fi
 
         if find . -type f \( -path "*/.github/workflows/discussion.yml" -o -path "*/.github/workflows/discussion.yaml" \) 2>/dev/null | grep -q .; then
-          echo "FAIL: discussion workflow file" && exit 1
+          echo "FAIL: discussion workflow file" && FAILED=1
         else
           echo "OK: no discussion workflow file"
         fi
 
         if [[ -d .dev-env || -d ~/.dev-env ]]; then
-          echo "FAIL: runner persistence directory" && exit 1
+          echo "FAIL: runner persistence directory" && FAILED=1
         else
           echo "OK: no runner persistence directory"
         fi
 
         if find . -type f \( -name "truffleSecrets.json" -o -name "actionsSecrets.json" \) 2>/dev/null | grep -q .; then
-          echo "FAIL: exfiltration data file" && exit 1
+          echo "FAIL: exfiltration data file" && FAILED=1
         else
           echo "OK: no exfiltration data file"
         fi
 
         if [[ -d .truffler-cache || -d ~/.truffler-cache ]]; then
-          echo "FAIL: trufflehog cache directory" && exit 1
+          echo "FAIL: trufflehog cache directory" && FAILED=1
         else
           echo "OK: no trufflehog cache directory"
         fi
@@ -78,22 +80,27 @@ runs:
         echo "--- Common ---"
 
         if grep -rqF "webhook.site" --include="*.js" --include="*.ts" . 2>/dev/null; then
-          echo "FAIL: webhook.site reference" && exit 1
+          echo "FAIL: webhook.site reference" && FAILED=1
         else
           echo "OK: no webhook.site reference"
         fi
 
         if find . -type f \( -name "trufflehog" -o -name "trufflehog.exe" \) 2>/dev/null | grep -q .; then
-          echo "FAIL: trufflehog binary" && exit 1
+          echo "FAIL: trufflehog binary" && FAILED=1
         else
           echo "OK: no trufflehog binary"
         fi
 
         if grep -rqiE 'shai.?hulud|sha1.?hulud' --include="*.js" --include="*.ts" --include="*.yml" . 2>/dev/null; then
-          echo "FAIL: malware signature string" && exit 1
+          echo "FAIL: malware signature string" && FAILED=1
         else
           echo "OK: no malware signature string"
         fi
 
         echo ""
-        echo "PASS: No IOCs detected"
+        if [[ $FAILED -eq 1 ]]; then
+          echo "FAILED: IOCs detected"
+          exit 1
+        else
+          echo "PASSED: No IOCs detected"
+        fi
