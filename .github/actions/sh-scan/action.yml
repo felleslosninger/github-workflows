@@ -1,4 +1,4 @@
-name: Shai-Hulud files scan
+name: Shai-Hulud malicious files scanner
 description: Scans for malicious files related to Shai-Hulud supply chain attack
 author: Digdir Platform Team
 
