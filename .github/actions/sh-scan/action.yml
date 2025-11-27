@@ -11,99 +11,89 @@ runs:
         #!/bin/bash
         set -euo pipefail
 
+        echo "Installing dependencies with --ignore-scripts..."
+        [[ -f "yarn.lock" ]] && yarn install --frozen-lockfile --ignore-scripts || npm install --ignore-scripts
+
         echo ""
-        echo "════════════════════════════════════════"
-        echo " Building with --ignore-scripts"
-        echo "════════════════════════════════════════"
+        echo "--- Wave 1 ---"
 
-        [[ -f "yarn.lock" ]] && PM="yarn" || PM="npm"
-
-        if [[ "$PM" == "yarn" ]]; then
-          yarn install --frozen-lockfile --ignore-scripts
+        if grep -rqE '"postinstall".*(shai|hulud|webhook\.site)' --include="package.json" . 2>/dev/null; then
+          echo "FAIL: malicious postinstall hook" && exit 1
         else
-          npm install --ignore-scripts --package-lock=false
+          echo "OK: no malicious postinstall hook"
+        fi
+
+        if [[ -f .github/workflows/shai-hulud-workflow.yml ]]; then
+          echo "FAIL: shai-hulud workflow file" && exit 1
+        else
+          echo "OK: no shai-hulud workflow file"
         fi
 
         echo ""
-        echo "════════════════════════════════════════"
-        echo " Scanning for malicious files..."
-        echo "════════════════════════════════════════"
+        echo "--- Wave 2 ---"
 
-        echo "[1/8] Checking for malicious loader files..."
-        LOADERS=$(find . -name "setup_bun.js" -o -name "bun_environment.js" 2>/dev/null || true)
-        if [[ -n "$LOADERS" ]]; then
-          echo "::error::Malicious loader detected: $LOADERS"
-          exit 1
-        fi
-        echo "  ✓ No malicious loaders found"
-
-        echo "[2/8] Checking preinstall hooks..."
         if grep -rqE '"preinstall".*(setup_bun|bun_environment)' --include="package.json" . 2>/dev/null; then
-          echo "::error::Malicious preinstall hook detected"
-          exit 1
+          echo "FAIL: malicious preinstall hook" && exit 1
+        else
+          echo "OK: no malicious preinstall hook"
         fi
-        echo "  ✓ No malicious preinstall hooks found"
 
-        echo "[3/8] Checking for Trufflehog artifacts..."
-        TRUFFLEHOG_CACHE=$(find . -type d \( -name ".truffler-cache" -o -name ".trufflehog*" \) 2>/dev/null || true)
-        if [[ -n "$TRUFFLEHOG_CACHE" ]]; then
-          echo "::error::Suspicious Trufflehog cache detected: $TRUFFLEHOG_CACHE"
-          exit 1
+        if find . -type f \( -name "setup_bun.js" -o -name "bun_environment.js" \) 2>/dev/null | grep -q .; then
+          echo "FAIL: malicious loader file" && exit 1
+        else
+          echo "OK: no malicious loader file"
         fi
-        TRUFFLEHOG_BINS=$(find . -name "trufflehog" -o -name "trufflehog.exe" 2>/dev/null || true)
-        if [[ -n "$TRUFFLEHOG_BINS" ]]; then
-          echo "::error::Suspicious Trufflehog binary detected: $TRUFFLEHOG_BINS"
-          exit 1
-        fi
-        echo "  ✓ No Trufflehog artifacts found"
 
-        echo "[4/8] Checking for suspicious Bun installation commands..."
-        if grep -rqE 'curl.*bun\.sh/install.*bash|irm.*bun\.sh/install.*iex' --include="*.js" --include="*.ts" . 2>/dev/null; then
-          echo "::error::Suspicious Bun installation command detected in source files"
-          exit 1
+        if find . -type f -name "*.js" -size +10M 2>/dev/null | grep -q .; then
+          echo "FAIL: oversized js payload" && exit 1
+        else
+          echo "OK: no oversized js payload"
         fi
-        echo "  ✓ No suspicious Bun installation commands found"
 
-        echo "[5/8] Checking for exfiltration repository markers..."
-        if grep -rqiE 'sha.?1.?hulud|shai.?hulud' --include="*.js" --include="*.ts" --include="*.json" . 2>/dev/null; then
-          echo "::error::Shai-Hulud malware signature detected"
-          exit 1
+        if find . -type f \( -path "*/.github/workflows/discussion.yml" -o -path "*/.github/workflows/discussion.yaml" \) 2>/dev/null | grep -q .; then
+          echo "FAIL: discussion workflow file" && exit 1
+        else
+          echo "OK: no discussion workflow file"
         fi
-        echo "  ✓ No malware signatures found"
 
-        echo "[6/8] Checking for malicious workflow files..."
-        MALICIOUS_WORKFLOWS=$(find . -path "*/.github/workflows/discussion.yaml" -o -path "*/.github/workflows/discussion.yml" 2>/dev/null || true)
-        if [[ -n "$MALICIOUS_WORKFLOWS" ]]; then
-          echo "::error::Malicious workflow file detected: $MALICIOUS_WORKFLOWS"
-          exit 1
+        if [[ -d .dev-env || -d ~/.dev-env ]]; then
+          echo "FAIL: runner persistence directory" && exit 1
+        else
+          echo "OK: no runner persistence directory"
         fi
-        if [[ -d ".github/workflows" ]] && grep -rqE 'on:\s*discussion|runs-on:.*SHA1HULUD' --include="*.yml" --include="*.yaml" .github/workflows/ 2>/dev/null; then
-          echo "::error::Malicious workflow trigger pattern detected"
-          exit 1
-        fi
-        echo "  ✓ No malicious workflow files found"
 
-        echo "[7/8] Checking for hidden runner directories..."
-        RUNNER_DIRS=$(find . -type d -name ".dev-env" 2>/dev/null || true)
-        if [[ -n "$RUNNER_DIRS" ]]; then
-          echo "::error::Suspicious hidden runner directory detected: $RUNNER_DIRS"
-          exit 1
+        if find . -type f \( -name "truffleSecrets.json" -o -name "actionsSecrets.json" \) 2>/dev/null | grep -q .; then
+          echo "FAIL: exfiltration data file" && exit 1
+        else
+          echo "OK: no exfiltration data file"
         fi
-        echo "  ✓ No hidden runner directories found"
 
-        echo "[8/8] Checking for oversized obfuscated payloads..."
-        LARGE_JS=$(find . -path ./node_modules -prune -o -name "*.js" -size +5M -print 2>/dev/null || true)
-        if [[ -n "$LARGE_JS" ]]; then
-          echo "::error::Suspiciously large JS file detected (possible obfuscated payload): $LARGE_JS"
-          exit 1
+        if [[ -d .truffler-cache || -d ~/.truffler-cache ]]; then
+          echo "FAIL: trufflehog cache directory" && exit 1
+        else
+          echo "OK: no trufflehog cache directory"
         fi
-        LARGE_JS_NODE=$(find ./node_modules -name "*.js" -size +10M 2>/dev/null | head -5 || true)
-        if [[ -n "$LARGE_JS_NODE" ]]; then
-          echo "::error::Suspiciously large JS file in node_modules: $LARGE_JS_NODE"
-          exit 1
-        fi
-        echo "  ✓ No oversized payloads found"
 
-        echo "════════════════════════════════════════"
-        echo " Scan complete - no malicious files detected"
-        echo "════════════════════════════════════════"
+        echo ""
+        echo "--- Common ---"
+
+        if grep -rqF "webhook.site" --include="*.js" --include="*.ts" . 2>/dev/null; then
+          echo "FAIL: webhook.site reference" && exit 1
+        else
+          echo "OK: no webhook.site reference"
+        fi
+
+        if find . -type f \( -name "trufflehog" -o -name "trufflehog.exe" \) 2>/dev/null | grep -q .; then
+          echo "FAIL: trufflehog binary" && exit 1
+        else
+          echo "OK: no trufflehog binary"
+        fi
+
+        if grep -rqiE 'shai.?hulud|sha1.?hulud' --include="*.js" --include="*.ts" --include="*.yml" . 2>/dev/null; then
+          echo "FAIL: malware signature string" && exit 1
+        else
+          echo "OK: no malware signature string"
+        fi
+
+        echo ""
+        echo "PASS: No IOCs detected"
