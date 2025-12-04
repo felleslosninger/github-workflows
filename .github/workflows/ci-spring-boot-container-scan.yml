@@ -22,6 +22,11 @@ on:
         default: "11"
         required: false
         type: string
+      java-distribution:
+        description: Java distribution to use
+        default: "liberica"
+        required: false
+        type: string
       container-scan-offline-mode:
         description: Container-scan is default download updated CVE definitions via Trivy, enable offline on download problems
         default: false
@@ -63,7 +68,7 @@ jobs:
       - name: Set up JDK ${{ inputs.java-version }}
         uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # pin@v5.0.0
         with:
-          distribution: "liberica"
+          distribution: "${{ inputs.java-distribution }}"
           java-version: ${{ inputs.java-version }}
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
@@ -106,4 +111,3 @@ jobs:
           image-ref: "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}"
           exit-code: "1"
           severity: "CRITICAL,HIGH"
-
