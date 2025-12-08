@@ -111,7 +111,6 @@ runs:
         EOF
 
     - name: Sign and attest the image
-      id: sign_and_attest
       shell: bash
       run: |
         echo "Signing image..."
@@ -120,38 +119,9 @@ runs:
         echo "Attesting provenance..."
         cosign attest --yes --predicate ./provenance.json --type slsaprovenance1 "$TARGET_IMAGE"
 
-    - name: Log security report
-      if: steps.sign_and_attest.outcome == 'success'
-      shell: bash
-      run: |
-        # echo "#### Cosign tree and verify report"
-
-        # echo "##### Cosign artifact tree" >> "$GITHUB_STEP_SUMMARY"
-        # echo '```console' >> "$GITHUB_STEP_SUMMARY"
-        # cosign tree "$TARGET_IMAGE" >> "$GITHUB_STEP_SUMMARY"
-        # echo '```' >> "$GITHUB_STEP_SUMMARY"
-
-        # echo "##### Cosign verification check" >> "$GITHUB_STEP_SUMMARY"
-        # echo "<details><summary>Click to view raw verification output</summary>" >> "$GITHUB_STEP_SUMMARY"
-        # echo "" >> "$GITHUB_STEP_SUMMARY"
-        # echo '```json' >> "$GITHUB_STEP_SUMMARY"
-        # cosign verify "$TARGET_IMAGE" --certificate-identity-regexp ".*" --certificate-oidc-issuer-regexp ".*" >> "$GITHUB_STEP_SUMMARY" 2>&1
-        # echo '```' >> "$GITHUB_STEP_SUMMARY"
-        # echo "</details>" >> "$GITHUB_STEP_SUMMARY"
-
         {
-          echo "#### Cosign tree and verify report"
-          echo "##### Cosign artifact tree"
+          echo "#### Cosign tree output"
           echo '```console'
           cosign tree "$TARGET_IMAGE"
           echo '```'
-
-          echo "##### Cosign verification check"
-          echo "<details><summary>Click to view raw verification output</summary>"
-          echo ""
-          echo '```json'
-          cosign verify "$TARGET_IMAGE" --certificate-identity-regexp ".*" --certificate-oidc-issuer-regexp ".*" 2>&1
-          echo '```'
-          echo "</details>"
-          echo ""
         } >> "$GITHUB_STEP_SUMMARY"
