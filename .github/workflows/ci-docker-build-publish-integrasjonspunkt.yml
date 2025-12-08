@@ -166,9 +166,9 @@ jobs:
 
       - name: Image signing
         if: ${{ inputs.image-signing == true }}
-        uses: felleslosninger/github-workflows-internal/image-signing@image-signing-as-composite-action
+        uses: felleslosninger/github-workflows/.github/actions/image-signing@main
         with:
-          image: ${{ steps.set-image-name.outputs.image-name }}:${{ inputs.package-version }}@${{ steps.set-image-digest.outputs.image-digest }}  
+          image: ${{ steps.set-image-name.outputs.image-name }}:${{ inputs.package-version }}
 
   notify-on-errors:
     runs-on: ubuntu-latest
