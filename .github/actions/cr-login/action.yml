@@ -2,32 +2,18 @@ name: Container registry login
 description: Logs into an Azure Container Registry (ACR)
 author: Digdir Platform Team
 
-inputs:
-  azure_client_id:
-    description: "Azure Client ID"
-    required: true
-  azure_tenant_id:
-    description: "Azure Tenant ID"
-    required: true
-  azure_subscription_id:
-    description: "Azure Subscription ID"
-    required: true
-  acr_name:
-    description: "ACR name"
-    required: true
-
 runs:
   using: composite
   steps:
     - name: Login to Azure
       uses: azure/login@v2
       with:
-        client-id: ${{ inputs.azure_client_id }}
-        tenant-id: ${{ inputs.azure_tenant_id }}
-        subscription-id: ${{ inputs.azure_subscription_id }}
-
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  
     - name: Login to Azure Container Registry
       shell: bash
       run: az acr login --name "$ACR_NAME"
       env:
-        ACR_NAME: ${{ inputs.acr_name }}
+        ACR_NAME: ${{ vars.ACR_NAME }}
