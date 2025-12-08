@@ -32,15 +32,15 @@ runs:
         IMAGE: ${{ inputs.image }}
       run: |
         # Get digest from image inspection
-        IMAGE_DIGEST_NORMALIZED=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE")
+        TARGET_IMAGE=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE")
 
-        if [[ -z "$IMAGE_DIGEST_NORMALIZED" ]]; then
+        if [[ -z "$TARGET_IMAGE" ]]; then
           echo "::error title=Could not resolve repo digest::Could not resolve RepoDigest for $IMAGE. The image might not be pushed to a registry yet."
           exit 1
         fi
 
         # Extract pure digest
-        IMAGE_DIGEST="${IMAGE_DIGEST_NORMALIZED##*sha256:}"
+        IMAGE_DIGEST="${TARGET_IMAGE##*sha256:}"
 
         # Extract subject name from input
         # Strip potential digest to leave subject name and potential tag
@@ -50,16 +50,18 @@ runs:
         SUBJECT_NAME="${SUBJECT_NAME_TAG%:*}"
 
         # Set outputs
-        echo "image-digest-normalized=$IMAGE_DIGEST_NORMALIZED" >> "$GITHUB_OUTPUT"
         echo "image-digest=$IMAGE_DIGEST" >> "$GITHUB_OUTPUT"
         echo "subject-name=$SUBJECT_NAME" >> "$GITHUB_OUTPUT"
+
+        # Set env. vars
+        echo "$TARGET_IMAGE" >> "$GITHUB_ENV"
 
         {
           echo "#### Extracted image signing metadata"
           echo "| Key                 | Value |"
           echo "| ------------------- | ----- |"
-          echo "| Digest (normalized) | $IMAGE_DIGEST_NORMALIZED |"
-          echo "| Digest (cleaned) | $IMAGE_DIGEST |"
+          echo "| Target image | $TARGET_IMAGE |"
+          echo "| Digest | $IMAGE_DIGEST |"
           echo "| Subject | $SUBJECT_NAME |"
         } >> "$GITHUB_STEP_SUMMARY"
 
@@ -81,7 +83,7 @@ runs:
           "buildDefinition": {
             "buildType": "https://github.com/github-actions/build",
             "externalParameters": {
-              "image": "${{ steps.set-signing-metadata.outputs.image-digest-normalized }}",
+              "image": "$TARGET_IMAGE",
               "commit": "${{ github.sha }}",
               "author": "${{ github.actor }}",
               "job": "${{ github.job }}",
@@ -108,9 +110,48 @@ runs:
         }
         EOF
 
-    - name: Sign the image
+    - name: Sign and attest the image
+      id: sign_and_attest
       shell: bash
       run: |
-        cosign sign --yes "${{ steps.set-signing-metadata.outputs.image-digest-normalized }}"
-        cosign attest --yes --predicate ./provenance.json --type slsaprovenance1 "${{ steps.set-signing-metadata.outputs.image-digest-normalized }}"
-        cosign tree "${{ steps.set-signing-metadata.outputs.image-digest-normalized }}"
+        echo "Signing image..."
+        cosign sign --yes "$TARGET_IMAGE"
+
+        echo "Attesting provenance..."
+        cosign attest --yes --predicate ./provenance.json --type slsaprovenance1 "$TARGET_IMAGE"
+
+    - name: Log security report
+      if: steps.sign_and_attest.outcome == 'success'
+      shell: bash
+      run: |
+        # echo "#### Cosign tree and verify report"
+
+        # echo "##### Cosign artifact tree" >> "$GITHUB_STEP_SUMMARY"
+        # echo '```console' >> "$GITHUB_STEP_SUMMARY"
+        # cosign tree "$TARGET_IMAGE" >> "$GITHUB_STEP_SUMMARY"
+        # echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+        # echo "##### Cosign verification check" >> "$GITHUB_STEP_SUMMARY"
+        # echo "<details><summary>Click to view raw verification output</summary>" >> "$GITHUB_STEP_SUMMARY"
+        # echo "" >> "$GITHUB_STEP_SUMMARY"
+        # echo '```json' >> "$GITHUB_STEP_SUMMARY"
+        # cosign verify "$TARGET_IMAGE" --certificate-identity-regexp ".*" --certificate-oidc-issuer-regexp ".*" >> "$GITHUB_STEP_SUMMARY" 2>&1
+        # echo '```' >> "$GITHUB_STEP_SUMMARY"
+        # echo "</details>" >> "$GITHUB_STEP_SUMMARY"
+
+        {
+          echo "#### Cosign tree and verify report"
+          echo "##### Cosign artifact tree"
+          echo '```console'
+          cosign tree "$TARGET_IMAGE"
+          echo '```'
+
+          echo "##### Cosign verification check"
+          echo "<details><summary>Click to view raw verification output</summary>"
+          echo ""
+          echo '```json'
+          cosign verify "$TARGET_IMAGE" --certificate-identity-regexp ".*" --certificate-oidc-issuer-regexp ".*" 2>&1
+          echo '```'
+          echo "</details>"
+          echo ""
+        } >> "$GITHUB_STEP_SUMMARY"
