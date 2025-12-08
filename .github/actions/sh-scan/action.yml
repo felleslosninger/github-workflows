@@ -2,11 +2,20 @@ name: Shai-Hulud malicious files scanner
 description: Scans for malicious files related to Shai-Hulud supply chain attack
 author: Digdir Platform Team
 
+
+inputs:
+  install_method:
+    description: "npm | yarn | ci"
+    required: true
+
+
 runs:
   using: composite
   steps:
     - name: SH scan
       shell: bash
+      env:
+        INSTALL_METHOD: ${{ inputs.install_method }}
       run: |
         #!/bin/bash
         set -euo pipefail
@@ -151,7 +160,7 @@ runs:
             echo "ERROR: Unsupported INSTALL_METHOD: $INSTALL_METHOD (use: npm | yarn | ci)" >&2
             exit 2
 
-        fi
+        fi    
 
 
 
