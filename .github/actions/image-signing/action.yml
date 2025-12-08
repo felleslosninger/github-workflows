@@ -54,7 +54,7 @@ runs:
         echo "subject-name=$SUBJECT_NAME" >> "$GITHUB_OUTPUT"
 
         # Set env. vars
-        echo "$TARGET_IMAGE" >> "$GITHUB_ENV"
+        echo "TARGET_IMAGE=$TARGET_IMAGE" >> "$GITHUB_ENV"
 
         {
           echo "#### Extracted image signing metadata"
