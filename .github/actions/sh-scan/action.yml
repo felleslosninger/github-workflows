@@ -1,13 +1,11 @@
 name: Shai-Hulud malicious files scanner
-description: Scans for malicious files related to Shai-Hulud supply chain attack
+description: Scans for IOCs related to Shai-Hulud supply chain attack in NPM
 author: Digdir Platform Team
-
 
 inputs:
   install_method:
-    description: "npm | yarn | ci"
+    description: "npm | yarn | ci | pnpm"
     required: true
-
 
 runs:
   using: composite
@@ -36,7 +34,12 @@ runs:
             "46faab8ab153fae6e80e7cca38eab363075bb524edd79e42269217a083628f09"
         )
 
-        INSTALL_METHOD="${1:-npm}" # npm | yarn | ci
+        # Check if INSTALL_METHOD is set and non-empty env variable 
+        if [[ -z "${INSTALL_METHOD:-}" ]]; then
+            echo "ERROR: INSTALL_METHOD needs to be npm | yarn | ci | pnpm" >&2
+            exit 1
+        fi
+
         NODE_MODULES_DIR="${NODE_MODULES_DIR:-node_modules}"
 
         get_sha256_filehash() {
@@ -153,6 +156,11 @@ runs:
 
         elif [[ "$INSTALL_METHOD" == "ci" ]]; then
             npm ci --ignore-scripts
+            scan_files "$NODE_MODULES_DIR"
+            scan_for_hashes "$NODE_MODULES_DIR"
+        
+        elif [[ "$INSTALL_METHOD" == "pnpm" ]]; then
+            pnpm install
             scan_files "$NODE_MODULES_DIR"
             scan_for_hashes "$NODE_MODULES_DIR"
 
