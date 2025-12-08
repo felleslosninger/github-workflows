@@ -14,9 +14,21 @@ deployed is actually built the way we expect.
 
 - It is expected that this composite action is pulled into a workflow that has
   built a container image, as `docker inspect` needs the image to exist locally
+
 - It is expected that this composite action is pulled into a workflow that has
   pushed a container image to a registry, as the workflow needs valid
   credentials to push the signature and attestation to the registry
+
+- The job including the composite action must have the necessary `id-token`
+  permission to use the OIDC workflow with Cosign and Fulcio
+
+  ```yaml
+  jobs:
+    <job-name>:
+      permissions:
+        id-token: write
+  ```
+
 - The image input string is expected to include the full image name in
   combination with a tag or digest (both also works)
 
@@ -41,6 +53,11 @@ name: Some workflow that build and push container images
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+
+    # Needed to allow keyless OIDC workflow with Cosign and Fulcio
+    permissions:
+      id-token: write
+
     steps:
       <other-steps-including-image-build-and-push>
       - name: Image signing
