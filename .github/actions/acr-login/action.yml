@@ -3,18 +3,19 @@ description: Logs into an Azure Container Registry (ACR)
 author: Digdir Platform Team
 
 inputs:
-  azure_client_id:
+  client-id:
     description: "Azure Client ID"
     required: true
-  azure_tenant_id:
+  tenant-id:
     description: "Azure Tenant ID"
     required: true
-  azure_subscription_id:
+  subscription-id:
     description: "Azure Subscription ID"
     required: true
-  acr_name:
+  acr-name:
     description: "ACR name"
-    required: true
+    default: ${{ vars.ACR_NAME }}
+    required: false
 
 runs:
   using: composite
