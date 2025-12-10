@@ -139,7 +139,9 @@ jobs:
         run: mvn -B test
 
       - name: Upload artifact
-        if: inputs.artifact-path != ''
+        if: |
+          !cancelled() &&
+          inputs.artifact-path != ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin@v4.6.2
         with:
           name: ${{ inputs.artifact-name }}
