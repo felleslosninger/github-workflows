@@ -13,19 +13,19 @@ inputs:
     description: "Azure Subscription ID"
     required: true
   acr-name:
-    description: "ACR name"
-    default: ${{ vars.ACR_NAME }}
+    description: "Azure container registry name"
+    default: "creiddev"
     required: false
 
 runs:
   using: composite
   steps:
     - name: Login to Azure
-      uses: azure/login@v2
+      uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5
       env: 
-        AZURE_CLIENT_ID: ${{ inputs.azure_client_id }}
-        AZURE_TENANT_ID: ${{ inputs.azure_tenant_id }}
-        AZURE_SUBSCRIPTION_ID: ${{ inputs.azure_subscription_id }}
+        AZURE_CLIENT_ID: ${{ inputs.client-id }}
+        AZURE_TENANT_ID: ${{ inputs.tenant-id}}
+        AZURE_SUBSCRIPTION_ID: ${{ inputs.subscription-id }}
       with:
         client-id: ${{ env.AZURE_CLIENT_ID }}
         tenant-id: ${{ env.AZURE_TENANT_ID }}
@@ -35,4 +35,4 @@ runs:
       shell: bash
       run: az acr login --name "$ACR_NAME"
       env:
-        ACR_NAME: ${{ inputs.acr_name }}
+        ACR_NAME: ${{ inputs.acr-name }}
