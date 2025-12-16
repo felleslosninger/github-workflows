@@ -32,7 +32,36 @@ runs:
         subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
   
     - name: Login to Azure Container Registry
+      id: acr_login
       shell: bash
       run: az acr login --name "$ACR_NAME"
+      env:
+        ACR_NAME: ${{ inputs.acr-name }}
+
+    - name: Write step summary
+      if: ${{ always() }}
+      shell: bash
+      run: |
+        {
+          echo "### ACR login"
+
+          echo "#### Inputs"
+          echo "| Key | Value |"
+          echo "| --- | ----- |"
+          echo "| client-id | ${{ inputs.client-id }} |"
+          echo "| tenant-id | ${{ inputs.tenant-id }} |"
+          echo "| subscription-id | ${{ inputs.subscription-id }} |"
+          echo "| acr-name | ${{ inputs.acr-name }} |"
+
+          echo "#### Result"
+          echo "| Key | Value |"
+          echo "| --- | ----- |"
+          if [ "${{ steps.acr_login.outcome }}" = "success" ]; then
+            echo "| login-success | true |"
+          else
+            echo "| login-success | false |"
+          fi
+          echo "| registry | ${ACR_NAME} |"
+        } >> "$GITHUB_STEP_SUMMARY"
       env:
         ACR_NAME: ${{ inputs.acr-name }}
