@@ -45,14 +45,6 @@ runs:
         {
           echo "### ACR login"
 
-          echo "#### Inputs"
-          echo "| Key | Value |"
-          echo "| --- | ----- |"
-          echo "| client-id | ${{ inputs.client-id }} |"
-          echo "| tenant-id | ${{ inputs.tenant-id }} |"
-          echo "| subscription-id | ${{ inputs.subscription-id }} |"
-          echo "| acr-name | ${{ inputs.acr-name }} |"
-
           echo "#### Result"
           echo "| Key | Value |"
           echo "| --- | ----- |"
