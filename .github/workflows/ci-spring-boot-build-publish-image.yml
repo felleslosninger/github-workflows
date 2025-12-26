@@ -165,7 +165,7 @@ jobs:
           scope: '@felleslosninger'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+ 
       - name: Build image with Maven/Spring Boot
         run: |
           mvn -B spring-boot:build-image \
@@ -174,6 +174,30 @@ jobs:
             -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} \
             -Dspring-boot.build-image.createdDate=now
 
+      - name: Run Trivy vulnerability scanner for Copa
+        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # pin@v0.28.0
+        id: trivy-copa
+        env:
+          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
+          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+        with:
+          scan-type: "image"
+          format: "json"
+          output: "report.json"
+          ignore-unfixed: true
+          vuln-type: "os"
+          image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+          
+      - name: Display report.json content
+        run: cat report.json
+
+      - name: Check vulnerability count
+        id: vuln_count
+        run: |
+          report_file="report.json"
+          vuln_count=$(jq 'if .Results then [.Results[] | select(.Class=="os-pkgs" and .Vulnerabilities!=null) | .Vulnerabilities[]] | length else 0 end' "$report_file")
+          echo "vuln_count=$vuln_count" >> "$GITHUB_OUTPUT"
+                    
       - name: Set trivyignore env if file exists
         id: set-trivyignore-path
         run: |
@@ -236,6 +260,12 @@ jobs:
       - name: Push image
         run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
 
+      #- name: Push patched image
+      #  if: steps.vuln_count.outputs.vuln_count != '0'
+      #  run: |
+      #    #docker tag ${{ steps.copa.outputs.patched-image }} ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+      #    docker push ${{ steps.copa.outputs.patched-image }}
+          
       - name: Set image digest
         id: set-image-digest
         run: |
