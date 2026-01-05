@@ -40,6 +40,10 @@ on:
         default: "./"
         required: false
         type: string
+      module-name:
+        default: ""
+        required: false
+        type: string
       cache-path:
         default: "**/pom.xml"
         required: false
@@ -99,6 +103,11 @@ jobs:
             }]
 
       - name: Build image with Maven (skips tests)
+        if: inputs.module-name != ''
+        run: mvn install -DskipTests -B spring-boot:build-image -pl ${{ inputs.module-name }} -am -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}
+
+      - name: Build image with Maven (skips tests)
+        if: inputs.module-name == ''
         run: mvn -DskipTests -B spring-boot:build-image --file ${{ inputs.application-path }}pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}
 
       - name: Run Trivy vulnerability scanner
