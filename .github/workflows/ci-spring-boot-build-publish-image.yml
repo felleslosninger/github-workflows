@@ -171,7 +171,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build image with Maven/Spring Boot
+      - name: Build image with Maven/Spring Boot (module-name)
         if: inputs.module-name != ''
         run: |
           mvn install -B spring-boot:build-image \
@@ -180,7 +180,7 @@ jobs:
             -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} \
             -Dspring-boot.build-image.createdDate=now
 
-      - name: Build image with Maven/Spring Boot
+      - name: Build image with Maven/Spring Boot (application-path)
         if: inputs.module-name == ''
         run: |
           mvn -B spring-boot:build-image \

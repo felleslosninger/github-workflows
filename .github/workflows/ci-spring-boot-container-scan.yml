@@ -102,11 +102,11 @@ jobs:
               "password": "${{ secrets.MAVEN_PASSWORD }}"
             }]
 
-      - name: Build image with Maven (skips tests)
+      - name: Build image with Maven (module-name, skips tests)
         if: inputs.module-name != ''
         run: mvn install -DskipTests -B spring-boot:build-image -pl ${{ inputs.module-name }} -am -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}
 
-      - name: Build image with Maven (skips tests)
+      - name: Build image with Maven (application-path, skips tests)
         if: inputs.module-name == ''
         run: mvn -DskipTests -B spring-boot:build-image --file ${{ inputs.application-path }}pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}
 
