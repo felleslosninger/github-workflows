@@ -48,6 +48,11 @@ on:
         required: false
         type: string
 
+      module-name:
+        default: ""
+        required: false
+        type: string
+
       cache-path:
         default: "**/pom.xml"
         required: false
@@ -166,7 +171,17 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build image with Maven/Spring Boot
+      - name: Build image with Maven/Spring Boot (module-name)
+        if: inputs.module-name != ''
+        run: |
+          mvn install -B spring-boot:build-image \
+            -pl ${{ inputs.module-name }} -am  \
+            -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
+            -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} \
+            -Dspring-boot.build-image.createdDate=now
+
+      - name: Build image with Maven/Spring Boot (application-path)
+        if: inputs.module-name == ''
         run: |
           mvn -B spring-boot:build-image \
             --file ${{ inputs.application-path }}pom.xml \
