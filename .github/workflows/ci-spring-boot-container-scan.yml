@@ -22,6 +22,11 @@ on:
         default: "11"
         required: false
         type: string
+      java-distribution:
+        description: Java distribution to use
+        default: "liberica"
+        required: false
+        type: string
       container-scan-offline-mode:
         description: Container-scan is default download updated CVE definitions via Trivy, enable offline on download problems
         default: false
@@ -33,6 +38,10 @@ on:
         type: boolean
       application-path:
         default: "./"
+        required: false
+        type: string
+      module-name:
+        default: ""
         required: false
         type: string
       cache-path:
@@ -63,7 +72,7 @@ jobs:
       - name: Set up JDK ${{ inputs.java-version }}
         uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # pin@v5.0.0
         with:
-          distribution: "liberica"
+          distribution: "${{ inputs.java-distribution }}"
           java-version: ${{ inputs.java-version }}
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
@@ -93,7 +102,12 @@ jobs:
               "password": "${{ secrets.MAVEN_PASSWORD }}"
             }]
 
-      - name: Build image with Maven (skips tests)
+      - name: Build image with Maven (module-name, skips tests)
+        if: inputs.module-name != ''
+        run: mvn install -DskipTests -B spring-boot:build-image -pl ${{ inputs.module-name }} -am -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}
+
+      - name: Build image with Maven (application-path, skips tests)
+        if: inputs.module-name == ''
         run: mvn -DskipTests -B spring-boot:build-image --file ${{ inputs.application-path }}pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}
 
       - name: Run Trivy vulnerability scanner
@@ -106,4 +120,3 @@ jobs:
           image-ref: "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}"
           exit-code: "1"
           severity: "CRITICAL,HIGH"
-

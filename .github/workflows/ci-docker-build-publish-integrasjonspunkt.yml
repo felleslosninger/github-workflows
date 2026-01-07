@@ -10,11 +10,17 @@ on:
         required: false
         type: string
 
+      java-distribution:
+        description: Java distribution to use
+        default: "liberica"
+        required: false
+        type: string
+
       registry-url:
         description: URL of the Docker container registry (e.g., ghcr.io)
         default: "ghcr.io/felleslosninger"
         required: false
-        type: string    
+        type: string
 
       image-name:
         description: Name of Docker image
@@ -48,11 +54,13 @@ on:
         required: false
         type: boolean
 
-    outputs:
-      image-version:
-        description: "Docker image version"
-        value: ${{ jobs.build-publish-image.outputs.image-tag }}
+      package-version:
+        description: Version to use for maven package
+        default: ""
+        required: false
+        type: string
 
+    outputs:
       image-digest:
         description: "Docker image SHA256 digest"
         value: ${{ jobs.build-publish-image.outputs.image-digest }}
@@ -67,7 +75,6 @@ jobs:
       TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
 
     outputs:
-      image-tag: ${{ steps.set-image-tag.outputs.image-tag }}
       image-digest: ${{ steps.set-image-digest.outputs.image-digest }}
 
     permissions:
@@ -82,30 +89,8 @@ jobs:
       - name: Set up JDK ${{ inputs.java-version }}
         uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # pin@v5.0.0
         with:
-          distribution: "liberica"
+          distribution: "${{ inputs.java-distribution }}"
           java-version: ${{ inputs.java-version }}
-
-      - name: Set image tag from pom.xml
-        id: set-image-tag
-        run: |
-          # Extract version from pom.xml
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout -f ${{ inputs.application-path }}/pom.xml)
-          
-          if [ -n "$VERSION" ] && [ "$VERSION" != "null" ]; then
-            # Use the version from pom.xml
-            image_tag="${VERSION}"
-            
-            # Remove -SNAPSHOT if present for production builds
-            if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.ref }}" =~ ^refs/tags/ ]]; then
-              image_tag=${image_tag/-SNAPSHOT/}
-            fi
-          else
-            # Fallback to date-based tag if version not found
-            image_tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}
-          fi
-          
-          echo "image-tag=$image_tag" >> "$GITHUB_OUTPUT"
-          echo "- Image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Set image name
         id: set-image-name
@@ -117,7 +102,7 @@ jobs:
       - name: Build image
         run: |
           docker build \
-            --tag ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
+            --tag ${{ steps.set-image-name.outputs.image-name }}:${{ inputs.package-version }} \
             --file ${{ inputs.application-path }}/docker/Dockerfile \
             --build-arg GIT_PACKAGE_TOKEN=${{ secrets.GH_PACKAGES_READ_PAT }} \
             --build-arg GIT_PACKAGE_USERNAME=${{ secrets.GH_PACKAGES_READ_USER }} \
@@ -130,7 +115,7 @@ jobs:
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
           TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
         with:
-          image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+          image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ inputs.package-version }}
           exit-code: "1"
           severity: "CRITICAL,HIGH"
 
@@ -149,15 +134,15 @@ jobs:
         with:
           scan-type: image
           format: github
-          image-ref: "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}"
-          output: "sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}.json"
+          image-ref: "${{ steps.set-image-name.outputs.image-name }}:${{ inputs.package-version}}"
+          output: "sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ inputs.package-version }}.json"
           github-pat: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload trivy report as a Github artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin@v4.6.2
         with:
-          name: "sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}"
-          path: "${{ github.workspace }}/sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}.json"
+          name: "sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ inputs.package-version }}"
+          path: "${{ github.workspace }}/sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ inputs.package-version }}.json"
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # pin@v3.4.0
@@ -167,75 +152,23 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Push image"
-        run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+        run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ inputs.package-version }}
 
       - name: Set image digest
         id: set-image-digest
         run: |
           image_digest=$(docker inspect \
-            --format='{{.RepoDigests}}' ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
+            --format='{{.RepoDigests}}' ${{ steps.set-image-name.outputs.image-name }}:${{ inputs.package-version }} \
             | cut -d '@' -f 2 \
             | cut -d ']' -f 1)
           echo "image-digest=$image_digest" >> "$GITHUB_OUTPUT"
           echo "- Image digest: $image_digest" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Install Cosign
+      - name: Image signing
         if: ${{ inputs.image-signing == true }}
-        uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # pin@v3.10.0
-
-      - name: Generate Provenance Metadata
-        if: ${{ inputs.image-signing == true }}
-        run: |
-          # Generate provenance data according to spec https://slsa.dev/spec/v1.0/provenance
-          cat <<EOF > ./provenance.json
-          {
-            "_type": "https://slsa.dev/provenance/v1",
-            "subject": [
-              {
-                "name": "${{ steps.set-image-name.outputs.image-name }}",
-                "digest": {
-                  "sha256": "${DIGEST}"
-                }
-              }
-            ],
-            "buildDefinition": {
-              "buildType": "https://github.com/github-actions/build",
-              "externalParameters": {
-                "image": "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}",
-                "commit": "${{ github.sha }}",
-                "author": "${{ github.actor }}",
-                "job": "${{ github.job }}",
-                "repositoryOwnerId": "${{ github.repository_owner_id }}"
-              }
-            },
-            "runDetails": {
-              "builder": {
-                "id": "${{ github.workflow_ref }}"
-              },
-              "metadata": {
-                "invocationId": "${{ github.run_id }}",
-                "startedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-              }
-            },
-            "materials": [
-              {
-                "uri": "git+https://github.com/${{ github.repository }}.git",
-                "digest": {
-                  "sha1": "${{ github.sha }}"
-                }
-              }
-            ]
-          }
-          EOF
-
-      - name: Sign the image
-        if: ${{ inputs.image-signing == true }}
-        run: |
-          cosign sign --yes "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
-          cosign attest --yes --predicate ./provenance.json --type slsaprovenance1 "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
-        env:
-          DIGEST: ${{ steps.set-image-digest.outputs.image-digest }}
-
+        uses: felleslosninger/github-workflows/.github/actions/image-signing@main
+        with:
+          image: ${{ steps.set-image-name.outputs.image-name }}:${{ inputs.package-version }}
 
   notify-on-errors:
     runs-on: ubuntu-latest
