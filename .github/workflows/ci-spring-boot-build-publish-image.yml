@@ -53,6 +53,12 @@ on:
         required: false
         type: string
 
+      semantic-version:
+        description: Semantic version to set for the application
+        default: ""
+        required: false
+        type: string
+
       cache-path:
         default: "**/pom.xml"
         required: false
@@ -115,7 +121,13 @@ jobs:
       - name: Set image tag
         id: set-image-tag
         run: |
-          image_tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}
+          if [ -n "${{ inputs.semantic-version }}" ]; then
+            image_tag="${{ inputs.semantic-version }}"
+            echo "- Using semantic version: $image_tag" >> "$GITHUB_STEP_SUMMARY"
+          else
+            image_tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}
+            echo "- Using auto-generated tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
+          fi
           echo "image-tag=$image_tag" >> "$GITHUB_OUTPUT"
           echo "- Image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
 
