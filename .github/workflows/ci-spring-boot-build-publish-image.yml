@@ -53,8 +53,8 @@ on:
         required: false
         type: string
 
-      semantic-version:
-        description: Semantic version to set for the application
+      image-tag:
+        description: Custom image tag, if not provided a tag will be auto-generated
         default: ""
         required: false
         type: string
@@ -121,9 +121,9 @@ jobs:
       - name: Set image tag
         id: set-image-tag
         run: |
-          if [ -n "${{ inputs.semantic-version }}" ]; then
-            image_tag="${{ inputs.semantic-version }}"
-            echo "- Using semantic version: $image_tag" >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "${{ inputs.image-tag }}" ]; then
+            image_tag="${{ inputs.image-tag }}"
+            echo "- Using custom image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
           else
             image_tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}
             echo "- Using auto-generated tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
