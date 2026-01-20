@@ -20,6 +20,12 @@ on:
         required: false
         type: boolean
 
+      image-tag:
+        description: Custom image tag, if not provided a tag will be auto-generated
+        default: ""
+        required: false
+        type: string
+
       java-version:
         description: Main version of java
         default: "11"
@@ -138,6 +144,7 @@ jobs:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
       image-signing: ${{ inputs.image-signing }}
+      image-tag: ${{ inputs.image-tag }}
       java-version: ${{ inputs.java-version }}
       java-distribution: ${{ inputs.java-distribution }}
       container-scan-offline-mode: ${{ inputs.container-scan-offline-mode }}
