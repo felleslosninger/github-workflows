@@ -20,6 +20,12 @@ on:
         required: false
         type: boolean
 
+      image-tag:
+        description: Custom image tag, if not provided a tag will be auto-generated
+        default: ""
+        required: false
+        type: string
+
       java-version:
         description: Main version of java
         default: "11"
@@ -138,11 +144,12 @@ jobs:
   run-spring-boot-build:
     needs: input-checks
     if: inputs.application-type == 'spring-boot'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-build-publish-image.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-build-publish-image.yml@MOVE-4422-remove-dockerfile
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
       image-signing: ${{ inputs.image-signing }}
+      image-tag: ${{ inputs.image-tag }}
       java-version: ${{ inputs.java-version }}
       java-distribution: ${{ inputs.java-distribution }}
       container-scan-offline-mode: ${{ inputs.container-scan-offline-mode }}
