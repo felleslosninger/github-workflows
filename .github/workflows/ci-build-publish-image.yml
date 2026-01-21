@@ -83,6 +83,11 @@ on:
         default: "deployment"
         type: string
 
+      module-name:
+        description: Module name to build (for multi-module projects)
+        required: false
+        type: string
+
     outputs:
       image-version:
         description: "Docker image version"
@@ -148,6 +153,7 @@ jobs:
       container-registry: ${{ needs.input-checks.outputs.container-registry }}
       sp-container-registry-client-id: ${{ needs.input-checks.outputs.sp-container-registry-client-id }}
       setup-npm-auth: ${{ inputs.setup-npm-auth }}
+      module-name: ${{ inputs.module-name }}
     secrets: inherit
 
   run-quarkus-build:
