@@ -1,5 +1,6 @@
 # This GitHub Action calls workflow to update Docker image
 name: Call Update Image
+permissions: {}
 
 on:
   workflow_call:
