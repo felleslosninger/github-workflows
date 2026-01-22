@@ -115,7 +115,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
-      packages: write
+      packages: read
 
     steps:
       - name: Set image tag
