@@ -53,6 +53,12 @@ on:
         required: false
         type: string
 
+      image-tag:
+        description: Custom image tag, if not provided a tag will be auto-generated
+        default: ""
+        required: false
+        type: string
+
       cache-path:
         default: "**/pom.xml"
         required: false
@@ -70,7 +76,7 @@ on:
         type: boolean
 
       container-registry:
-        description: Azure Container Registry name
+        description: Container Registry url
         default: "creiddev.azurecr.io"
         required: false
         type: string
@@ -115,7 +121,13 @@ jobs:
       - name: Set image tag
         id: set-image-tag
         run: |
-          image_tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}
+          if [ -n "${{ inputs.image-tag }}" ]; then
+            image_tag="${{ inputs.image-tag }}"
+            echo "- Using custom image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
+          else
+            image_tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}
+            echo "- Using auto-generated tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
+          fi
           echo "image-tag=$image_tag" >> "$GITHUB_OUTPUT"
           echo "- Image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
 
@@ -247,6 +259,7 @@ jobs:
         run: az acr login --name "$ACR_NAME"
         env:
           ACR_NAME: ${{ inputs.container-registry }}
+
 
       - name: Push image
         run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}

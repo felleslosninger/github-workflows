@@ -20,6 +20,12 @@ on:
         required: false
         type: boolean
 
+      image-tag:
+        description: Custom image tag, if not provided a tag will be auto-generated
+        default: ""
+        required: false
+        type: string
+
       java-version:
         description: Main version of java
         default: "11"
@@ -83,6 +89,11 @@ on:
         default: "deployment"
         type: string
 
+      module-name:
+        description: Module name to build (for multi-module projects)
+        required: false
+        type: string
+
     outputs:
       image-version:
         description: "Docker image version"
@@ -138,6 +149,7 @@ jobs:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
       image-signing: ${{ inputs.image-signing }}
+      image-tag: ${{ inputs.image-tag }}
       java-version: ${{ inputs.java-version }}
       java-distribution: ${{ inputs.java-distribution }}
       container-scan-offline-mode: ${{ inputs.container-scan-offline-mode }}
@@ -148,6 +160,7 @@ jobs:
       container-registry: ${{ needs.input-checks.outputs.container-registry }}
       sp-container-registry-client-id: ${{ needs.input-checks.outputs.sp-container-registry-client-id }}
       setup-npm-auth: ${{ inputs.setup-npm-auth }}
+      module-name: ${{ inputs.module-name }}
     secrets: inherit
 
   run-quarkus-build:
