@@ -108,6 +108,10 @@ jobs:
 
       - id: output-image-digest
         run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
+      - name: Image signing
+        uses: felleslosninger/github-workflows/.github/actions/image-signing@main
+        with:
+          image: ${{env.IMAGE_NAME}}:${{env.IMAGETAG}}
   notify-on-errors:
     runs-on: ubuntu-latest
     needs: [build-publish-image]
