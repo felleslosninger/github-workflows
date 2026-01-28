@@ -138,6 +138,6 @@ jobs:
           severity: "CRITICAL,HIGH"
           trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
 
-      - uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # pin@v0.20.6
+      - uses: anchore/sbom-action@deef08a0db64bfad603422135db61477b16cef56 # pin@v0.22.1
         with:
           path: ${{ inputs.sbom-path }}
