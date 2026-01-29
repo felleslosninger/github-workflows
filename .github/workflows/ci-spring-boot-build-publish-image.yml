@@ -250,7 +250,7 @@ jobs:
       
       # Login to GHCR if container-registry starts with ghcr.io
       - name: Login to GitHub Container Registry
-        if: startsWith(inputs.container-registry, 'ghcr.io')
+        if: contains(inputs.container-registry, 'ghcr.io')
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -259,7 +259,7 @@ jobs:
 
       # Login to Azure if container-registry is ACR
       - name: Login to Azure
-        if: startsWith(inputs.container-registry, 'creiddev.azurecr.io')
+        if: contains(inputs.container-registry, 'azurecr.io')
         uses: azure/login@v2
         with:
           client-id: ${{ secrets[inputs.sp-container-registry-client-id] }}
@@ -267,11 +267,10 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Login to Azure Container Registry
-        if: startsWith(inputs.container-registry, 'creiddev.azurecr.io')
+        if: contains(inputs.container-registry, 'azurecr.io')
         run: az acr login --name "$ACR_NAME"
         env:
           ACR_NAME: ${{ inputs.container-registry }}
-
 
       - name: Push image
         run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}

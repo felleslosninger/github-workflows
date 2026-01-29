@@ -35,6 +35,10 @@ on:
       deployment-environment:
         required: true
         type: string
+      cr-type:
+        required: false
+        default: "acr"
+        type: string
       # Default should follow ArgoCD version
       kustomize-version:
         required: false
@@ -114,6 +118,8 @@ jobs:
             echo "container-registry=${{ vars.CR_DEPLOYMENT_URL }}" >> "$GITHUB_OUTPUT"
           elif [[ "${{ inputs.lifecycle }}" == "development" ]]; then
             echo "container-registry=${{ vars.CR_DEV_URL }}" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ inputs.cr-type }}" == "ghcr" ]]; then
+            echo "container-registry=ghcr.io" >> "$GITHUB_OUTPUT"
           else
             echo "Invalid lifecycle type. Supported types are: \`deployment\`, and \`development\`" >> "$GITHUB_STEP_SUMMARY"
           fi
