@@ -1,0 +1,50 @@
+name: Zap fullscan 
+description:  Runs OWASP ZAP scan against webapplication or API
+author: Digdir Platform Team
+
+inputs:
+  target_url:
+    description: "Target url to scan"
+    required: true
+    default: ""
+
+  rules_file:
+    description: "Optional: Path to file customizing scanning rules"
+    required: false
+    default: ""
+
+  cmd_options:
+    description: "Optional: Additional command lines options for the script"
+    required: false
+    default: ""
+  
+  artifact_name:
+    description: "Name of the report name"
+    required: false
+    default: "zap-report"
+
+  # scan_api:
+  #   description: "true | false - set true if you want to scan an API" 
+  #   required: false
+  #   default: "false"
+
+  # api_specs:
+  #   description: "Optinal: If you set scan_api=true, you can spesify api specs as a file here."
+  #   required: false
+  #   default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Run ZAP fullscan with default rules 
+      uses: zaproxy/action-full-scan@v0.13.0
+      with:
+        target: ${{ inputs.target_url }}
+        cmd_option: ${{ inputs.cmd_options}}
+    
+    - name: Upload ZAP report 
+      uses: actions/upload-artifact@v4 
+      with:
+        name: ${{ inputs.artifact_name }}
+        
+
