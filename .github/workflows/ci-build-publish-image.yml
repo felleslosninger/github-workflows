@@ -89,6 +89,11 @@ on:
         default: "deployment"
         type: string
 
+      cr-type:
+        required: false
+        default: "acr"
+        type: string
+
     outputs:
       image-version:
         description: "Docker image version"

@@ -35,10 +35,6 @@ on:
       deployment-environment:
         required: true
         type: string
-      cr-type:
-        required: false
-        default: "acr"
-        type: string
       # Default should follow ArgoCD version
       kustomize-version:
         required: false
