@@ -126,7 +126,9 @@ jobs:
       - name: Set container registry
         id: set-container-registry
         run: |
-          if [[ "${{ inputs.lifecycle }}" == "deployment" ]]; then
+          if [[ "${{ inputs.cr-type }}" == "ghcr" ]]; then
+            echo "container-registry=ghcr.io" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ inputs.lifecycle }}" == "deployment" ]]; then
             echo "sp-container-registry-client-id=AZURE_CLIENT_ID" >> "$GITHUB_OUTPUT"
             echo "container-registry=${{ vars.CR_DEPLOYMENT_URL }}" >> "$GITHUB_OUTPUT"
           elif [[ "${{ inputs.lifecycle }}" == "development" ]]; then
