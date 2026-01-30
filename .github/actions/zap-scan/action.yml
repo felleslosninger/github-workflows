@@ -8,6 +8,11 @@ inputs:
     required: true
     default: ""
 
+  allow_issue_writing:
+    description: "Optional: true | false - If you want Zap to create issues in your repository based on its findings."
+    required: false
+    default: "false"
+
   # rules_file:
   #   description: "Optional: Path to file customizing scanning rules"
   #   required: false
@@ -41,15 +46,13 @@ runs:
       with:
         target: ${{ inputs.target_url }}
         cmd_options: ${{ inputs.cmd_options }}
+        allow_issue_writing: ${{ inputs.allow_issue_writing }}
     
     - name: Upload ZAP report 
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: ${{ inputs.artifact_name }}
-        path: |
-          report_html.html
-          report_json.json
-          report_md.md
-        
+        path: report_html.html
+
 
