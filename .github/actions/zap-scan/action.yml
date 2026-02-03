@@ -4,49 +4,61 @@ author: Digdir Platform Team
 
 inputs:
   target_url:
-    description: "Target url to scan"
+    description: "Required: Target url to scan, note that if you want to do a API scan, then this parameter needs to be set to the api config spec."
     required: true
     default: ""
+  
+  format:
+    description: "Optinal: openapi, soap, or graphql - format of the api specs, requires allow_issue_writing to be true."
+    required: false 
+    default: "openapi"
 
   allow_issue_writing:
     description: "Optional: true | false - If you want Zap to create issues in your repository based on its findings."
     required: false
     default: "false"
 
-  # rules_file:
-  #   description: "Optional: Path to file customizing scanning rules"
-  #   required: false
-  #   default: ""
+  issue_title:
+    description: "Optional: Title of the github issue to be created, requires allow_issue_writing to be true."
+    required: false
+    default: "Zap-scan-report"
 
   cmd_options:
-    description: "Optional: Additional command lines options for the script"
+    description: "Optional: Additional command lines options for the script, see zap fullscan doc for possible options."
     required: false
-    default: ""
+    default: "-a"
   
   artifact_name:
     description: "Name of the report name"
     required: false
     default: "zap-report"
 
-  # scan_api:
-  #   description: "true | false - set true if you want to scan an API" 
-  #   required: false
-  #   default: "false"
-
-  # api_specs:
-  #   description: "Optinal: If you set scan_api=true, you can spesify api specs as a file here."
-  #   required: false
-  #   default: ""
+  scan_api:
+    description: "Optional: true | false - set true if you want to scan an API" 
+    required: false
+    default: "false"
 
 runs:
   using: composite
   steps:
     - name: Run ZAP fullscan with default rules 
       uses: zaproxy/action-full-scan@v0.13.0
+      if: ${{ inputs.scan_api }} == false 
       with:
         target: ${{ inputs.target_url }}
         cmd_options: ${{ inputs.cmd_options }}
         allow_issue_writing: ${{ inputs.allow_issue_writing }}
+        issue_title: ${{ inputs.issue_title }}
+
+    - name: Run ZAP API scan 
+      uses: zaproxy/action-api-scan@v0.10.0
+      if: ${{ inputs.scan_api }} == true 
+      with:
+        target: ${{ inputs.target_url }}
+        format: ${{ inputs.format }}
+        cmd_options: ${{ inputs.cmd_options }}
+        allow_issue_writing: ${{ inputs.allow_issue_writing }}
+        issue_title: ${{ inputs.issue_title }}
     
     - name: Upload ZAP report 
       uses: actions/upload-artifact@v4
