@@ -28,6 +28,14 @@ These scans perform active testing, and will send payloads that try to exploit y
 | `token` | Token used for issue writing (use `secrets.GITHUB_TOKEN`), if not set then allow_issue_writing will not work. | false |
 | `artifact_name` | Name of the workflow artifact containing the ZAP reports. | false |
 
+## Enviroment variables (Only needed if you have to authenticate to use the application you want to scan)
+
+| Env | Description | Required |
+| :--- | :--- | :--- |
+| `auth_header_name` | If this is defined then its value will be used as the header name - if it is not defined then the standard Authorization header will be used. | false |
+| `auth_header_value` | If this is defined then its value will be added as a header to all of the requests. | false |
+| `auth_header_site` | Sites where we want to send authenticated requests. If not set, zap is allowed to send requests which include the auth_header_name and auth_header_value to any site. | false |
+
 ## Example Usage
 
 ### Full scan (web application)
@@ -51,6 +59,10 @@ jobs:
           allow_issue_writing: "true"
           issue_title: "Zap-fullscan-report"
           artifact_name: "Zap-fullscan-summary"
+        env:
+          ZAP_AUTH_HEADER: Authorization
+          ZAP_AUTH_HEADER_VALUE: "Bearer ${{ secrets.ZAP_TOKEN }}"
+          ZAP_AUTH_HEADER_SITE: "example-url.no"
 
 ```
 
@@ -75,6 +87,10 @@ jobs:
           allow_issue_writing: "true"
           issue_title: "Zap-apiscan-report"
           artifact_name: "Zap-apiscan-summary"
+        env:
+          ZAP_AUTH_HEADER: Authorization
+          ZAP_AUTH_HEADER_VALUE: "Bearer ${{ secrets.ZAP_TOKEN }}"
+          ZAP_AUTH_HEADER_SITE: "example-url.no"
 
 ```
 
