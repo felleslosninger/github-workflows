@@ -1,70 +1,78 @@
-name: Zap fullscan 
-description:  Runs OWASP ZAP scan against webapplication or API
+name: ZAP scan
+description: Runs OWASP ZAP scan against a web application (full scan) or an API (API scan)
 author: Digdir Platform Team
 
 inputs:
-  target_url:
-    description: "Required: Target url to scan, note that if you want to do a API scan, then this parameter needs to be set to the api config spec."
+  target:
+    description: "Required. Full scan: target URL. API scan: API definition (OpenAPI/SOAP) file/URL, or GraphQL endpoint URL."
     required: true
-    default: ""
-  
+
+  scan_api:
+    description: "Optional. true|false. Set true to run API scan instead of full scan."
+    required: false
+    default: "false"
+
   format:
-    description: "Optinal: openapi, soap, or graphql - format of the api specs, requires allow_issue_writing to be true."
-    required: false 
+    description: "Optional. openapi|soap|graphql. Only used when scan_api=true."
+    required: false
     default: "openapi"
 
+  cmd_options:
+    description: "Optional. Additional command line options for the underlying scan script."
+    required: false
+    default: "-a"
+
+  rules_file_name:
+    description: "Optional. Relative path to rules file (e.g. .zap/rules.tsv). Requires checkout if file is in repo."
+    required: false
+    default: ""
+
   allow_issue_writing:
-    description: "Optional: true | false - If you want Zap to create issues in your repository based on its findings."
+    description: "Optional. true|false. Create/update a GitHub issue with results."
     required: false
     default: "false"
 
   issue_title:
-    description: "Optional: Title of the github issue to be created, requires allow_issue_writing to be true."
+    description: "Optional. Issue title used when allow_issue_writing=true."
     required: false
-    default: "Zap-scan-report"
+    default: "ZAP Scan Report"
 
-  cmd_options:
-    description: "Optional: Additional command lines options for the script, see zap fullscan doc for possible options."
+  token:
+    description: "Optional. GitHub token for issue writing (use secrets.GITHUB_TOKEN)."
     required: false
-    default: "-a"
-  
+    default: ""
+
   artifact_name:
-    description: "Name of the report name"
+    description: "Optional. Name of the artifact that contains the ZAP reports."
     required: false
-    default: "zap-report"
-
-  scan_api:
-    description: "Optional: true | false - set true if you want to scan an API" 
-    required: false
-    default: "false"
+    default: "zap_scan"
 
 runs:
   using: composite
   steps:
-    - name: Run ZAP fullscan with default rules 
+    - name: Run ZAP full scan
+      if: ${{ inputs.scan_api == 'false' }}
       uses: zaproxy/action-full-scan@v0.13.0
-      if: ${{ inputs.scan_api }} == false 
       with:
-        target: ${{ inputs.target_url }}
+        target: ${{ inputs.target }}
+        scan_api: ${{ inputs.scan_api }}
+        rules_file_name: ${{ inputs.rules_file_name }}
         cmd_options: ${{ inputs.cmd_options }}
         allow_issue_writing: ${{ inputs.allow_issue_writing }}
         issue_title: ${{ inputs.issue_title }}
+        token: ${{ inputs.token }}
+        artifact_name: ${{ inputs.artifact_name }}
 
-    - name: Run ZAP API scan 
+    - name: Run ZAP API scan
+      if: ${{ inputs.scan_api == 'true' }}
       uses: zaproxy/action-api-scan@v0.10.0
-      if: ${{ inputs.scan_api }} == true 
       with:
-        target: ${{ inputs.target_url }}
+        target: ${{ inputs.target }}
+        scan_api: ${{ inputs.scan_api }}
         format: ${{ inputs.format }}
+        rules_file_name: ${{ inputs.rules_file_name }}
         cmd_options: ${{ inputs.cmd_options }}
         allow_issue_writing: ${{ inputs.allow_issue_writing }}
         issue_title: ${{ inputs.issue_title }}
-    
-    - name: Upload ZAP report 
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: ${{ inputs.artifact_name }}
-        path: report_html.html
-
-
+        token: ${{ inputs.token }}
+        artifact_name: ${{ inputs.artifact_name }}
