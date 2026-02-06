@@ -1,6 +1,5 @@
 # GitHub Action: ZAP scan (full scan / API scan)
 
-MORE DETAILS COMING.  
 Author: **Digdir Platform Team**
 
 ## Description
@@ -34,7 +33,9 @@ These scans perform active testing, and will send payloads that try to exploit y
 | `token` | Token used for issue writing (use `secrets.GITHUB_TOKEN`), if not set then allow_issue_writing will not work. | false |
 | `artifact_name` | Name of the workflow artifact containing the ZAP reports. | false |
 
-## Enviroment variables (Only needed if you have to authenticate to use the application you want to scan)
+## Enviroment variables
+
+Only needed if you have to authenticate to use the application you want to scan.
 
 | Env | Description | Required |
 | :--- | :--- | :--- |

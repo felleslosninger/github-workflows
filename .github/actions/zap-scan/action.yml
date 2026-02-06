@@ -67,7 +67,7 @@ runs:
   steps:
     - name: Run ZAP full scan
       if: ${{ inputs.scan_api == 'false' }}
-      uses: zaproxy/action-full-scan@v0.13.0
+      uses: zaproxy/action-full-scan@3c58388149901b9a03b7718852c5ba889646c27c # pin@v0.13.0
       env:
         ZAP_AUTH_HEADER: ${{ inputs.auth_header_name }}
         ZAP_AUTH_HEADER_VALUE: ${{ inputs.auth_header_value }}
@@ -84,7 +84,7 @@ runs:
 
     - name: Run ZAP API scan
       if: ${{ inputs.scan_api == 'true' }}
-      uses: zaproxy/action-api-scan@v0.10.0
+      uses: zaproxy/action-api-scan@5158fe4d9d8fcc75ea204db81317cce7f9e5453d # pin@v0.10.0
       env:
         ZAP_AUTH_HEADER: ${{ inputs.auth_header_name }}
         ZAP_AUTH_HEADER_VALUE: ${{ inputs.auth_header_value }}
