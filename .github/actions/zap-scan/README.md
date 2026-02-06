@@ -72,7 +72,6 @@ jobs:
           ZAP_AUTH_HEADER: Authorization
           ZAP_AUTH_HEADER_VALUE: "Bearer ${{ secrets.ZAP_TOKEN }}"
           ZAP_AUTH_HEADER_SITE: "example-url.no"
-
 ```
 
 ### Api scan
@@ -103,7 +102,6 @@ jobs:
           ZAP_AUTH_HEADER: Authorization
           ZAP_AUTH_HEADER_VALUE: "Bearer ${{ secrets.ZAP_TOKEN }}"
           ZAP_AUTH_HEADER_SITE: "example-url.no"
-
 ```
 
 ## Documentation
