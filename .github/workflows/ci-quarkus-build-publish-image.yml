@@ -14,6 +14,12 @@ on:
         required: false
         type: string
 
+      image-pack-tag:
+        description: "Docker image pack version tag. Pinned to 0.0.440 due to lifecycle 0.21.2 regression (see: paketo-buildpacks/builder-noble-java-tiny#191). Normally we would use 'latest', but this is temporarily pinned until the upstream issue is resolved."
+        default: "0.0.440"
+        required: false
+        type: string
+
       image-signing:
         description: Flag to toggle image signing on/off - default off
         default: true
@@ -136,7 +142,7 @@ jobs:
             --path . \
             --buildpack docker://paketobuildpacks/quarkus \
             --buildpack docker://paketobuildpacks/java-native-image \
-            --builder paketobuildpacks/${{ inputs.image-pack }}:0.0.440 \
+            --builder paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }} \
             --volume "${HOME}/.m2:/home/cnb/.m2:rw" \
             --env BP_JVM_VERSION="${{ inputs.java-version }}" \
             --env BP_MAVEN_POM_FILE="./pom.xml" \
@@ -151,7 +157,7 @@ jobs:
             --path . \
             --buildpack docker://paketobuildpacks/quarkus \
             --buildpack docker://paketobuildpacks/java \
-            --builder paketobuildpacks/${{ inputs.image-pack }}:0.0.440 \
+            --builder paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }} \
             --volume "${HOME}/.m2:/home/cnb/.m2:rw" \
             --env BP_JVM_VERSION="${{ inputs.java-version }}" \
             --env BP_MAVEN_POM_FILE="./pom.xml" \
