@@ -196,6 +196,9 @@ jobs:
             -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} \
             -Dspring-boot.build-image.createdDate=now
 
+      - name: Check Docker installation
+        run: docker info
+  
       - name: Build image with Maven/Spring Boot (application-path)
         if: inputs.module-name == ''
         run: |
