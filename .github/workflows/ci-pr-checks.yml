@@ -164,7 +164,7 @@ jobs:
     if: |
       inputs.enable-trivy-image-scan == true &&
       inputs.application-type == 'quarkus'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@pack-upgrade-testing
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
