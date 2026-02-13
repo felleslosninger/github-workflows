@@ -199,7 +199,7 @@ jobs:
       - name: Build image with Maven/Spring Boot (module-name)
         if: inputs.module-name != ''
         run: |
-          mvn install -B spring-boot:build-image \
+          DOCKER_MIN_API_VERSION=1.24 mvn install -B spring-boot:build-image \
             -pl ${{ inputs.module-name }} -am  \
             -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
             -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }} \
