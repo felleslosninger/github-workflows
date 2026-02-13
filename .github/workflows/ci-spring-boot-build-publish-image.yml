@@ -202,7 +202,7 @@ jobs:
           mvn -B spring-boot:build-image \
             --file ${{ inputs.application-path }}pom.xml \
             -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
-            -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} \
+            -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}:0.0.440 \
             -Dspring-boot.build-image.createdDate=now
 
       - name: Set trivyignore env if file exists
@@ -251,7 +251,7 @@ jobs:
         with:
           name: "sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}"
           path: "${{ github.workspace }}/sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}.json"
-      
+
       # Login to GHCR if container-registry starts with ghcr.io
       - name: Login to GitHub Container Registry
         if: contains(inputs.container-registry, 'ghcr.io')
