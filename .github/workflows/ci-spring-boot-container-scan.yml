@@ -108,7 +108,7 @@ jobs:
 
       - name: Build image with Maven (application-path, skips tests)
         if: inputs.module-name == ''
-        run: mvn -DskipTests -B spring-boot:build-image --file ${{ inputs.application-path }}pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}
+        run: mvn -DskipTests -B spring-boot:build-image --file ${{ inputs.application-path }}pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/builder-jammy-tiny:v0.0.440${{ inputs.image-pack }}
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # pin@v0.33.1
