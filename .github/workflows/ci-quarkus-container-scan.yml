@@ -83,7 +83,7 @@ jobs:
             "https://github.com/buildpacks/pack/releases/download/v${PACK_VERSION}/pack-v${PACK_VERSION}-linux.tgz" \
           | sudo tar -C /usr/local/bin --no-same-owner -xzv pack
         env:
-          PACK_VERSION: 0.32.1
+          PACK_VERSION: 0.40.0
 
       - name: Build native image with Maven/Quarkus
         if: inputs.native == true
