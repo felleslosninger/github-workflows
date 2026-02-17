@@ -8,12 +8,6 @@ on:
         required: false
         type: string
 
-      image-pack:
-        description: Docker image pack of builder-jammy-tiny, builder-jammy-base or builder-jammy-full
-        default: builder-jammy-tiny
-        required: false
-        type: string
-
       image-signing:
         description: Flag to toggle image signing on/off - default off
         default: true
