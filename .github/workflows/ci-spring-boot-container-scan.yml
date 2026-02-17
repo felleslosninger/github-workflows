@@ -9,7 +9,7 @@ on:
         type: string
       image-pack:
         description: Docker image pack of builder-jammy-tiny, builder-jammy-base or builder-jammy-full
-        default: builder-jammy-tiny
+        default: builder-jammy-java-tiny
         required: false
         type: string
       image-pack-tag:
