@@ -13,8 +13,8 @@ on:
         required: false
         type: string
       image-pack-tag:
-        description: "Docker image pack version tag. Pinned to 0.0.440 due to lifecycle 0.21.2 regression (see: paketo-buildpacks/builder-noble-java-tiny#191). Normally we would use 'latest', but this is temporarily pinned until the upstream issue is resolved."
-        default: "0.0.440"
+        description: "Docker image pack version tag. Earlier pinned to 0.0.440 due to lifecycle 0.21.2 regression (see: paketo-buildpacks/builder-noble-java-tiny#191). Now fixed: https://github.com/paketo-buildpacks/builder-noble-java-tiny/issues/191#issuecomment-3897508140"
+        default: "latest"
         required: false
         type: string
       registry-url:
