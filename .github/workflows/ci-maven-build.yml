@@ -114,7 +114,7 @@ jobs:
 
       - name: Configure private NPM registry authentication
         if: ${{ inputs.setup-npm-auth == true }}
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # pin@v5.0.0
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # pin@v6.2.0
         with:
           node-version: '20.x'
           registry-url: 'https://npm.pkg.github.com'
