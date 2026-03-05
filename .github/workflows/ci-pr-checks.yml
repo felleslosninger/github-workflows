@@ -77,6 +77,11 @@ on:
         default: "**/pom.xml"
         required: false
         type: string
+      maven-lifecycle:
+        description: 'Maven lifecycle phase (test, package, verify, install)'
+        type: string
+        required: false
+        default: 'test'
 
 jobs:
   verify-pull-request-title:
@@ -140,8 +145,18 @@ jobs:
                 "password": "${{ secrets.MAVEN_PASSWORD }}"
             }]
 
-      - name: Run build and test with Maven
-        run: mvn -B test
+      - name: Run mvn ${{ inputs.maven-lifecycle }}
+        run: |
+          LIFECYCLE="${{ inputs.maven-lifecycle }}"
+          case "$LIFECYCLE" in
+            test|package|verify|install)
+              mvn -B "$LIFECYCLE"
+              ;;
+            *)
+              echo "Invalid Maven lifecycle: $LIFECYCLE"
+              exit 1
+              ;;
+          esac
 
       - name: Upload artifact
         if: |
