@@ -46,7 +46,7 @@ jobs:
       - name: Fetch Dependabot metadata
         if: ${{ fromJson(steps.update-types.outputs.count) > 0 }}
         id: dependabot-metadata
-        uses: dependabot/fetch-metadata@08eff52bf64351f401fb50d4972fa95b9f2c2d1b # pin@v2.4.0
+        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # pin@v2.5.0
 
       - name: Approve and auto-merge
         id: auto-merge
