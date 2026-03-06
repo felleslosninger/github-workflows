@@ -211,26 +211,10 @@ jobs:
             -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }} \
             -Dspring-boot.build-image.createdDate=now
 
-      - name: Set trivyignore env if file exists
-        id: set-trivyignore-path
-        run: |
-          if [ -f "${{ inputs.application-path }}.trivyignore" ]; then
-            trivyignore_path=${{ inputs.application-path }}.trivyignore
-            echo "trivyignore-path=$trivyignore_path" >> "$GITHUB_OUTPUT"
-            echo "- Trivy ignore path: $trivyignore_path" >> "$GITHUB_STEP_SUMMARY"
-          fi
-
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@97e0b3872f55f89b95b2f65b3dbab56962816478 # pin@v0.34.2
-        id: trivy-primary
-        env:
-          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
-          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+        uses: felleslosninger/github-workflows/.github/actions/trivy-vulnerability-scan@PF-2231-trivy-vuln-scanning-composite-action
         with:
           image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
-          trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
 
       - name: Create SBOM artifact name
         id: sbom-name
@@ -240,7 +224,7 @@ jobs:
           echo "- SBOM: $SBOM_NAME" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run Trivy SBOM generation
-        uses: aquasecurity/trivy-action@97e0b3872f55f89b95b2f65b3dbab56962816478 # pin@v0.34.2 
+        uses: aquasecurity/trivy-action@97e0b3872f55f89b95b2f65b3dbab56962816478 # pin@v0.34.2
         env:
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
           TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
