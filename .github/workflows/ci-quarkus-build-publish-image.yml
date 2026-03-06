@@ -9,8 +9,14 @@ on:
         type: string
 
       image-pack:
-        description: Docker image pack of builder-jammy-tiny, builder-jammy-base or builder-jammy-full
-        default: builder-jammy-tiny
+        description: Paketo builder image to use. See https://paketo.io/docs/reference/builders-reference/ for choices
+        default: builder-jammy-java-tiny
+        required: false
+        type: string
+
+      image-pack-tag:
+        description: "Docker image pack version tag. Earlier pinned to 0.0.440 due to lifecycle 0.21.2 regression (see: paketo-buildpacks/builder-noble-java-tiny#191). Now fixed: https://github.com/paketo-buildpacks/builder-noble-java-tiny/issues/191#issuecomment-3897508140"
+        default: "latest"
         required: false
         type: string
 
@@ -127,7 +133,7 @@ jobs:
             "https://github.com/buildpacks/pack/releases/download/v${PACK_VERSION}/pack-v${PACK_VERSION}-linux.tgz" \
           | sudo tar -C /usr/local/bin --no-same-owner -xzv pack
         env:
-          PACK_VERSION: 0.32.1
+          PACK_VERSION: 0.39.1
 
       - name: Build native image with Maven/Quarkus
         if: inputs.native == true
@@ -136,7 +142,7 @@ jobs:
             --path . \
             --buildpack docker://paketobuildpacks/quarkus \
             --buildpack docker://paketobuildpacks/java-native-image \
-            --builder paketobuildpacks/${{ inputs.image-pack }} \
+            --builder paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }} \
             --volume "${HOME}/.m2:/home/cnb/.m2:rw" \
             --env BP_JVM_VERSION="${{ inputs.java-version }}" \
             --env BP_MAVEN_POM_FILE="./pom.xml" \
@@ -151,14 +157,14 @@ jobs:
             --path . \
             --buildpack docker://paketobuildpacks/quarkus \
             --buildpack docker://paketobuildpacks/java \
-            --builder paketobuildpacks/${{ inputs.image-pack }} \
+            --builder paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }} \
             --volume "${HOME}/.m2:/home/cnb/.m2:rw" \
             --env BP_JVM_VERSION="${{ inputs.java-version }}" \
             --env BP_MAVEN_POM_FILE="./pom.xml" \
             --creation-time now
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # pin@v0.33.1
+        uses: aquasecurity/trivy-action@97e0b3872f55f89b95b2f65b3dbab56962816478 # pin@v0.34.2
         id: trivy-primary
         env:
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
