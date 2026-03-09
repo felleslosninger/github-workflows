@@ -215,6 +215,7 @@ jobs:
         uses: felleslosninger/github-workflows/.github/actions/trivy-vulnerability-scan@PF-2231-trivy-vuln-scanning-composite-action
         with:
           image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create SBOM artifact name
         id: sbom-name
