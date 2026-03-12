@@ -120,6 +120,7 @@ jobs:
         uses: felleslosninger/github-workflows/.github/actions/trivy-vulnerability-scan@PF-2231-trivy-vuln-scanning-composite-action
         with:
           scan-type: 'fs'
+          library-hide-progress: false
 
       - uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # pin@v0.20.6
         with:
