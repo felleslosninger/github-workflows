@@ -10,6 +10,14 @@ GitHub Actions UI. The action accepts a JSON input and an optional title. It
 also includes a best-effort check to avoid showing secret input values in the
 table.
 
+It supports the two use-cases we have
+
+- Input logging
+- Repository dispatch payload logging
+
+Repository dispatch events only supports a maximun of 10 top-level keys, which
+is why we have a check to see if this is a nested payload to circumvent this limit.
+
 ## Prerequisites
 
 None
@@ -23,6 +31,8 @@ None
 
 ## Example usage
 
+For input logging you can do
+
 ```yaml
 name: Some workflow where you want to log inputs
 
@@ -35,6 +45,23 @@ jobs:
       uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
       with:
         json-payload: ${{ toJson(inputs) }}
+```
+
+For repository dispatch objects you can do
+
+```yaml
+name: Some workflow where you want to log a repository dispatch payload
+
+jobs:
+  some job:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Write GitHub client payload to summary
+        uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
+        with:
+          json-payload: ${{ toJson(github.event.client_payload) }}
+          title: "GitHub Client Payload (update image)"
 ```
 
 ## How it works
