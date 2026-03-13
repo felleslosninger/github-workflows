@@ -2,7 +2,7 @@ name: Write JSON to step summary
 description: |
   Composite action to write JSON content to the step summary. The action accepts
   a JSON input and an optional title. This is normally used to write GitHub
-  Actions inputs to the step summary
+  Actions inputs or repository dispatch event payloads to the step summary
 author: Digdir Platform Team
 
 inputs:
