@@ -19,16 +19,34 @@ runs:
   steps:
     - name: Write JSON to step summary
       shell: bash
+      env:
+        JSON_PAYLOAD: ${{ inputs.json-payload }}
       run: |
         {
-          echo "#### ${{ inputs.title }}"
-          echo "| Input | Value |"
-          echo "| ----- | ----- |"
-          echo '${{ inputs.json-payload }}' | jq -r ' to_entries[]? |
-            if (.key | test("token|password|secret|key"; "i")) then
-              "| \(.key) | `***` |"
+          echo "### ${{ inputs.title }}"
+          echo "| Key | Value |"
+          echo "| --- | ----- |"
+
+          echo "$JSON_PAYLOAD" | jq -r '
+            # Check if this is a JSON object with a single key whose value is
+            # also an object. If so, unwrap one level to avoid an extra nesting
+            # level in the summary table
+            (if type == "object" and length == 1 and (to_entries[0].value | type == "object") then
+              to_entries[0].value
             else
-              "| \(.key) | `\(.value)` |"
-            end
+              .
+            end)
+
+            # Convert to key/value array
+            | to_entries[]?
+
+            # Format and mask secrets
+            | if (.key | test("token|password|secret|key|cert"; "i")) then
+                "| \(.key) | `***` |"
+              elif (.value == "" or .value == null) then
+                "| \(.key) | _Not set_ |"
+              else
+                "| \(.key) | `\(.value | tostring)` |"
+              end
           '
         } >> $GITHUB_STEP_SUMMARY
