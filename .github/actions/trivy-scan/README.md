@@ -1,16 +1,18 @@
-# GitHub Action: Trivy vulnerability scanning
+# GitHub Action: Trivy scan
 
 Author: **Digdir Platform Team**
 
 ## Description
 
-This GitHub Action performs vulnerability scanning using Trivy on container
-images or filesystem paths. It supports both library and OS vulnerability scans
-with configurable severity levels and can respect `.trivyignore` files for
-excluding specific vulnerabilities. The Trivy version to use is possible to
-override, but it will use the default from the official Trivy Action if unset.
-We add a warning to the step summary if the number of ignored vulnerabilities in
-`.trivyignore` exceeds what the Platform team considers a high amount.
+This GitHub Action performs scanning using Trivy on container images or
+filesystem paths. It supports both library and OS vulnerability scans with
+configurable severity levels and can respect `.trivyignore` files for excluding
+specific vulnerabilities. The Trivy version to use is possible to override, but
+it will use the default from the official Trivy Action if unset. We add a
+warning to the step summary if the number of ignored vulnerabilities in
+`.trivyignore` exceeds what the Platform team considers a high amount. By
+default, it will also scan for secrets that might have been accidentally
+included in plaintext.
 
 By default we
 
@@ -20,6 +22,7 @@ By default we
   there's no fix available yet (but this can be overridden)
 - We hide the full output from the Trivy scan, and move it out to the step
   summary if there's something you should look at (but this can be overridden)
+- Scan for plaintext secrets
 
 ## Prerequisites
 
@@ -53,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run Trivy vulnerability scanner
-        uses: felleslosninger/github-workflows/.github/actions/trivy-vulnerability-scan@main
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
           image-ref: my-registry/my-image:latest
 ```
@@ -66,7 +69,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run Trivy vulnerability scanner
-        uses: felleslosninger/github-workflows/.github/actions/trivy-vulnerability-scan@main
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
           scan-type: 'fs'
 ```

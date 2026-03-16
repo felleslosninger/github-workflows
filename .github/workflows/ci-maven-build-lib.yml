@@ -117,7 +117,7 @@ jobs:
           mvn -B clean install --update-snapshots
 
       - name: Run Trivy vulnerability scanner
-        uses: felleslosninger/github-workflows/.github/actions/trivy-vulnerability-scan@PF-2231-trivy-vuln-scanning-composite-action
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@PF-2231-trivy-vuln-scanning-composite-action
         with:
           scan-type: 'fs'
           library-hide-progress: false

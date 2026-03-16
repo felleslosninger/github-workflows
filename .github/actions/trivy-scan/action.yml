@@ -1,5 +1,5 @@
-name: Trivy Vulnerability Scan
-description: Composite action for Trivy vulnerability scanning
+name: Trivy Scan
+description: Composite action for Trivy scanning
 author: Digdir Platform Team
 
 inputs:
