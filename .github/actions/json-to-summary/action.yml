@@ -22,6 +22,7 @@ runs:
       env:
         JSON_PAYLOAD: ${{ inputs.json-payload }}
         TITLE: ${{ inputs.title }}
+        TITLE: ${{ inputs.title }}
       run: |
         {
          echo "### $TITLE"
