@@ -3,62 +3,88 @@ name: Build, scan and publish Docker image
 on:
   workflow_call:
     inputs:
-
       java-version:
         description: Main version of java
         default: "21"
         required: false
         type: string
-
       java-distribution:
         description: Java distribution to use
         default: "liberica"
         required: false
         type: string
-
       registry-url:
         description: URL of the Docker container registry (e.g., ghcr.io)
         default: "ghcr.io/felleslosninger"
         required: false
         type: string
-
       image-name:
         description: Name of Docker image
         required: false
         type: string
-
       image-signing:
         description: Flag to toggle image signing on/off - default off
         default: true
         required: false
         type: boolean
-
       container-scan-offline-mode:
         description: Container-scan is default download updated CVE definitions via Trivy, enable offline on download problems
         default: false
         type: boolean
-
       slack-channel-id:
         description: Team channel id
         default: ""
         required: false
         type: string
-
       application-path:
         default: "./integrasjonspunkt"
         required: false
         type: string
-
       add-git-package-token:
         description: Adds GIT_PACKAGE_TOKEN build argument for Docker
         required: false
         type: boolean
-
       package-version:
         description: Version to use for maven package
         default: ""
         required: false
         type: string
+      trivy-library-disable-scan:
+        description: Disable Trivy library scan
+        type: boolean
+        required: false
+      trivy-library-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy library scan
+        type: boolean
+        required: false
+      trivy-library-severity:
+        description: When to fail the scan with Trivy library vulnerabilities
+        type: string
+        required: false
+      trivy-library-hide-progress:
+        description: Hide progress output for Trivy library scan
+        type: boolean
+        required: false
+      trivy-os-disable-scan:
+        description: Disable Trivy OS scan
+        type: boolean
+        required: false
+      trivy-os-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy OS scan
+        type: boolean
+        required: false
+      trivy-os-severity:
+        description: When to fail the scan with Trivy OS vulnerabilities
+        type: string
+        required: false
+      trivy-os-hide-progress:
+        description: Hide progress output for Trivy OS scan
+        type: boolean
+        required: false
+      trivy-version:
+        description: Version of Trivy to use for scanning
+        type: string
+        required: false
 
     outputs:
       image-digest:
@@ -109,15 +135,19 @@ jobs:
             .
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@97e0b3872f55f89b95b2f65b3dbab56962816478 # pin@v0.34.2 
-        id: trivy-primary
-        env:
-          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
-          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@PF-2231-trivy-vuln-scanning-composite-action
         with:
           image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ inputs.package-version }}
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
+          application-path: ${{ inputs.application-path }}
+          library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+          library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+          library-severity: ${{ inputs.trivy-library-severity }}
+          library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
+          os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
+          os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
+          os-severity: ${{ inputs.trivy-os-severity }}
+          os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
+          trivy-version: ${{ inputs.trivy-version }}
 
       - name: Create SBOM artifact name
         id: sbom-name
