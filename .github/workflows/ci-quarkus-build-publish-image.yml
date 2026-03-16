@@ -7,60 +7,87 @@ on:
         description: Name of Docker image
         required: false
         type: string
-
       image-pack:
         description: Paketo builder image to use. See https://paketo.io/docs/reference/builders-reference/ for choices
         default: builder-jammy-java-tiny
         required: false
         type: string
-
       image-pack-tag:
         description: "Docker image pack version tag. Earlier pinned to 0.0.440 due to lifecycle 0.21.2 regression (see: paketo-buildpacks/builder-noble-java-tiny#191). Now fixed: https://github.com/paketo-buildpacks/builder-noble-java-tiny/issues/191#issuecomment-3897508140"
         default: "latest"
         required: false
         type: string
-
       image-signing:
         description: Flag to toggle image signing on/off - default off
         default: true
         required: false
         type: boolean
-
       java-version:
         description: Main version of java
         default: "21"
         required: false
         type: string
-
       slack-channel-id:
         description: Team channel id
         default: ""
         required: false
         type: string
-
       native:
         description: Build native image
         required: false
         type: boolean
         default: false
-
       container-registry:
         description: Azure Container Registry name
         default: "creiddev.azurecr.io"
         required: false
         type: string
-
       sp-container-registry-client-id:
         required: false
         default: "AZURE_CLIENT_ID"
         type: string
         description: Service Principal used for container registry in inputs
+      trivy-library-disable-scan:
+        description: Disable Trivy library scan
+        type: boolean
+        required: false
+      trivy-library-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy library scan
+        type: boolean
+        required: false
+      trivy-library-severity:
+        description: When to fail the scan with Trivy library vulnerabilities
+        type: string
+        required: false
+      trivy-library-hide-progress:
+        description: Hide progress output for Trivy library scan
+        type: boolean
+        required: false
+      trivy-os-disable-scan:
+        description: Disable Trivy OS scan
+        type: boolean
+        required: false
+      trivy-os-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy OS scan
+        type: boolean
+        required: false
+      trivy-os-severity:
+        description: When to fail the scan with Trivy OS vulnerabilities
+        type: string
+        required: false
+      trivy-os-hide-progress:
+        description: Hide progress output for Trivy OS scan
+        type: boolean
+        required: false
+      trivy-version:
+        description: Version of Trivy to use for scanning
+        type: string
+        required: false
 
     outputs:
       image-version:
         description: "Docker image version"
         value: ${{ jobs.build-publish-image.outputs.imagetag }}
-
       image-digest:
         description: "Docker image SHA256 digest"
         value: ${{ jobs.build-publish-image.outputs.imagedigest }}
@@ -164,15 +191,18 @@ jobs:
             --creation-time now
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@97e0b3872f55f89b95b2f65b3dbab56962816478 # pin@v0.34.2
-        id: trivy-primary
-        env:
-          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
-          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@PF-2231-trivy-vuln-scanning-composite-action
         with:
-          image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
+          image-ref: ${{ env.IMAGE-NAME }}:${{ env.IMAGETAG }}
+          library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+          library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+          library-severity: ${{ inputs.trivy-library-severity }}
+          library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
+          os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
+          os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
+          os-severity: ${{ inputs.trivy-os-severity }}
+          os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
+          trivy-version: ${{ inputs.trivy-version }}
 
       - name: Create SBOM artifact-name
         id: sbom-name
