@@ -13,7 +13,7 @@ inputs:
     required: false
   application-path:
     description: Path to application for Trivy scan (to detect .trivyignore)
-    default: "."
+    default: "./"
     required: false
   library-disable-scan:
     description: Disable library scan
@@ -100,7 +100,7 @@ runs:
         APP_PATH: ${{ inputs.application-path }}
         THRESHOLD: ${{ inputs.trivyignore-warning-threshold }}
       run: |
-        TARGET_FILE="${APP_PATH}/.trivyignore"
+        TARGET_FILE="${APP_PATH}.trivyignore"
 
         if [ -f "$TARGET_FILE" ]; then
           echo "Found ignore file: $TARGET_FILE"

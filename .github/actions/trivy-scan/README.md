@@ -34,7 +34,7 @@ None
 | :---- | :---------- | :------- | :------ |
 | `scan-type` | Type of scan to run ('image' or 'fs') | false | `image` |
 | `image-ref` | Image reference to scan (implicitly required if `scan-type` is `image`) | false | `""` |
-| `application-path` | Path to application for Trivy scan (to detect .trivyignore) | false | `.` |
+| `application-path` | Path to application for Trivy scan (to detect .trivyignore) | false | `./` |
 | `library-disable-scan` | Disable library scan | false | `false` |
 | `library-ignore-unfixed` | Ignore unfixed vulnerabilities in library scan | false | `true` |
 | `library-severity` | When to fail the scan with library vulnerabilities | false | `HIGH,CRITICAL` |
