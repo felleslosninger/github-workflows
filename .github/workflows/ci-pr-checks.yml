@@ -82,6 +82,46 @@ on:
         type: string
         required: false
         default: 'test'
+      application-path:
+        default: "./"
+        required: false
+        type: string
+      trivy-library-disable-scan:
+        description: Disable Trivy library scan
+        type: boolean
+        required: false
+      trivy-library-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy library scan
+        type: boolean
+        required: false
+      trivy-library-severity:
+        description: When to fail the scan with Trivy library vulnerabilities
+        type: string
+        required: false
+      trivy-library-hide-progress:
+        description: Hide progress output for Trivy library scan
+        type: boolean
+        required: false
+      trivy-os-disable-scan:
+        description: Disable Trivy OS scan
+        type: boolean
+        required: false
+      trivy-os-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy OS scan
+        type: boolean
+        required: false
+      trivy-os-severity:
+        description: When to fail the scan with Trivy OS vulnerabilities
+        type: string
+        required: false
+      trivy-os-hide-progress:
+        description: Hide progress output for Trivy OS scan
+        type: boolean
+        required: false
+      trivy-version:
+        description: Version of Trivy to use for scanning
+        type: string
+        required: false
 
 jobs:
   verify-pull-request-title:
@@ -178,6 +218,16 @@ jobs:
       image-pack: ${{ inputs.image-pack }}
       image-pack-tag: ${{ inputs.image-pack-tag }}
       java-version: ${{ inputs.java-version }}
+      application-path: ${{ inputs.application-path }}
+      trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+      trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+      trivy-library-severity: ${{ inputs.trivy-library-severity }}
+      trivy-library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
+      trivy-os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
+      trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
+      trivy-os-severity: ${{ inputs.trivy-os-severity }}
+      trivy-os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
+      trivy-version: ${{ inputs.trivy-version }}
     secrets: inherit
 
   call-quarkus-container-scan:
@@ -185,13 +235,23 @@ jobs:
     if: |
       inputs.enable-trivy-image-scan == true &&
       inputs.application-type == 'quarkus'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@PF-2231-trivy-vuln-scanning-composite-action
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
       image-pack-tag: ${{ inputs.image-pack-tag }}
       java-version: ${{ inputs.java-version }}
       native: ${{ inputs.native }}
+      application-path: ${{ inputs.application-path }}
+      trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+      trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+      trivy-library-severity: ${{ inputs.trivy-library-severity }}
+      trivy-library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
+      trivy-os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
+      trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
+      trivy-os-severity: ${{ inputs.trivy-os-severity }}
+      trivy-os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
+      trivy-version: ${{ inputs.trivy-version }}
     secrets: inherit
 
   call-auto-merge:
