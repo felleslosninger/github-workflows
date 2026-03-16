@@ -20,9 +20,8 @@ runs:
     - name: Write JSON to step summary
       shell: bash
       env:
+        TITLE: ${{ inputs.title }}
         JSON_PAYLOAD: ${{ inputs.json-payload }}
-        TITLE: ${{ inputs.title }}
-        TITLE: ${{ inputs.title }}
       run: |
         {
          echo "### $TITLE"
