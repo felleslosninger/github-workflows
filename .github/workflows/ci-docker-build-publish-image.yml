@@ -14,11 +14,6 @@ on:
         required: false
         type: boolean
 
-      container-scan-offline-mode:
-        description: Container-scan is default download updated CVE definitions via Trivy, enable offline on download problems
-        default: false
-        type: boolean
-
       slack-channel-id:
         description: Team channel id
         default: ""
@@ -95,7 +90,7 @@ jobs:
           fi
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@97e0b3872f55f89b95b2f65b3dbab56962816478 # pin@v0.34.2 
+        uses: aquasecurity/trivy-action@97e0b3872f55f89b95b2f65b3dbab56962816478 # pin@v0.34.2
         id: trivy-primary
         env:
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
