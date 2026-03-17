@@ -65,7 +65,7 @@ runs:
         echo "### Trivy vulnerability scan" >> "$GITHUB_STEP_SUMMARY"
 
     - name: Write inputs to summary
-      uses: felleslosninger/github-workflows/.github/actions/json-to-summary@PF-2287-migrate-and-improve-json-to-summary
+      uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
       with:
         json-payload: ${{ toJson(inputs) }}
 
