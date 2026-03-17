@@ -30,38 +30,47 @@ on:
         description: Disable Trivy library scan
         type: boolean
         required: false
+        default: false
       trivy-library-ignore-unfixed:
         description: Ignore unfixed vulnerabilities in Trivy library scan
         type: boolean
         required: false
+        default: true
       trivy-library-severity:
         description: When to fail the scan with Trivy library vulnerabilities
         type: string
         required: false
+        default: 'HIGH,CRITICAL'
       trivy-library-hide-progress:
         description: Hide progress output for Trivy library scan
         type: boolean
         required: false
+        default: true
       trivy-os-disable-scan:
         description: Disable Trivy OS scan
         type: boolean
         required: false
+        default: false
       trivy-os-ignore-unfixed:
         description: Ignore unfixed vulnerabilities in Trivy OS scan
         type: boolean
         required: false
+        default: true
       trivy-os-severity:
         description: When to fail the scan with Trivy OS vulnerabilities
         type: string
         required: false
+        default: 'CRITICAL'
       trivy-os-hide-progress:
         description: Hide progress output for Trivy OS scan
         type: boolean
         required: false
+        default: true
       trivy-version:
         description: Version of Trivy to use for scanning
         type: string
         required: false
+        default: ''
 
     outputs:
       image-version:
