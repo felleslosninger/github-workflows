@@ -47,6 +47,10 @@ inputs:
     description: Hide progress output for OS scan
     default: "true"
     required: false
+  os-exit-code:
+    description: Exit code when OS vulnerabilities are found (0 = informational, 1 = blocking)
+    default: "0"
+    required: false
   trivy-version:
     description: Version of Trivy to use for scanning
     default: ""
@@ -193,28 +197,38 @@ runs:
         trivyignores: ${{ steps.trivyignore.outputs.trivyignore-path }}
         hide-progress: ${{ inputs.os-hide-progress }}
         output: trivy-os-scan.txt
-        exit-code: "1"
+        exit-code: "${{ inputs.os-exit-code }}"
         # Skip Trivy setup if library scan is not enabled, as the OS scan also
         # requires the Trivy setup and this avoids redundant setup when only OS
         # scan is enabled
         skip-setup-trivy: ${{ inputs.library-disable-scan != 'true' }}
 
     - name: Publish Trivy OS scan output to step summary
-      if: ${{ always() && inputs.os-disable-scan != 'true' && inputs.scan-type == 'image'}}
+      if: ${{ always() && inputs.os-disable-scan != 'true' && inputs.scan-type == 'image' }}
       shell: bash
       env:
         SCAN_OUTCOME: ${{ steps.trivy-os.outcome }}
+        OS_EXIT_CODE: ${{ inputs.os-exit-code }}
       run: |
         if [[ -s trivy-os-scan.txt ]]; then
           {
             echo "#### OS scan results"
 
-            if [[ "$SCAN_OUTCOME" == "failure" ]]; then
-              echo "> [!WARNING]"
-              echo "> **Action Required:** The pipeline failed due to fixable OS vulnerabilities. Expand the details below to view them."
+            # Check if this is an informational scan (managed base image)
+            if [[ "$OS_EXIT_CODE" == "0" ]]; then
+              echo "> [!IMPORTANT]"
+              echo "> **Informational OS Scan:** This pipeline is configured to not fail on OS vulnerabilities as you have no control of the base image. Expand the details below to review the affected packages."
+
+            # Check if this is a blocking scan that failed due to OS
+            # vulnerabilities (normally when using custom Dockerfile)
+            elif [[ "$SCAN_OUTCOME" == "failure" ]]; then
+              echo "> [!ERROR]"
+              echo "> **Action Required:** The pipeline failed due to OS-level vulnerabilities in your base image. Expand the details below to review the affected packages."
+
+            # Blocking scan passed (normally when using custom Dockerfile)
             else
               echo "> [!NOTE]"
-              echo "> **Scan Passed:** No blocking OS vulnerabilities were found."
+              echo "> **Scan Passed:** No blocking OS vulnerabilities were found in your base image."
             fi
 
             echo ""
@@ -224,5 +238,5 @@ runs:
             cat trivy-os-scan.txt
             echo '```'
             echo "</details>"
-          } >> $GITHUB_STEP_SUMMARY
+          } >> "$GITHUB_STEP_SUMMARY"
         fi

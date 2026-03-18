@@ -12,7 +12,10 @@ it will use the default from the official Trivy Action if unset. We add a
 warning to the step summary if the number of ignored vulnerabilities in
 `.trivyignore` exceeds what the Platform team considers a high amount. By
 default, it will also scan for secrets that might have been accidentally
-included in plaintext.
+included in plaintext. We try to only fail the scans when there is actionable
+feedback (like library scan failures for fixable CVEs). We try to avoid failing
+the pipeline when there is nothing you can do about it, like a OS vulnerability
+in the `latest` tag of our base image.
 
 By default we
 
