@@ -162,7 +162,7 @@ runs:
             echo "#### Library scan results"
 
             if [[ "$SCAN_OUTCOME" == "failure" ]]; then
-              echo "> [!ERROR]"
+              echo "> [!WARNING]"
               echo "> **Action Required:** The pipeline failed due to fixable library vulnerabilities. Expand the details below to review the scan result."
             else
               echo "> [!NOTE]"
@@ -222,7 +222,7 @@ runs:
             # Check if this is a blocking scan that failed due to OS
             # vulnerabilities (normally when using custom Dockerfile)
             elif [[ "$SCAN_OUTCOME" == "failure" ]]; then
-              echo "> [!ERROR]"
+              echo "> [!WARNING]"
               echo "> **Action Required:** The pipeline failed due to fixable OS vulnerabilities. Expand the details below to review the scan result."
 
             # Blocking scan passed (normally when using custom Dockerfile)
