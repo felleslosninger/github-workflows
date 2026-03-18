@@ -162,8 +162,8 @@ runs:
             echo "#### Library scan results"
 
             if [[ "$SCAN_OUTCOME" == "failure" ]]; then
-              echo "> [!WARNING]"
-              echo "> **Action Required:** The pipeline failed due to fixable library vulnerabilities. Expand the details below to view them."
+              echo "> [!ERROR]"
+              echo "> **Action Required:** The pipeline failed due to fixable library vulnerabilities. Expand the details below to review the scan result."
             else
               echo "> [!NOTE]"
               echo "> **Scan Passed:** No blocking library vulnerabilities were found."
@@ -217,13 +217,13 @@ runs:
             # Check if this is an informational scan (managed base image)
             if [[ "$OS_EXIT_CODE" == "0" ]]; then
               echo "> [!IMPORTANT]"
-              echo "> **Informational OS Scan:** This pipeline is configured to not fail on OS vulnerabilities as you have no control of the base image. Expand the details below to review the affected packages."
+              echo "> **Informational OS Scan:** This pipeline is configured to not fail on OS vulnerabilities as you have no control of the base image. Expand the details below to review the scan result."
 
             # Check if this is a blocking scan that failed due to OS
             # vulnerabilities (normally when using custom Dockerfile)
             elif [[ "$SCAN_OUTCOME" == "failure" ]]; then
               echo "> [!ERROR]"
-              echo "> **Action Required:** The pipeline failed due to OS-level vulnerabilities in your base image. Expand the details below to review the affected packages."
+              echo "> **Action Required:** The pipeline failed due to fixable OS vulnerabilities. Expand the details below to review the scan result."
 
             # Blocking scan passed (normally when using custom Dockerfile)
             else
