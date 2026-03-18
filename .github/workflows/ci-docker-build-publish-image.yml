@@ -75,11 +75,6 @@ on:
         type: boolean
         required: false
         default: true
-      trivy-os-exit-code:
-        description: Exit code for OS vulns (1 = blocking for Dockerfiles)
-        type: string
-        required: false
-        default: '1'
       trivy-version:
         description: Version of Trivy to use for scanning
         type: string
@@ -145,7 +140,7 @@ jobs:
           os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
           os-severity: ${{ inputs.trivy-os-severity }}
           os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
-          os-exit-code: ${{ inputs.trivy-os-exit-code }}
+          os-exit-code: "1"
           trivy-version: ${{ inputs.trivy-version }}
 
       - name: Create SBOM artifact name
