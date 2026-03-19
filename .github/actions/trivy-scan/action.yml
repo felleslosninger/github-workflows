@@ -138,6 +138,8 @@ runs:
       env:
         TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
         TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+        # Disable noisy VEX notice from the scan result
+        TRIVY_DISABLE_VEX_NOTICE: "true"
       with:
         version: ${{ inputs.trivy-version }}
         scan-type: ${{ inputs.scan-type }}
@@ -186,6 +188,8 @@ runs:
       env:
         TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
         TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+        # Disable noisy VEX notice from the scan result
+        TRIVY_DISABLE_VEX_NOTICE: "true"
       with:
         version: ${{ inputs.trivy-version }}
         scan-type: "image"

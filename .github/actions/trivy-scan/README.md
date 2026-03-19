@@ -26,6 +26,7 @@ By default we
 - We hide the full output from the Trivy scan, and move it out to the step
   summary if there's something you should look at (but this can be overridden)
 - Scan for plaintext secrets
+- Disable the noisy VEX notice that is included in scan results
 
 ## Prerequisites
 
