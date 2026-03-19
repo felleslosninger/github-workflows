@@ -169,8 +169,6 @@ runs:
             if [[ "$SCAN_OUTCOME" == "failure" ]]; then
               echo "> [!WARNING]"
               echo "> **Action Required:** The pipeline failed due to fixable library vulnerabilities. See scan result below."
-              echo ""
-              echo ""
               echo '```text'
               cat trivy-library-scan.txt
               echo '```'
@@ -235,8 +233,6 @@ runs:
             elif [[ "$SCAN_OUTCOME" == "failure" ]]; then
               echo "> [!WARNING]"
               echo "> **Action Required:** The pipeline failed due to fixable OS vulnerabilities. See scan result below."
-              echo ""
-              echo ""
               echo '```text'
               cat trivy-os-scan.txt
               echo '```'
