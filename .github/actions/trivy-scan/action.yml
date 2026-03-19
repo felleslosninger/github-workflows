@@ -163,19 +163,16 @@ runs:
 
             if [[ "$SCAN_OUTCOME" == "failure" ]]; then
               echo "> [!WARNING]"
-              echo "> **Action Required:** The pipeline failed due to fixable library vulnerabilities. Expand the details below to review the scan result."
+              echo "> **Action Required:** The pipeline failed due to fixable library vulnerabilities. See scan result below."
+              echo ""
+              echo ""
+              echo '```text'
+              cat trivy-library-scan.txt
+              echo '```'
             else
               echo "> [!NOTE]"
               echo "> **Scan Passed:** No blocking library vulnerabilities were found."
             fi
-
-            echo ""
-            echo "<details><summary>Click to expand</summary>"
-            echo ""
-            echo '```terraform'
-            cat trivy-library-scan.txt
-            echo '```'
-            echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
         fi
 
@@ -218,25 +215,29 @@ runs:
             if [[ "$OS_EXIT_CODE" == "0" ]]; then
               echo "> [!IMPORTANT]"
               echo "> **Informational OS Scan:** This pipeline is configured to not fail on OS vulnerabilities as you have no control of the base image. Expand the details below to review the scan result."
+              echo ""
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```text'
+              cat trivy-os-scan.txt
+              echo '```'
+              echo "</details>"
 
             # Check if this is a blocking scan that failed due to OS
             # vulnerabilities (normally when using custom Dockerfile)
             elif [[ "$SCAN_OUTCOME" == "failure" ]]; then
               echo "> [!WARNING]"
-              echo "> **Action Required:** The pipeline failed due to fixable OS vulnerabilities. Expand the details below to review the scan result."
+              echo "> **Action Required:** The pipeline failed due to fixable OS vulnerabilities. See scan result below."
+              echo ""
+              echo ""
+              echo '```text'
+              cat trivy-os-scan.txt
+              echo '```'
 
             # Blocking scan passed (normally when using custom Dockerfile)
             else
               echo "> [!NOTE]"
               echo "> **Scan Passed:** No blocking OS vulnerabilities were found in your base image."
             fi
-
-            echo ""
-            echo "<details><summary>Click to expand</summary>"
-            echo ""
-            echo '```terraform'
-            cat trivy-os-scan.txt
-            echo '```'
-            echo "</details>"
           } >> "$GITHUB_STEP_SUMMARY"
         fi
