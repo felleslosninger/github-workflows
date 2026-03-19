@@ -46,6 +46,7 @@ None
 | `os-ignore-unfixed` | Ignore unfixed vulnerabilities in OS scan | false | `true` |
 | `os-severity` | When to fail the scan with OS vulnerabilities | false | `CRITICAL` |
 | `os-hide-progress` | Hide progress output for OS scan | false | `true` |
+| `os-exit-code` | Exit code when OS vulnerabilities are found (0 = informational, 1 = blocking) | false | `"0"` |
 | `trivy-version` | Version of Trivy to use for scanning | false | `""` |
 | `trivyignore-warning-threshold` | Number of ignored vulnerabilities before we issue a warning | false | `10` |
 
