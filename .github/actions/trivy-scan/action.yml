@@ -105,11 +105,14 @@ runs:
         THRESHOLD: ${{ inputs.trivyignore-warning-threshold }}
       run: |
         TARGET_FILE="${APP_PATH}.trivyignore"
+        IGNORE_COUNT=0
 
         if [ -f "$TARGET_FILE" ]; then
           echo "Found ignore file: $TARGET_FILE"
           echo "trivyignore-path=$TARGET_FILE" >> "$GITHUB_OUTPUT"
-          IGNORE_COUNT=$(grep -v '^\s*#' "$TARGET_FILE" | grep -v '^\s*$' | wc -l | tr -d ' ')
+          # Count CVEs (ignoring comments and empty lines). Do not fail if the
+          # file is empty or only contains comments (handled with '|| true')
+          IGNORE_COUNT=$(grep -cvE '^\s*(#|$)' "$TARGET_FILE" || true)
         fi
 
         {
