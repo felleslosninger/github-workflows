@@ -53,6 +53,31 @@ on:
         default: "./"
         required: false
         type: string
+      trivy-library-disable-scan:
+        description: Disable Trivy library scan
+        type: boolean
+        required: false
+        default: false
+      trivy-library-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy library scan
+        type: boolean
+        required: false
+        default: true
+      trivy-library-severity:
+        description: When to fail the scan with Trivy library vulnerabilities
+        type: string
+        required: false
+        default: 'HIGH,CRITICAL'
+      trivy-library-hide-progress:
+        description: Hide progress output for Trivy library scan
+        type: boolean
+        required: false
+        default: true
+      trivy-version:
+        description: Version of Trivy to use for scanning
+        type: string
+        required: false
+        default: ''
 
 jobs:
   build:
@@ -101,27 +126,16 @@ jobs:
             mvn -B clean install --update-snapshots
           fi
 
-      - name: Set trivyignore env if file exists
-        id: set-trivyignore-path
-        run: |
-          if [ -f "${{ inputs.application-path }}.trivyignore" ]; then
-            trivyignore_path=${{ inputs.application-path }}.trivyignore
-            echo "trivyignore-path=$trivyignore_path" >> "$GITHUB_OUTPUT"
-            echo "- Trivy ignore path: $trivyignore_path" >> "$GITHUB_STEP_SUMMARY"
-          fi
-
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@97e0b3872f55f89b95b2f65b3dbab56962816478 # pin@v0.34.2
-        id: trivy-maven
-        env:
-          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
-          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
-          scan-type: 'fs'
-          scan-ref: '${{ inputs.application-path }}'
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
-          trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
+          scan-type: "fs"
+          application-path: ${{ inputs.application-path }}
+          library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+          library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+          library-severity: ${{ inputs.trivy-library-severity }}
+          library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
+          trivy-version: ${{ inputs.trivy-version }}
 
       - name: Overwrite m2 settings to publish libs
         run: |

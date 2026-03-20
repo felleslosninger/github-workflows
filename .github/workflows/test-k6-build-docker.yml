@@ -17,6 +17,60 @@ on:
         default: "libs"
         required: false
         type: string
+      application-path:
+        default: "./"
+        required: false
+        type: string
+      trivy-library-disable-scan:
+        description: Disable Trivy library scan
+        type: boolean
+        required: false
+        default: false
+      trivy-library-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy library scan
+        type: boolean
+        required: false
+        default: true
+      trivy-library-severity:
+        description: When to fail the scan with Trivy library vulnerabilities
+        type: string
+        required: false
+        default: 'HIGH,CRITICAL'
+      trivy-library-hide-progress:
+        description: Hide progress output for Trivy library scan
+        type: boolean
+        required: false
+        default: true
+      trivy-os-disable-scan:
+        description: Disable Trivy OS scan
+        type: boolean
+        required: false
+        default: false
+      trivy-os-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy OS scan
+        type: boolean
+        required: false
+        default: true
+      trivy-os-severity:
+        description: When to fail the scan with Trivy OS vulnerabilities
+        type: string
+        required: false
+        default: 'CRITICAL'
+      trivy-os-hide-progress:
+        description: Hide progress output for Trivy OS scan
+        type: boolean
+        required: false
+        default: true
+      trivy-os-exit-code:
+        description: Exit code for OS vulns (1 = blocking for Dockerfiles)
+        type: string
+        required: false
+        default: '1'
+      trivy-version:
+        description: Version of Trivy to use for scanning
+        type: string
+        required: false
+        default: ''
 
 jobs:
   build:
@@ -45,13 +99,17 @@ jobs:
         run: docker build --tag ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} docker/
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@97e0b3872f55f89b95b2f65b3dbab56962816478 # pin@v0.34.2 
-        id: trivy-primary
-        env:
-          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
-          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
           image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
-
+          application-path: ${{ inputs.application-path }}
+          library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+          library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+          library-severity: ${{ inputs.trivy-library-severity }}
+          library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
+          os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
+          os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
+          os-severity: ${{ inputs.trivy-os-severity }}
+          os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
+          os-exit-code: ${{ inputs.trivy-os-exit-code }}
+          trivy-version: ${{ inputs.trivy-version }}
