@@ -288,7 +288,7 @@ jobs:
       # Login to Azure if container-registry is ACR
       - name: Login to Azure
         if: contains(inputs.container-registry, 'azurecr.io')
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets[inputs.sp-container-registry-client-id] }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
