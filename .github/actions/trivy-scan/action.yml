@@ -1,0 +1,246 @@
+name: Trivy Scan
+description: Composite action for Trivy scanning
+author: Digdir Platform Team
+
+inputs:
+  scan-type:
+    description: "Type of scan to run ('image' or 'fs')"
+    default: "image"
+    required: false
+  image-ref:
+    description: "Image reference to scan (Required if scan-type is 'image')"
+    default: ""
+    required: false
+  application-path:
+    description: Path to application for Trivy scan (to detect .trivyignore)
+    default: "./"
+    required: false
+  library-disable-scan:
+    description: Disable library scan
+    default: "false"
+    required: false
+  library-ignore-unfixed:
+    description: Ignore unfixed vulnerabilities in library scan
+    default: "true"
+    required: false
+  library-severity:
+    description: When to fail the scan with library vulnerabilities
+    default: "HIGH,CRITICAL"
+    required: false
+  library-hide-progress:
+    description: Hide progress output for library scan
+    default: "true"
+    required: false
+  os-disable-scan:
+    description: Disable OS scan
+    default: "false"
+    required: false
+  os-ignore-unfixed:
+    description: Ignore unfixed vulnerabilities in OS scan
+    default: "true"
+    required: false
+  os-severity:
+    description: When to fail the scan with OS vulnerabilities
+    default: "CRITICAL"
+    required: false
+  os-hide-progress:
+    description: Hide progress output for OS scan
+    default: "true"
+    required: false
+  os-exit-code:
+    description: Exit code when OS vulnerabilities are found (0 = informational, 1 = blocking)
+    default: "0"
+    required: false
+  trivy-version:
+    description: Version of Trivy to use for scanning
+    default: ""
+    required: false
+  trivyignore-warning-threshold:
+    description: Warn if the .trivyignore file contains many entries
+    default: "10"
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Start Trivy vulnerability scan
+      shell: bash
+      run: |
+        echo "### Trivy vulnerability scan" >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Write inputs to summary
+      uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
+      with:
+        json-payload: ${{ toJson(inputs) }}
+
+    - name: Validate inputs
+      shell: bash
+      run: |
+        if [[ "${{ inputs.scan-type }}" == "image" && -z "${{ inputs.image-ref }}" ]]; then
+          echo "::error:: Invalid inputs: 'image-ref' is required when
+          'scan-type' is set to 'image'."
+          {
+            echo "> [!WARNING]"
+            echo "> **Input validation failed:** You requested an 'image' scan
+            but did not provide the 'image-ref' parameter. Please provide a valid image reference to scan."
+          } >> $GITHUB_STEP_SUMMARY
+          exit 1
+        fi
+
+        if [[ "${{ inputs.scan-type }}" != "image" && "${{ inputs.scan-type }}" != "fs" ]]; then
+          echo "::error:: Invalid inputs: 'scan-type' must be either 'image' or
+          'fs'."
+          {
+            echo "> [!WARNING]"
+            echo "> **Input validation failed:** 'scan-type' must be either 'image' or 'fs'."
+          } >> $GITHUB_STEP_SUMMARY
+          exit 1
+        fi
+
+    - name: Detect .trivyignore
+      id: trivyignore
+      shell: bash
+      env:
+        APP_PATH: ${{ inputs.application-path }}
+        THRESHOLD: ${{ inputs.trivyignore-warning-threshold }}
+      run: |
+        TARGET_FILE="${APP_PATH}.trivyignore"
+        IGNORE_COUNT=0
+
+        if [ -f "$TARGET_FILE" ]; then
+          echo "Found ignore file: $TARGET_FILE"
+          echo "trivyignore-path=$TARGET_FILE" >> "$GITHUB_OUTPUT"
+          # Count CVEs (ignoring comments and empty lines). Do not fail if the
+          # file is empty or only contains comments (handled with '|| true')
+          IGNORE_COUNT=$(grep -cvE '^\s*(#|$)' "$TARGET_FILE" || true)
+        fi
+
+        {
+          echo "#### Detect .trivyignore file"
+          if [ -f "$TARGET_FILE" ]; then
+            if [ "$IGNORE_COUNT" -gt "$THRESHOLD" ]; then
+              echo "> [!WARNING]"
+              echo "> **Trivy Ignore Count:** The \`.trivyignore\` file contains **$IGNORE_COUNT** ignored vulnerabilities, exceeding the recommended threshold of **$THRESHOLD**. Please review the file and remove outdated or patched CVEs."
+            else
+              echo "> [!NOTE]"
+              echo "> **Trivy Ignore Count:** The \`.trivyignore\` file contains **$IGNORE_COUNT** ignored vulnerabilities, which is within the recommended threshold of **$THRESHOLD**."
+            fi
+            echo "- :white_check_mark: Found \`.trivyignore\` file: \`$TARGET_FILE\`"
+          else
+            echo "- :x: No \`.trivyignore\` found at \`$TARGET_FILE\` :x:"
+          fi
+        } >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Run Trivy vulnerability library scan
+      if: ${{ inputs.library-disable-scan != 'true' }}
+      uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # pin@v0.35.0
+      id: trivy-library
+      env:
+        TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
+        TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+        # Disable noisy VEX notice from the scan result
+        TRIVY_DISABLE_VEX_NOTICE: "true"
+      with:
+        version: ${{ inputs.trivy-version }}
+        scan-type: ${{ inputs.scan-type }}
+        # This is used if scan-type is 'image'
+        image-ref: ${{ inputs.image-ref }}
+        # This is used if scan-type is 'fs'
+        scan-ref: ${{ inputs.application-path }}
+        vuln-type: "library"
+        format: "table"
+        severity: "${{ inputs.library-severity }}"
+        ignore-unfixed: ${{ inputs.library-ignore-unfixed }}
+        trivyignores: ${{ steps.trivyignore.outputs.trivyignore-path }}
+        hide-progress: ${{ inputs.library-hide-progress }}
+        output: trivy-library-scan.txt
+        exit-code: "1"
+
+    - name: Publish Trivy library scan output to step summary
+      if: ${{ always() && inputs.library-disable-scan != 'true' }}
+      shell: bash
+      env:
+        SCAN_OUTCOME: ${{ steps.trivy-library.outcome }}
+      run: |
+        if [[ -s trivy-library-scan.txt ]]; then
+          {
+            echo "#### Library scan results"
+
+            if [[ "$SCAN_OUTCOME" == "failure" ]]; then
+              echo "> [!WARNING]"
+              echo "> **Action Required:** The pipeline failed due to fixable library vulnerabilities. See scan result below."
+              echo '```text'
+              cat trivy-library-scan.txt
+              echo '```'
+            else
+              echo "> [!NOTE]"
+              echo "> **Scan Passed:** No blocking library vulnerabilities were found."
+            fi
+          } >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Run Trivy vulnerability OS scan
+      if: ${{ inputs.os-disable-scan != 'true' && inputs.scan-type == 'image'}}
+      uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # pin@v0.35.0
+      id: trivy-os
+      env:
+        TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
+        TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+        # Disable noisy VEX notice from the scan result
+        TRIVY_DISABLE_VEX_NOTICE: "true"
+      with:
+        version: ${{ inputs.trivy-version }}
+        scan-type: "image"
+        image-ref: ${{ inputs.image-ref }}
+        vuln-type: "os"
+        format: "table"
+        severity: "${{ inputs.os-severity }}"
+        ignore-unfixed: ${{ inputs.os-ignore-unfixed }}
+        trivyignores: ${{ steps.trivyignore.outputs.trivyignore-path }}
+        hide-progress: ${{ inputs.os-hide-progress }}
+        output: trivy-os-scan.txt
+        exit-code: "${{ inputs.os-exit-code }}"
+        # Skip Trivy setup if library scan is not enabled, as the OS scan also
+        # requires the Trivy setup and this avoids redundant setup when only OS
+        # scan is enabled
+        skip-setup-trivy: ${{ inputs.library-disable-scan != 'true' }}
+
+    - name: Publish Trivy OS scan output to step summary
+      if: ${{ always() && inputs.os-disable-scan != 'true' && inputs.scan-type == 'image' }}
+      shell: bash
+      env:
+        SCAN_OUTCOME: ${{ steps.trivy-os.outcome }}
+        OS_EXIT_CODE: ${{ inputs.os-exit-code }}
+      run: |
+        if [[ -s trivy-os-scan.txt ]]; then
+          {
+            echo "#### OS scan results"
+
+            # Check if this is an informational scan (managed base image)
+            if [[ "$OS_EXIT_CODE" == "0" ]]; then
+              echo "> [!IMPORTANT]"
+              echo "> **Informational OS Scan:** This pipeline is configured to not fail on OS vulnerabilities as you have no control of the base image. Expand the details below to review the scan result."
+              echo ""
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```text'
+              cat trivy-os-scan.txt
+              echo '```'
+              echo "</details>"
+
+            # Check if this is a blocking scan that failed due to OS
+            # vulnerabilities (normally when using custom Dockerfile)
+            elif [[ "$SCAN_OUTCOME" == "failure" ]]; then
+              echo "> [!WARNING]"
+              echo "> **Action Required:** The pipeline failed due to fixable OS vulnerabilities. See scan result below."
+              echo '```text'
+              cat trivy-os-scan.txt
+              echo '```'
+
+            # Blocking scan passed (normally when using custom Dockerfile)
+            else
+              echo "> [!NOTE]"
+              echo "> **Scan Passed:** No blocking OS vulnerabilities were found in your base image."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+        fi

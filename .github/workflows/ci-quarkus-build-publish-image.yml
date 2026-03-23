@@ -7,54 +7,96 @@ on:
         description: Name of Docker image
         required: false
         type: string
-
       image-pack:
-        description: Docker image pack of builder-jammy-tiny, builder-jammy-base or builder-jammy-full
-        default: builder-jammy-tiny
+        description: Paketo builder image to use. See https://paketo.io/docs/reference/builders-reference/ for choices
+        default: builder-jammy-java-tiny
         required: false
         type: string
-
+      image-pack-tag:
+        description: "Docker image pack version tag. Earlier pinned to 0.0.440 due to lifecycle 0.21.2 regression (see: paketo-buildpacks/builder-noble-java-tiny#191). Now fixed: https://github.com/paketo-buildpacks/builder-noble-java-tiny/issues/191#issuecomment-3897508140"
+        default: "latest"
+        required: false
+        type: string
       image-signing:
         description: Flag to toggle image signing on/off - default off
         default: true
         required: false
         type: boolean
-
       java-version:
         description: Main version of java
         default: "21"
         required: false
         type: string
-
       slack-channel-id:
         description: Team channel id
         default: ""
         required: false
         type: string
-
       native:
         description: Build native image
         required: false
         type: boolean
         default: false
-
       container-registry:
         description: Azure Container Registry name
         default: "creiddev.azurecr.io"
         required: false
         type: string
-
       sp-container-registry-client-id:
         required: false
         default: "AZURE_CLIENT_ID"
         type: string
         description: Service Principal used for container registry in inputs
+      trivy-library-disable-scan:
+        description: Disable Trivy library scan
+        type: boolean
+        required: false
+        default: false
+      trivy-library-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy library scan
+        type: boolean
+        required: false
+        default: true
+      trivy-library-severity:
+        description: When to fail the scan with Trivy library vulnerabilities
+        type: string
+        required: false
+        default: 'HIGH,CRITICAL'
+      trivy-library-hide-progress:
+        description: Hide progress output for Trivy library scan
+        type: boolean
+        required: false
+        default: true
+      trivy-os-disable-scan:
+        description: Disable Trivy OS scan
+        type: boolean
+        required: false
+        default: false
+      trivy-os-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy OS scan
+        type: boolean
+        required: false
+        default: true
+      trivy-os-severity:
+        description: When to fail the scan with Trivy OS vulnerabilities
+        type: string
+        required: false
+        default: 'CRITICAL'
+      trivy-os-hide-progress:
+        description: Hide progress output for Trivy OS scan
+        type: boolean
+        required: false
+        default: true
+      trivy-version:
+        description: Version of Trivy to use for scanning
+        type: string
+        required: false
+        default: ''
 
     outputs:
       image-version:
         description: "Docker image version"
         value: ${{ jobs.build-publish-image.outputs.imagetag }}
-
       image-digest:
         description: "Docker image SHA256 digest"
         value: ${{ jobs.build-publish-image.outputs.imagedigest }}
@@ -127,7 +169,7 @@ jobs:
             "https://github.com/buildpacks/pack/releases/download/v${PACK_VERSION}/pack-v${PACK_VERSION}-linux.tgz" \
           | sudo tar -C /usr/local/bin --no-same-owner -xzv pack
         env:
-          PACK_VERSION: 0.32.1
+          PACK_VERSION: 0.39.1
 
       - name: Build native image with Maven/Quarkus
         if: inputs.native == true
@@ -136,7 +178,7 @@ jobs:
             --path . \
             --buildpack docker://paketobuildpacks/quarkus \
             --buildpack docker://paketobuildpacks/java-native-image \
-            --builder paketobuildpacks/${{ inputs.image-pack }} \
+            --builder paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }} \
             --volume "${HOME}/.m2:/home/cnb/.m2:rw" \
             --env BP_JVM_VERSION="${{ inputs.java-version }}" \
             --env BP_MAVEN_POM_FILE="./pom.xml" \
@@ -151,22 +193,25 @@ jobs:
             --path . \
             --buildpack docker://paketobuildpacks/quarkus \
             --buildpack docker://paketobuildpacks/java \
-            --builder paketobuildpacks/${{ inputs.image-pack }} \
+            --builder paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }} \
             --volume "${HOME}/.m2:/home/cnb/.m2:rw" \
             --env BP_JVM_VERSION="${{ inputs.java-version }}" \
             --env BP_MAVEN_POM_FILE="./pom.xml" \
             --creation-time now
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # pin@v0.33.1
-        id: trivy-primary
-        env:
-          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
-          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
-          image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
+          image-ref: ${{ env.IMAGE-NAME }}:${{ env.IMAGETAG }}
+          library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+          library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+          library-severity: ${{ inputs.trivy-library-severity }}
+          library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
+          os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
+          os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
+          os-severity: ${{ inputs.trivy-os-severity }}
+          os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
+          trivy-version: ${{ inputs.trivy-version }}
 
       - name: Create SBOM artifact-name
         id: sbom-name
@@ -202,62 +247,11 @@ jobs:
       - id: output-image-digest
         run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
 
-      - name: Install Cosign
+      - name: Image signing
         if: ${{ inputs.image-signing == true }}
-        uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # pin@v3.10.0
-
-      - name: Generate Provenance Metadata
-        if: ${{ inputs.image-signing == true }}
-        run: |
-          # Generate provenance data according to spec https://slsa.dev/spec/v1.0/provenance
-          cat <<EOF > ./provenance.json
-          {
-            "_type": "https://slsa.dev/provenance/v1",
-            "subject": [
-              {
-                "name": "${{ env.IMAGE-NAME }}",
-                "digest": {
-                  "sha256": "${DIGEST}"
-                }
-              }
-            ],
-            "buildDefinition": {
-              "buildType": "https://github.com/github-actions/build",
-              "externalParameters": {
-                "image": "${{ env.IMAGE-NAME }}:${{ env.IMAGETAG }}",
-                "commit": "${{ github.sha }}",
-                "author": "${{ github.actor }}",
-                "job": "${{ github.job }}",
-                "repositoryOwnerId": "${{ github.repository_owner_id }}"
-              }
-            },
-            "runDetails": {
-              "builder": {
-                "id": "${{ github.workflow_ref }}"
-              },
-              "metadata": {
-                "invocationId": "${{ github.run_id }}",
-                "startedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-              }
-            },
-            "materials": [
-              {
-                "uri": "git+https://github.com/${{ github.repository }}.git",
-                "digest": {
-                  "sha1": "${{ github.sha }}"
-                }
-              }
-            ]
-          }
-          EOF
-
-      - name: Sign the image
-        if: ${{ inputs.image-signing == true }}
-        run: |
-          cosign sign --yes "${{ env.IMAGE-NAME }}@${DIGEST}"
-          cosign attest --yes --predicate ./provenance.json --type slsaprovenance1 "${{ env.IMAGE-NAME }}@${DIGEST}"
-        env:
-          DIGEST: ${{ env.IMAGE_DIGEST }}
+        uses: felleslosninger/github-workflows/.github/actions/image-signing@main
+        with:
+          image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
 
   notify-on-errors:
     runs-on: ubuntu-latest

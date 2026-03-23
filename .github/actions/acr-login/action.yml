@@ -1,0 +1,59 @@
+name: Azure Container Registry login
+description: Logs into an Azure Container Registry (ACR)
+author: Digdir Platform Team
+
+inputs:
+  client-id:
+    description: "Azure Client ID"
+    required: true
+  tenant-id:
+    description: "Azure Tenant ID"
+    required: true
+  subscription-id:
+    description: "Azure Subscription ID"
+    required: true
+  acr-name:
+    description: "Azure container registry name"
+    default: "creiddev"
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Login to Azure
+      uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5
+      env: 
+        AZURE_CLIENT_ID: ${{ inputs.client-id }}
+        AZURE_TENANT_ID: ${{ inputs.tenant-id}}
+        AZURE_SUBSCRIPTION_ID: ${{ inputs.subscription-id }}
+      with:
+        client-id: ${{ env.AZURE_CLIENT_ID }}
+        tenant-id: ${{ env.AZURE_TENANT_ID }}
+        subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+  
+    - name: Login to Azure Container Registry
+      id: acr_login
+      shell: bash
+      run: az acr login --name "$ACR_NAME"
+      env:
+        ACR_NAME: ${{ inputs.acr-name }}
+
+    - name: Write step summary
+      if: ${{ always() }}
+      shell: bash
+      run: |
+        {
+          echo "### ACR login"
+
+          echo "#### Result"
+          echo "| Key | Value |"
+          echo "| --- | ----- |"
+          if [ "${{ steps.acr_login.outcome }}" = "success" ]; then
+            echo "| login-success | true |"
+          else
+            echo "| login-success | false |"
+          fi
+          echo "| registry | ${ACR_NAME} |"
+        } >> "$GITHUB_STEP_SUMMARY"
+      env:
+        ACR_NAME: ${{ inputs.acr-name }}

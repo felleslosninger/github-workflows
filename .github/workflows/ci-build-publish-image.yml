@@ -7,81 +7,131 @@ on:
         description: Name of Docker image
         required: false
         type: string
-
       image-pack:
-        description: Docker image pack of builder-jammy-tiny, builder-jammy-base or builder-jammy-full
-        default: builder-jammy-tiny
+        description: Paketo builder image to use. See https://paketo.io/docs/reference/builders-reference/ for choices
+        default: builder-jammy-java-tiny
         required: false
         type: string
-
+      image-pack-tag:
+        description: "Docker image pack version tag. Earlier pinned to 0.0.440 due to lifecycle 0.21.2 regression (see: paketo-buildpacks/builder-noble-java-tiny#191). Now fixed: https://github.com/paketo-buildpacks/builder-noble-java-tiny/issues/191#issuecomment-3897508140"
+        default: "latest"
+        required: false
+        type: string
       image-signing:
         description: Flag to toggle image signing on/off - default off
         default: true
         required: false
         type: boolean
-
+      image-tag:
+        description: Custom image tag, if not provided a tag will be auto-generated
+        default: ""
+        required: false
+        type: string
       java-version:
         description: Main version of java
         default: "11"
         required: false
         type: string
-
-      container-scan-offline-mode:
-        description: Container-scan is default download updated CVE definitions via Trivy, enable offline on download problems
-        default: false
-        type: boolean
-
+      java-distribution:
+        description: Java distribution to use
+        default: "liberica"
+        required: false
+        type: string
       slack-channel-id:
         description: Team channel id
         default: ""
         required: false
         type: string
-
       application-path:
         default: "./"
         required: false
         type: string
-
       cache-path:
         default: "**/pom.xml"
         required: false
         type: string
-
       update-versions:
         default: "true"
         required: false
         type: string
-
       setup-npm-auth:
         description: Configure private NPM registry authentication
         default: false
         required: false
         type: boolean
-
       application-type:
         default: "spring-boot"
         required: false
         type: string
-
       add-git-package-token:
         required: false
         type: boolean
-
       native:
         required: false
         type: boolean
         default: false
-
       lifecycle:
         required: false
         default: "deployment"
         type: string
+      cr-type:
+        required: false
+        default: "acr"
+        type: string
+      module-name:
+        description: Module name to build (for multi-module projects)
+        required: false
+        type: string
+      trivy-library-disable-scan:
+        description: Disable Trivy library scan
+        type: boolean
+        required: false
+        default: false
+      trivy-library-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy library scan
+        type: boolean
+        required: false
+        default: true
+      trivy-library-severity:
+        description: When to fail the scan with Trivy library vulnerabilities
+        type: string
+        required: false
+        default: 'HIGH,CRITICAL'
+      trivy-library-hide-progress:
+        description: Hide progress output for Trivy library scan
+        type: boolean
+        required: false
+        default: true
+      trivy-os-disable-scan:
+        description: Disable Trivy OS scan
+        type: boolean
+        required: false
+        default: false
+      trivy-os-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy OS scan
+        type: boolean
+        required: false
+        default: true
+      trivy-os-severity:
+        description: When to fail the scan with Trivy OS vulnerabilities
+        type: string
+        required: false
+        default: 'CRITICAL'
+      trivy-os-hide-progress:
+        description: Hide progress output for Trivy OS scan
+        type: boolean
+        required: false
+        default: true
+      trivy-version:
+        description: Version of Trivy to use for scanning
+        type: string
+        required: false
+        default: ''
 
     outputs:
       image-version:
         description: "Docker image version"
         value: ${{ jobs.run-spring-boot-build.outputs.image-version || jobs.run-quarkus-build.outputs.image-version || jobs.run-docker-build.outputs.image-version }}
-
       image-digest:
         description: "Docker image SHA256 digest"
         value: ${{ jobs.run-spring-boot-build.outputs.image-digest || jobs.run-quarkus-build.outputs.image-digest || jobs.run-docker-build.outputs.image-digest }}
@@ -114,7 +164,9 @@ jobs:
       - name: Set container registry
         id: set-container-registry
         run: |
-          if [[ "${{ inputs.lifecycle }}" == "deployment" ]]; then
+          if [[ "${{ inputs.cr-type }}" == "ghcr" ]]; then
+            echo "container-registry=ghcr.io" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ inputs.lifecycle }}" == "deployment" ]]; then
             echo "sp-container-registry-client-id=AZURE_CLIENT_ID" >> "$GITHUB_OUTPUT"
             echo "container-registry=${{ vars.CR_DEPLOYMENT_URL }}" >> "$GITHUB_OUTPUT"
           elif [[ "${{ inputs.lifecycle }}" == "development" ]]; then
@@ -131,9 +183,11 @@ jobs:
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
+      image-pack-tag: ${{ inputs.image-pack-tag }}
       image-signing: ${{ inputs.image-signing }}
+      image-tag: ${{ inputs.image-tag }}
       java-version: ${{ inputs.java-version }}
-      container-scan-offline-mode: ${{ inputs.container-scan-offline-mode }}
+      java-distribution: ${{ inputs.java-distribution }}
       slack-channel-id: ${{ inputs.slack-channel-id }}
       application-path: ${{ inputs.application-path }}
       cache-path: ${{ inputs.cache-path }}
@@ -141,6 +195,16 @@ jobs:
       container-registry: ${{ needs.input-checks.outputs.container-registry }}
       sp-container-registry-client-id: ${{ needs.input-checks.outputs.sp-container-registry-client-id }}
       setup-npm-auth: ${{ inputs.setup-npm-auth }}
+      module-name: ${{ inputs.module-name }}
+      trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+      trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+      trivy-library-severity: ${{ inputs.trivy-library-severity }}
+      trivy-library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
+      trivy-os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
+      trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
+      trivy-os-severity: ${{ inputs.trivy-os-severity }}
+      trivy-os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
+      trivy-version: ${{ inputs.trivy-version }}
     secrets: inherit
 
   run-quarkus-build:
@@ -150,12 +214,22 @@ jobs:
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
+      image-pack-tag: ${{ inputs.image-pack-tag }}
       image-signing: ${{ inputs.image-signing }}
       java-version: ${{ inputs.java-version }}
       slack-channel-id: ${{ inputs.slack-channel-id }}
       native: ${{ inputs.native }}
       container-registry: ${{ needs.input-checks.outputs.container-registry }}
       sp-container-registry-client-id: ${{ needs.input-checks.outputs.sp-container-registry-client-id }}
+      trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+      trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+      trivy-library-severity: ${{ inputs.trivy-library-severity }}
+      trivy-library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
+      trivy-os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
+      trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
+      trivy-os-severity: ${{ inputs.trivy-os-severity }}
+      trivy-os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
+      trivy-version: ${{ inputs.trivy-version }}
     secrets: inherit
 
   run-docker-build:
@@ -164,12 +238,19 @@ jobs:
     uses: felleslosninger/github-workflows/.github/workflows/ci-docker-build-publish-image.yml@main
     with:
       image-name: ${{ inputs.image-name }}
-      image-pack: ${{ inputs.image-pack }}
       image-signing: ${{ inputs.image-signing }}
-      container-scan-offline-mode: ${{ inputs.container-scan-offline-mode }}
       slack-channel-id: ${{ inputs.slack-channel-id }}
       application-path: ${{ inputs.application-path }}
       add-git-package-token: ${{ inputs.add-git-package-token }}
       container-registry: ${{ needs.input-checks.outputs.container-registry }}
       sp-container-registry-client-id: ${{ needs.input-checks.outputs.sp-container-registry-client-id }}
+      trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+      trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+      trivy-library-severity: ${{ inputs.trivy-library-severity }}
+      trivy-library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
+      trivy-os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
+      trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
+      trivy-os-severity: ${{ inputs.trivy-os-severity }}
+      trivy-os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
+      trivy-version: ${{ inputs.trivy-version }}
     secrets: inherit

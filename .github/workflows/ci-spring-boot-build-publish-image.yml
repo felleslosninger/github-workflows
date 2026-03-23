@@ -7,74 +7,122 @@ on:
         description: Name of Docker image
         required: false
         type: string
-
       image-pack:
-        description: Docker image pack of builder-jammy-tiny, builder-jammy-base or builder-jammy-full
-        default: builder-jammy-tiny
+        description: Paketo builder image to use. See https://paketo.io/docs/reference/builders-reference/ for choices
+        default: builder-jammy-java-tiny
         required: false
         type: string
-
+      image-pack-tag:
+        description: "Docker image pack version tag. Earlier pinned to 0.0.440 due to lifecycle 0.21.2 regression (see: paketo-buildpacks/builder-noble-java-tiny#191). Now fixed: https://github.com/paketo-buildpacks/builder-noble-java-tiny/issues/191#issuecomment-3897508140"
+        default: "latest"
+        required: false
+        type: string
       image-signing:
         description: Flag to toggle image signing on/off - default off
         default: true
         required: false
         type: boolean
-
       java-version:
         description: Main version of java
         default: "11"
         required: false
         type: string
-
-      container-scan-offline-mode:
-        description: Container-scan is default download updated CVE definitions via Trivy, enable offline on download problems
-        default: false
-        type: boolean
-
+      java-distribution:
+        description: Java distribution to use
+        default: "liberica"
+        required: false
+        type: string
       slack-channel-id:
         description: Team channel id
         default: ""
         required: false
         type: string
-
       application-path:
         default: "./"
         required: false
         type: string
-
+      module-name:
+        default: ""
+        required: false
+        type: string
+      image-tag:
+        description: Custom image tag, if not provided a tag will be auto-generated
+        default: ""
+        required: false
+        type: string
       cache-path:
         default: "**/pom.xml"
         required: false
         type: string
-
       update-versions:
         default: "true"
         required: false
         type: string
-
       setup-npm-auth:
         description: Configure private NPM registry authentication
         default: false
         required: false
         type: boolean
-
       container-registry:
-        description: Azure Container Registry name
+        description: Container Registry url
         default: "creiddev.azurecr.io"
         required: false
         type: string
-
       sp-container-registry-client-id:
         required: false
         default: "AZURE_CLIENT_ID"
         type: string
         description: Service Principal used for container registry in inputs
+      trivy-library-disable-scan:
+        description: Disable Trivy library scan
+        type: boolean
+        required: false
+        default: false
+      trivy-library-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy library scan
+        type: boolean
+        required: false
+        default: true
+      trivy-library-severity:
+        description: When to fail the scan with Trivy library vulnerabilities
+        type: string
+        required: false
+        default: 'HIGH,CRITICAL'
+      trivy-library-hide-progress:
+        description: Hide progress output for Trivy library scan
+        type: boolean
+        required: false
+        default: true
+      trivy-os-disable-scan:
+        description: Disable Trivy OS scan
+        type: boolean
+        required: false
+        default: false
+      trivy-os-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy OS scan
+        type: boolean
+        required: false
+        default: true
+      trivy-os-severity:
+        description: When to fail the scan with Trivy OS vulnerabilities
+        type: string
+        required: false
+        default: 'CRITICAL'
+      trivy-os-hide-progress:
+        description: Hide progress output for Trivy OS scan
+        type: boolean
+        required: false
+        default: true
+      trivy-version:
+        description: Version of Trivy to use for scanning
+        type: string
+        required: false
+        default: ''
 
     outputs:
       image-version:
         description: "Docker image version"
         value: ${{ jobs.build-publish-image.outputs.image-tag }}
-
       image-digest:
         description: "Docker image SHA256 digest"
         value: ${{ jobs.build-publish-image.outputs.image-digest }}
@@ -98,20 +146,30 @@ jobs:
     permissions:
       id-token: write
       contents: write
-      packages: read
+      packages: write
 
     steps:
       - name: Set image tag
         id: set-image-tag
         run: |
-          image_tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}
+          if [ -n "${{ inputs.image-tag }}" ]; then
+            image_tag="${{ inputs.image-tag }}"
+            echo "- Using custom image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
+          else
+            image_tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}
+            echo "- Using auto-generated tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
+          fi
           echo "image-tag=$image_tag" >> "$GITHUB_OUTPUT"
           echo "- Image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Set image name
         id: set-image-name
         run: |
-          image_name=${{ inputs.container-registry }}/${{ inputs.image-name || github.event.repository.name }}
+          if [[ "${{ inputs.container-registry }}" == "ghcr.io" ]]; then
+            image_name=${{ inputs.container-registry }}/${{ github.repository_owner }}/${{ inputs.image-name || github.event.repository.name }}
+          else
+            image_name=${{ inputs.container-registry }}/${{ inputs.image-name || github.event.repository.name }}
+          fi
           echo "image-name=$image_name" >> "$GITHUB_OUTPUT"
           echo "- Image name: $image_name" >> "$GITHUB_STEP_SUMMARY"
 
@@ -121,7 +179,7 @@ jobs:
       - name: Set up JDK ${{ inputs.java-version }}
         uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # pin@v5.0.0
         with:
-          distribution: "liberica"
+          distribution: "${{ inputs.java-distribution }}"
           java-version: ${{ inputs.java-version }}
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
@@ -160,34 +218,38 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build image with Maven/Spring Boot
+      - name: Build image with Maven/Spring Boot (module-name)
+        if: inputs.module-name != ''
+        run: |
+          mvn install -B spring-boot:build-image \
+            -pl ${{ inputs.module-name }} -am  \
+            -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
+            -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }} \
+            -Dspring-boot.build-image.createdDate=now
+
+      - name: Build image with Maven/Spring Boot (application-path)
+        if: inputs.module-name == ''
         run: |
           mvn -B spring-boot:build-image \
             --file ${{ inputs.application-path }}pom.xml \
             -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} \
-            -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }} \
+            -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }} \
             -Dspring-boot.build-image.createdDate=now
 
-      - name: Set trivyignore env if file exists
-        id: set-trivyignore-path
-        run: |
-          if [ -f "${{ inputs.application-path }}.trivyignore" ]; then
-            trivyignore_path=${{ inputs.application-path }}.trivyignore
-            echo "trivyignore-path=$trivyignore_path" >> "$GITHUB_OUTPUT"
-            echo "- Trivy ignore path: $trivyignore_path" >> "$GITHUB_STEP_SUMMARY"
-          fi
-
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # pin@v0.33.1
-        id: trivy-primary
-        env:
-          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
-          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
           image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
-          trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
+          application-path: ${{ inputs.application-path }}
+          library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+          library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+          library-severity: ${{ inputs.trivy-library-severity }}
+          library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
+          os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
+          os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
+          os-severity: ${{ inputs.trivy-os-severity }}
+          os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
+          trivy-version: ${{ inputs.trivy-version }}
 
       - name: Create SBOM artifact name
         id: sbom-name
@@ -197,7 +259,7 @@ jobs:
           echo "- SBOM: $SBOM_NAME" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run Trivy SBOM generation
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # pin@v0.33.1
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # pin@v0.35.0
         env:
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
           TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
@@ -206,7 +268,6 @@ jobs:
           format: github
           image-ref: "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}"
           output: "sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}.json"
-          trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
           github-pat: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload trivy report as a Github artifact
@@ -215,7 +276,18 @@ jobs:
           name: "sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}"
           path: "${{ github.workspace }}/sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}.json"
 
+      # Login to GHCR if container-registry starts with ghcr.io
+      - name: Login to GitHub Container Registry
+        if: contains(inputs.container-registry, 'ghcr.io')
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Login to Azure if container-registry is ACR
       - name: Login to Azure
+        if: contains(inputs.container-registry, 'azurecr.io')
         uses: azure/login@v2
         with:
           client-id: ${{ secrets[inputs.sp-container-registry-client-id] }}
@@ -223,9 +295,11 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Login to Azure Container Registry
+        if: contains(inputs.container-registry, 'azurecr.io')
         run: az acr login --name "$ACR_NAME"
         env:
           ACR_NAME: ${{ inputs.container-registry }}
+
 
       - name: Push image
         run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
@@ -240,62 +314,11 @@ jobs:
           echo "image-digest=$image_digest" >> "$GITHUB_OUTPUT"
           echo "- Image digest: $image_digest" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Install Cosign
+      - name: Image signing
         if: ${{ inputs.image-signing == true }}
-        uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # pin@v3.10.0
-
-      - name: Generate Provenance Metadata
-        if: ${{ inputs.image-signing == true }}
-        run: |
-          # Generate provenance data according to spec https://slsa.dev/spec/v1.0/provenance
-          cat <<EOF > ./provenance.json
-          {
-            "_type": "https://slsa.dev/provenance/v1",
-            "subject": [
-              {
-                "name": "${{ steps.set-image-name.outputs.image-name }}",
-                "digest": {
-                  "sha256": "${DIGEST}"
-                }
-              }
-            ],
-            "buildDefinition": {
-              "buildType": "https://github.com/github-actions/build",
-              "externalParameters": {
-                "image": "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}",
-                "commit": "${{ github.sha }}",
-                "author": "${{ github.actor }}",
-                "job": "${{ github.job }}",
-                "repositoryOwnerId": "${{ github.repository_owner_id }}"
-              }
-            },
-            "runDetails": {
-              "builder": {
-                "id": "${{ github.workflow_ref }}"
-              },
-              "metadata": {
-                "invocationId": "${{ github.run_id }}",
-                "startedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-              }
-            },
-            "materials": [
-              {
-                "uri": "git+https://github.com/${{ github.repository }}.git",
-                "digest": {
-                  "sha1": "${{ github.sha }}"
-                }
-              }
-            ]
-          }
-          EOF
-
-      - name: Sign the image
-        if: ${{ inputs.image-signing == true }}
-        run: |
-          cosign sign --yes "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
-          cosign attest --yes --predicate ./provenance.json --type slsaprovenance1 "${{ steps.set-image-name.outputs.image-name }}@${DIGEST}"
-        env:
-          DIGEST: ${{ steps.set-image-digest.outputs.image-digest }}
+        uses: felleslosninger/github-workflows/.github/actions/image-signing@main
+        with:
+          image: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
 
   notify-on-errors:
     runs-on: ubuntu-latest

@@ -1,0 +1,101 @@
+name: ZAP scan
+description: Runs OWASP ZAP scan against a web application (full scan) or an API (API scan)
+author: Digdir Platform Team
+
+inputs:
+  target:
+    description: "Required. Full scan: target URL. API scan: API definition (OpenAPI/SOAP) file/URL, or GraphQL endpoint URL."
+    required: true
+
+  auth_header_name:
+    description: "Optional. HTTP header name used to send authenticated requests." 
+    required: false
+    default: "Authorization"
+
+  auth_header_value:
+    description: "Optional. Value of the HTTP header defined in auth_header_name, usually a token."
+    required: false
+    default: "" 
+
+  auth_header_site:
+    description: "Optional. Sites where we want to send authenticated requests."
+    required: false
+    default: ""
+
+  scan_api:
+    description: "Optional. true|false. Set true to run API scan instead of full scan."
+    required: false
+    default: "false"
+
+  format:
+    description: "Optional. openapi|soap|graphql. Only used when scan_api=true."
+    required: false
+    default: "openapi"
+
+  cmd_options:
+    description: "Optional. Additional command line options for the underlying scan script."
+    required: false
+    default: "-a"
+
+  rules_file_name:
+    description: "Optional. Relative path to rules file (e.g. .zap/rules.tsv). Requires checkout-acton if file is in repo."
+    required: false
+    default: ""
+
+  allow_issue_writing:
+    description: "Optional. true|false. Create/update a GitHub issue with results."
+    required: false
+    default: "false"
+
+  issue_title:
+    description: "Optional. Issue title used when allow_issue_writing=true."
+    required: false
+    default: "ZAP Scan Report"
+
+  token:
+    description: "Optional. GitHub token for issue writing (use secrets.GITHUB_TOKEN)."
+    required: false
+    default: ""
+
+  artifact_name:
+    description: "Optional. Name of the artifact that contains the ZAP reports."
+    required: false
+    default: "zap_scan"
+
+runs:
+  using: composite
+  steps:
+    - name: Run ZAP full scan
+      if: ${{ inputs.scan_api == 'false' }}
+      uses: zaproxy/action-full-scan@3c58388149901b9a03b7718852c5ba889646c27c # pin@v0.13.0
+      env:
+        ZAP_AUTH_HEADER: ${{ inputs.auth_header_name }}
+        ZAP_AUTH_HEADER_VALUE: ${{ inputs.auth_header_value }}
+        ZAP_AUTH_HEADER_SITE: ${{ inputs.auth_header_site }}
+      with:
+        target: ${{ inputs.target }}
+        scan_api: ${{ inputs.scan_api }}
+        rules_file_name: ${{ inputs.rules_file_name }}
+        cmd_options: ${{ inputs.cmd_options }}
+        allow_issue_writing: ${{ inputs.allow_issue_writing }}
+        issue_title: ${{ inputs.issue_title }}
+        token: ${{ inputs.token }}
+        artifact_name: ${{ inputs.artifact_name }}
+
+    - name: Run ZAP API scan
+      if: ${{ inputs.scan_api == 'true' }}
+      uses: zaproxy/action-api-scan@5158fe4d9d8fcc75ea204db81317cce7f9e5453d # pin@v0.10.0
+      env:
+        ZAP_AUTH_HEADER: ${{ inputs.auth_header_name }}
+        ZAP_AUTH_HEADER_VALUE: ${{ inputs.auth_header_value }}
+        ZAP_AUTH_HEADER_SITE: ${{ inputs.auth_header_site }}
+      with:
+        target: ${{ inputs.target }}
+        scan_api: ${{ inputs.scan_api }}
+        format: ${{ inputs.format }}
+        rules_file_name: ${{ inputs.rules_file_name }}
+        cmd_options: ${{ inputs.cmd_options }}
+        allow_issue_writing: ${{ inputs.allow_issue_writing }}
+        issue_title: ${{ inputs.issue_title }}
+        token: ${{ inputs.token }}
+        artifact_name: ${{ inputs.artifact_name }}

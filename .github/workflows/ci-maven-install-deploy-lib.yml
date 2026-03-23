@@ -8,6 +8,11 @@ on:
         default: "11"
         required: false
         type: string
+      java-distribution:
+        description: Java distribution to use
+        default: "liberica"
+        required: false
+        type: string
       sbom-path:
         description: Target directory for SBOM generation
         default: ./target/
@@ -48,6 +53,31 @@ on:
         default: "./"
         required: false
         type: string
+      trivy-library-disable-scan:
+        description: Disable Trivy library scan
+        type: boolean
+        required: false
+        default: false
+      trivy-library-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy library scan
+        type: boolean
+        required: false
+        default: true
+      trivy-library-severity:
+        description: When to fail the scan with Trivy library vulnerabilities
+        type: string
+        required: false
+        default: 'HIGH,CRITICAL'
+      trivy-library-hide-progress:
+        description: Hide progress output for Trivy library scan
+        type: boolean
+        required: false
+        default: true
+      trivy-version:
+        description: Version of Trivy to use for scanning
+        type: string
+        required: false
+        default: ''
 
 jobs:
   build:
@@ -59,7 +89,7 @@ jobs:
       - name: Set up JDK ${{ inputs.java-version }}
         uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # pin@v5.0.0
         with:
-          distribution: "liberica"
+          distribution: "${{ inputs.java-distribution }}"
           java-version: ${{ inputs.java-version }}
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
@@ -79,40 +109,6 @@ jobs:
           mkdir -p ~/.m2
           echo "<settings><servers><server><id>github</id><username>${{ secrets.GH_PACKAGES_READ_USER }}</username><password>${{ secrets.GH_PACKAGES_READ_PAT }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
-      - name: Maven install
-        run: |
-          if [ -n "${{ inputs.profile }}" ]; then
-            mvn -B clean install --update-snapshots -P"${{ inputs.profile }}"
-          else
-            mvn -B clean install --update-snapshots
-          fi
-
-      - name: Set trivyignore env if file exists
-        id: set-trivyignore-path
-        run: |
-          if [ -f "${{ inputs.application-path }}.trivyignore" ]; then
-            trivyignore_path=${{ inputs.application-path }}.trivyignore
-            echo "trivyignore-path=$trivyignore_path" >> "$GITHUB_OUTPUT"
-            echo "- Trivy ignore path: $trivyignore_path" >> "$GITHUB_STEP_SUMMARY"
-          fi
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # pin@v0.33.1
-        id: trivy-maven
-        env:
-          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
-          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
-        with:
-          scan-type: 'fs'
-          scan-ref: '${{ inputs.application-path }}'
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
-          trivyignores: ${{ steps.set-trivyignore-path.outputs.trivyignore-path }}
-
-      - name: Overwrite m2 settings to publish libs
-        run: |
-          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
-
       - name: Set version
         run: |
           if [ "${{ inputs.package-version }}" != "" ]; then
@@ -121,6 +117,29 @@ jobs:
           else
             echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
           fi
+
+      - name: Maven install
+        run: |
+          if [ -n "${{ inputs.profile }}" ]; then
+            mvn -B clean install --update-snapshots -P"${{ inputs.profile }}"
+          else
+            mvn -B clean install --update-snapshots
+          fi
+
+      - name: Run Trivy vulnerability scanner
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
+        with:
+          scan-type: "fs"
+          application-path: ${{ inputs.application-path }}
+          library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+          library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+          library-severity: ${{ inputs.trivy-library-severity }}
+          library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
+          trivy-version: ${{ inputs.trivy-version }}
+
+      - name: Overwrite m2 settings to publish libs
+        run: |
+          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
       - name: Maven deploy
         run: |
@@ -133,7 +152,7 @@ jobs:
           if [ "${{ inputs.deployment-repository }}" != "" ]; then
             MAVEN_CMD="$MAVEN_CMD -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/${{ inputs.deployment-repository }}"
           fi
-          
+
           cd ${{ inputs.application-path }} # Move into module path if multi module project, default is "./" so no operation if not specified.
 
           $MAVEN_CMD

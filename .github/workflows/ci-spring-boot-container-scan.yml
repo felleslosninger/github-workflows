@@ -8,8 +8,13 @@ on:
         required: false
         type: string
       image-pack:
-        description: Docker image pack of builder-jammy-tiny, builder-jammy-base or builder-jammy-full
-        default: builder-jammy-tiny
+        description: Paketo builder image to use. See https://paketo.io/docs/reference/builders-reference/ for choices
+        default: builder-jammy-java-tiny
+        required: false
+        type: string
+      image-pack-tag:
+        description: "Docker image pack version tag. Earlier pinned to 0.0.440 due to lifecycle 0.21.2 regression (see: paketo-buildpacks/builder-noble-java-tiny#191). Now fixed: https://github.com/paketo-buildpacks/builder-noble-java-tiny/issues/191#issuecomment-3897508140"
+        default: "latest"
         required: false
         type: string
       registry-url:
@@ -20,6 +25,11 @@ on:
       java-version:
         description: Main version of java
         default: "11"
+        required: false
+        type: string
+      java-distribution:
+        description: Java distribution to use
+        default: "liberica"
         required: false
         type: string
       container-scan-offline-mode:
@@ -35,10 +45,50 @@ on:
         default: "./"
         required: false
         type: string
+      module-name:
+        default: ""
+        required: false
+        type: string
       cache-path:
         default: "**/pom.xml"
         required: false
         type: string
+      trivy-library-disable-scan:
+        description: Disable Trivy library scan
+        type: boolean
+        required: false
+      trivy-library-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy library scan
+        type: boolean
+        required: false
+      trivy-library-severity:
+        description: When to fail the scan with Trivy library vulnerabilities
+        type: string
+        required: false
+      trivy-library-hide-progress:
+        description: Hide progress output for Trivy library scan
+        type: boolean
+        required: false
+      trivy-os-disable-scan:
+        description: Disable Trivy OS scan
+        type: boolean
+        required: false
+      trivy-os-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy OS scan
+        type: boolean
+        required: false
+      trivy-os-severity:
+        description: When to fail the scan with Trivy OS vulnerabilities
+        type: string
+        required: false
+      trivy-os-hide-progress:
+        description: Hide progress output for Trivy OS scan
+        type: boolean
+        required: false
+      trivy-version:
+        description: Version of Trivy to use for scanning
+        type: string
+        required: false
 
 jobs:
   build-and-scan-image:
@@ -63,7 +113,7 @@ jobs:
       - name: Set up JDK ${{ inputs.java-version }}
         uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # pin@v5.0.0
         with:
-          distribution: "liberica"
+          distribution: "${{ inputs.java-distribution }}"
           java-version: ${{ inputs.java-version }}
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
@@ -93,17 +143,25 @@ jobs:
               "password": "${{ secrets.MAVEN_PASSWORD }}"
             }]
 
-      - name: Build image with Maven (skips tests)
-        run: mvn -DskipTests -B spring-boot:build-image --file ${{ inputs.application-path }}pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}
+      - name: Build image with Maven (module-name, skips tests)
+        if: inputs.module-name != ''
+        run: mvn install -DskipTests -B spring-boot:build-image -pl ${{ inputs.module-name }} -am -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }}
+
+      - name: Build image with Maven (application-path, skips tests)
+        if: inputs.module-name == ''
+        run: mvn -DskipTests -B spring-boot:build-image --file ${{ inputs.application-path }}pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }}
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # pin@v0.33.1
-        id: trivy-primary
-        env:
-          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
-          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
-          image-ref: "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}"
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
-
+          image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
+          application-path: ${{ inputs.application-path }}
+          library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+          library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+          library-severity: ${{ inputs.trivy-library-severity }}
+          library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
+          os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
+          os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
+          os-severity: ${{ inputs.trivy-os-severity }}
+          os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
+          trivy-version: ${{ inputs.trivy-version }}

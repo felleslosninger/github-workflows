@@ -1,0 +1,53 @@
+name: Write JSON to step summary
+description: |
+  Composite action to write JSON content to the step summary. The action accepts
+  a JSON input and an optional title. This is normally used to write GitHub
+  Actions inputs or repository dispatch event payloads to the step summary
+author: Digdir Platform Team
+
+inputs:
+  title:
+    description: The Markdown heading for the step summary table
+    required: false
+    default: Inputs
+  json-payload:
+    description: JSON payload to parse and write to the step summary
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Write JSON to step summary
+      shell: bash
+      env:
+        TITLE: ${{ inputs.title }}
+        JSON_PAYLOAD: ${{ inputs.json-payload }}
+      run: |
+        {
+         echo "### $TITLE"
+          echo "| Key | Value |"
+          echo "| --- | ----- |"
+
+          echo "$JSON_PAYLOAD" | jq -r '
+            # Check if this is a JSON object with a single key whose value is
+            # also an object. If so, unwrap one level to avoid an extra nesting
+            # level in the summary table
+            (if type == "object" and length == 1 and (to_entries[0].value | type == "object") then
+              to_entries[0].value
+            else
+              .
+            end)
+
+            # Convert to key/value array
+            | to_entries[]?
+
+            # Format and mask secrets
+            | if (.key | test("token|password|secret|key|cert"; "i")) then
+                "| \(.key) | `***` |"
+              elif (.value == "" or .value == null) then
+                "| \(.key) | _Not set_ |"
+              else
+                "| \(.key) | `\(.value | tostring)` |"
+              end
+          '
+        } >> $GITHUB_STEP_SUMMARY
