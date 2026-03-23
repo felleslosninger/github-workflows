@@ -1,9 +1,4 @@
 name: Maven build java
-permissions:
-  contents: write
-  id-token: write
-  packages: read
-  pull-requests: read
 
 on:
   workflow_call:
