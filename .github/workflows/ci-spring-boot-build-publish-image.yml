@@ -131,11 +131,10 @@ jobs:
   inputs-to-summary:
     runs-on: ubuntu-latest
     steps:
-      - name: "Write inputs to summary"
-        uses: felleslosninger/github-actions/json-to-summary@e4ba7c675762d5e9d3eeb48d6b75042e3dd325d3 # pin@v0.7.5
+      - name: Write inputs to summary
+        uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
         with:
-          json: ${{ toJson(inputs) }}
-          title: "Inputs"
+          json-payload: ${{ toJson(inputs) }}
 
   build-publish-image:
     runs-on: ubuntu-latest
