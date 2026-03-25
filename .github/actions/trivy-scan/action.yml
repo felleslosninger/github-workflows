@@ -104,8 +104,19 @@ runs:
         APP_PATH: ${{ inputs.application-path }}
         THRESHOLD: ${{ inputs.trivyignore-warning-threshold }}
       run: |
-        TARGET_FILE="${APP_PATH}.trivyignore"
+        ROOT_FILE=".trivyignore"
+        APP_FILE="${APP_PATH%/}/.trivyignore"
+
+        TARGET_FILE=""
         IGNORE_COUNT=0
+
+        if [ -f "$ROOT_FILE" ]; then
+          TARGET_FILE="$ROOT_FILE"
+          echo "Found ignore file at root: $TARGET_FILE"
+        elif [ -f "$APP_FILE" ]; then
+          TARGET_FILE="$APP_FILE"
+          echo "Found ignore file at application path: $TARGET_FILE"
+        fi
 
         if [ -f "$TARGET_FILE" ]; then
           echo "Found ignore file: $TARGET_FILE"
@@ -127,7 +138,11 @@ runs:
             fi
             echo "- :white_check_mark: Found \`.trivyignore\` file: \`$TARGET_FILE\`"
           else
-            echo "- :x: No \`.trivyignore\` found at \`$TARGET_FILE\` :x:"
+            if [ "$APP_PATH" == "." ] || [ -z "$APP_PATH" ]; then
+              echo "- :x: No \`.trivyignore\` found at root."
+            else
+              echo "- :x: No \`.trivyignore\` found at root (\`$ROOT_FILE\`) or module path (\`$APP_FILE\`)."
+            fi
           fi
         } >> "$GITHUB_STEP_SUMMARY"
 
