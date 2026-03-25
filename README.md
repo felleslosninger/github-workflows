@@ -1,5 +1,6 @@
 # github-workflows
 
+
 ## Spring boot application workflows
 
 Build application on PR creation: [ci-maven-build.yml](.github/workflows/ci-maven-build.yml)
