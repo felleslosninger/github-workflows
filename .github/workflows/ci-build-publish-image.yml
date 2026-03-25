@@ -1,5 +1,8 @@
 name: Build and publish Docker image
-permissions: {}
+permissions: 
+  contents: write
+  packages: write
+  id-token: write
 
 on:
   workflow_call:
