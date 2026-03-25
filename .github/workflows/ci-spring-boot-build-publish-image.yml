@@ -140,7 +140,10 @@ jobs:
           title: "Inputs"
 
   build-publish-image:
-    permissions: {}
+    permissions: 
+     contents: write
+     packages: write
+     id-token: write
     runs-on: ubuntu-latest
     outputs:
       image-tag: ${{ steps.set-image-tag.outputs.image-tag }}
