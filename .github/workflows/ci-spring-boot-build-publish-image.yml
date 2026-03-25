@@ -237,7 +237,7 @@ jobs:
             -Dspring-boot.build-image.createdDate=now
 
       - name: Run Trivy vulnerability scanner
-        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@PF-2334-improve-trivyignore-detection
         with:
           image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
           application-path: ${{ inputs.application-path }}

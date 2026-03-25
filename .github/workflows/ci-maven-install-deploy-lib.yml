@@ -127,7 +127,7 @@ jobs:
           fi
 
       - name: Run Trivy vulnerability scanner
-        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@PF-2334-improve-trivyignore-detection
         with:
           scan-type: "fs"
           application-path: ${{ inputs.application-path }}
