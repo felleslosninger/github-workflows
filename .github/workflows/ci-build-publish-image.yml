@@ -208,6 +208,9 @@ jobs:
     secrets: inherit
 
   run-quarkus-build:
+    permissions:
+      id-token: write
+      contents: write
     needs: input-checks
     if: inputs.application-type == 'quarkus'
     uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-build-publish-image.yml@hardening-gh-token-permissions
