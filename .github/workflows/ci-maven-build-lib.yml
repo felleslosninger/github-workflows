@@ -142,7 +142,7 @@ jobs:
           mvn -B clean install --update-snapshots
 
       - name: Run Trivy vulnerability scanner
-        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@PF-2334-improve-trivyignore-detection
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
           scan-type: "fs"
           application-path: ${{ inputs.application-path }}

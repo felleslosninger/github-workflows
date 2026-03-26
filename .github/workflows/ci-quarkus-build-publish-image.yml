@@ -200,7 +200,7 @@ jobs:
             --creation-time now
 
       - name: Run Trivy vulnerability scanner
-        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@PF-2334-improve-trivyignore-detection
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
           image-ref: ${{ env.IMAGE-NAME }}:${{ env.IMAGETAG }}
           library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
