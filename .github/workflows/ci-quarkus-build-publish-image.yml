@@ -116,6 +116,10 @@ jobs:
           title: "Inputs"
 
   build-publish-image:
+    permissions:
+      id-token: write
+      contents: write
+      packages: write
     runs-on: ubuntu-latest
 
     env:
