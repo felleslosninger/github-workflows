@@ -239,6 +239,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
+      packages: read
     needs: input-checks
     if: inputs.application-type == 'docker'
     uses: felleslosninger/github-workflows/.github/workflows/ci-docker-build-publish-image.yml@hardening-gh-token-permissions
