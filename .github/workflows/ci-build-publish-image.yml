@@ -1,4 +1,5 @@
 name: Build and publish Docker image
+permissions: {}
 
 on:
   workflow_call:
