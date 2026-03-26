@@ -236,6 +236,9 @@ jobs:
     secrets: inherit
 
   run-docker-build:
+    permissions:
+      id-token: write
+      contents: write
     needs: input-checks
     if: inputs.application-type == 'docker'
     uses: felleslosninger/github-workflows/.github/workflows/ci-docker-build-publish-image.yml@hardening-gh-token-permissions
