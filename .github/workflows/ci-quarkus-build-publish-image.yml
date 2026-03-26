@@ -127,10 +127,6 @@ jobs:
       imagetag: ${{ steps.output-image-tag.outputs.imagetag }}
       imagedigest: ${{ steps.output-image-digest.outputs.imagedigest }}
 
-    permissions:
-      id-token: write
-      contents: write
-
     steps:
       - name: Set imagetag as env variable
         run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
