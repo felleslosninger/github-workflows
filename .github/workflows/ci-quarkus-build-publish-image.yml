@@ -1,8 +1,5 @@
 name: Build/publish Docker image
-permissions:
-  contents: write
-  id-token: write
-  packages: read
+permissions:  {}
 
 on:
   workflow_call:
@@ -119,7 +116,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
-      packages: write
+      
     runs-on: ubuntu-latest
 
     env:
