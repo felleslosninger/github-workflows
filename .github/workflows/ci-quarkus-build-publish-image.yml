@@ -1,5 +1,4 @@
 name: Build/publish Docker image
-permissions:  {}
 
 on:
   workflow_call:
@@ -113,9 +112,6 @@ jobs:
           title: "Inputs"
 
   build-publish-image:
-    permissions:
-      id-token: write
-      contents: write
       
     runs-on: ubuntu-latest
 
