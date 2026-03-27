@@ -1,0 +1,101 @@
+name: Trivy SBOM generation
+description: Composite action for generating and uploading SBOMs using Trivy
+author: Digdir Platform Team
+
+inputs:
+  sbom-artifact-id:
+    description: "Unique ID for the artifact (e.g., the app name)"
+    required: true
+  sbom-image-ref:
+    description: "Image reference to scan (e.g. 'my-repo/my-app:v1.0.0')"
+    required: true
+  sbom-format:
+    description: "Output format ('github', 'cyclonedx', 'spdx', 'spdx-json')"
+    default: "github"
+    required: false
+  sbom-upload-artifact:
+    description: "Whether to automatically upload the SBOM as a GitHub artifact"
+    default: "true"
+    required: false
+  sbom-skip-setup:
+    description: "Skip Trivy setup if it has already been run in a previous step"
+    default: "false"
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Start Trivy SBOM generation
+      shell: bash
+      run: |
+        echo "### Trivy SBOM generation" >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Write inputs to summary
+      uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
+      with:
+        json-payload: ${{ toJson(inputs) }}
+
+    - name: Prepare SBOM Metadata
+      id: meta
+      shell: bash
+      run: |
+        # Sanitize name: replace slashes/dots with dashes
+        SAFE_NAME=$(echo "${{ inputs.sbom-artifact-id }}" | tr '/.' '-')
+
+        # Determine extension
+        EXT="json"
+        if [[ "${{ inputs.format }}" == "spdx" ]]; then EXT="spdx"; fi
+
+        FILENAME="sbom-${SAFE_NAME}.${EXT}"
+
+        echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
+
+    - name: Run Trivy SBOM generation
+      id: trivy-gen
+      uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+      env:
+        TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
+        TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+      with:
+        scan-type: 'image'
+        format: ${{ inputs.sbom-format }}
+        image-ref: ${{ inputs.sbom-image-ref }}
+        output: ${{ steps.meta.outputs.filename }}
+        github-pat: ${{ github.token }}
+        skip-setup-trivy: ${{ inputs.sbom-skip-setup }}
+
+    - name: Publish Trivy status to summary
+      if: always()
+      shell: bash
+      env:
+        OUTCOME: ${{ steps.trivy-gen.outcome }}
+        FILENAME: ${{ steps.meta.outputs.filename }}
+      run: |
+        if [[ "$OUTCOME" == "success" ]]; then
+          echo "> [!SUCCESS]"
+          echo "> **SBOM generated:** \`$FILENAME\`"
+        else
+          echo "> [!WARNING]"
+          echo "> **SBOM generation failed:** Check the Trivy logs for details."
+        fi >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Upload SBOM artifact
+      if: ${{ inputs.sbom-upload-artifact == 'true' && steps.trivy-gen.outcome == 'success' }}
+      id: upload
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      with:
+        name: ${{ steps.meta.outputs.filename }}
+        path: ${{ steps.meta.outputs.filename }}
+        retention-days: 14
+
+    - name: Publish upload status to summary
+      if: ${{ always() && inputs.upload-artifact == 'true' }}
+      shell: bash
+      env:
+        OUTCOME: ${{ steps.upload.outcome }}
+      run: |
+        if [[ "$OUTCOME" == "success" ]]; then
+          echo "- :white_check_mark: Artifact successfully uploaded to GitHub."
+        else
+          echo "- :x: Artifact upload failed or was skipped due to generation error."
+        fi >> "$GITHUB_STEP_SUMMARY"
