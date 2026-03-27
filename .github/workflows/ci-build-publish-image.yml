@@ -139,6 +139,7 @@ on:
 
 jobs:
   inputs-to-summary:
+    permissions: {}
     runs-on: ubuntu-latest
     steps:
       - name: "Write inputs to summary"
@@ -148,6 +149,7 @@ jobs:
           title: "Inputs"
 
   input-checks:
+    permissions: {}
     runs-on: ubuntu-latest
     outputs:
       container-registry: ${{ steps.set-container-registry.outputs.container-registry }}
@@ -177,6 +179,10 @@ jobs:
             echo "Invalid lifecycle type. Supported types are: \`deployment\`, and \`development\`" >> "$GITHUB_STEP_SUMMARY"
           fi
   run-spring-boot-build:
+    permissions:
+      id-token: write
+      contents: write
+      packages: write
     needs: input-checks
     if: inputs.application-type == 'spring-boot'
     uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-build-publish-image.yml@hardening-gh-token-permissions
