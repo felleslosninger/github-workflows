@@ -130,7 +130,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
-          image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
+          image-ref: ${{env.IMAGE_NAME}}:${{env.IMAGETAG}}
           application-path: ${{ inputs.application-path }}
           library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
           library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
