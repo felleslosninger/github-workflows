@@ -132,6 +132,9 @@ jobs:
           distribution: "${{ inputs.java-distribution }}"
           java-version: ${{ inputs.java-version }}
 
+      - name: Build JAR
+        run: mvn -B clean package -DskipTests
+
       - name: Set image name
         id: set-image-name
         run: |
