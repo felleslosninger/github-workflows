@@ -46,7 +46,14 @@ on:
         type: string
 
 jobs:
-  # Job to prepare payload and set outputs
+  inputs-to-summary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write inputs to summary
+        uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
+        with:
+          json-payload: ${{ toJson(inputs) }}
+
   prepare-payload:
     runs-on: ubuntu-latest
 
@@ -54,23 +61,6 @@ jobs:
       jira-id: ""
 
     steps:
-      - name: Log Inputs
-        run: |
-          {
-            echo "# Inputs"
-            echo "| Key                     | Value                                 |"
-            echo "| ----------------------- | ------------------------------------- |"
-            echo "| application-name        | ${{ inputs.application-name }}        |"
-            echo "| product-name            | ${{ inputs.product-name }}            |"
-            echo "| image-name              | ${{ inputs.image-name }}              |"
-            echo "| image-version           | ${{ inputs.image-version }}           |"
-            echo "| image-digest            | ${{ inputs.image-digest }}            |"
-            echo "| kubernetes-repo         | ${{ inputs.kubernetes-repo }}         |"
-            echo "| kubernetes-repo-event   | ${{ inputs.kubernetes-repo-event }}   |"
-            echo "| deployment-environment  | ${{ inputs.deployment-environment }}  |"
-            echo "| kustomize-version       | ${{ inputs.kustomize-version }}       |"
-          } >> "$GITHUB_STEP_SUMMARY"
-
       - name: Check important image inputs
         if: |
           inputs.image-version == '' ||
