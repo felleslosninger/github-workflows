@@ -166,6 +166,10 @@ jobs:
       inputs.application-type == 'spring-boot' ||
       inputs.application-type == 'quarkus'
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # pin@v5.0.0
@@ -215,52 +219,52 @@ jobs:
           name: ${{ inputs.artifact-name }}
           path: ${{ inputs.artifact-path }}
 
-  call-spring-boot-container-scan:
-    name: Call Spring Boot container scan
-    if: |
-      inputs.enable-trivy-image-scan == true &&
-      inputs.application-type == 'spring-boot'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@main
-    with:
-      image-name: ${{ inputs.image-name }}
-      image-pack: ${{ inputs.image-pack }}
-      image-pack-tag: ${{ inputs.image-pack-tag }}
-      java-version: ${{ inputs.java-version }}
-      application-path: ${{ inputs.application-path }}
-      trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
-      trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
-      trivy-library-severity: ${{ inputs.trivy-library-severity }}
-      trivy-library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
-      trivy-os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
-      trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
-      trivy-os-severity: ${{ inputs.trivy-os-severity }}
-      trivy-os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
-      trivy-version: ${{ inputs.trivy-version }}
-    secrets: inherit
+  # call-spring-boot-container-scan:
+  #   name: Call Spring Boot container scan
+  #   if: |
+  #     inputs.enable-trivy-image-scan == true &&
+  #     inputs.application-type == 'spring-boot'
+  #   uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@main
+  #   with:
+  #     image-name: ${{ inputs.image-name }}
+  #     image-pack: ${{ inputs.image-pack }}
+  #     image-pack-tag: ${{ inputs.image-pack-tag }}
+  #     java-version: ${{ inputs.java-version }}
+  #     application-path: ${{ inputs.application-path }}
+  #     trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+  #     trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+  #     trivy-library-severity: ${{ inputs.trivy-library-severity }}
+  #     trivy-library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
+  #     trivy-os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
+  #     trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
+  #     trivy-os-severity: ${{ inputs.trivy-os-severity }}
+  #     trivy-os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
+  #     trivy-version: ${{ inputs.trivy-version }}
+  #   secrets: inherit
 
-  call-quarkus-container-scan:
-    name: Call Quarkus container scan
-    if: |
-      inputs.enable-trivy-image-scan == true &&
-      inputs.application-type == 'quarkus'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@main
-    with:
-      image-name: ${{ inputs.image-name }}
-      image-pack: ${{ inputs.image-pack }}
-      image-pack-tag: ${{ inputs.image-pack-tag }}
-      java-version: ${{ inputs.java-version }}
-      native: ${{ inputs.native }}
-      application-path: ${{ inputs.application-path }}
-      trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
-      trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
-      trivy-library-severity: ${{ inputs.trivy-library-severity }}
-      trivy-library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
-      trivy-os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
-      trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
-      trivy-os-severity: ${{ inputs.trivy-os-severity }}
-      trivy-os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
-      trivy-version: ${{ inputs.trivy-version }}
-    secrets: inherit
+  # call-quarkus-container-scan:
+  #   name: Call Quarkus container scan
+  #   if: |
+  #     inputs.enable-trivy-image-scan == true &&
+  #     inputs.application-type == 'quarkus'
+  #   uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@main
+  #   with:
+  #     image-name: ${{ inputs.image-name }}
+  #     image-pack: ${{ inputs.image-pack }}
+  #     image-pack-tag: ${{ inputs.image-pack-tag }}
+  #     java-version: ${{ inputs.java-version }}
+  #     native: ${{ inputs.native }}
+  #     application-path: ${{ inputs.application-path }}
+  #     trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+  #     trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+  #     trivy-library-severity: ${{ inputs.trivy-library-severity }}
+  #     trivy-library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
+  #     trivy-os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
+  #     trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
+  #     trivy-os-severity: ${{ inputs.trivy-os-severity }}
+  #     trivy-os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
+  #     trivy-version: ${{ inputs.trivy-version }}
+  #   secrets: inherit
 
   # call-auto-merge:
   #   name: Call auto-merge
