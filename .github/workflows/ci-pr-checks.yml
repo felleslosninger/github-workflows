@@ -172,6 +172,7 @@ jobs:
     permissions:
       contents: read
       artifact-metadata: read
+      pull-requests: write
 
     steps:
       - name: Checkout
