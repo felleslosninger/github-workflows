@@ -171,8 +171,6 @@ jobs:
 
     permissions:
       contents: read
-      artifact-metadata: read
-      pull-requests: write
 
     steps:
       - name: Checkout
@@ -186,24 +184,11 @@ jobs:
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
 
-      - name: Maven environment setup
-        uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # pin@v4.0.0
-        with:
-          githubServer: false
-          servers: |
-            [{
-                "id": "github-oidc-sdk",
-                "username": "${{ secrets.MAVEN_USER }}",
-                "password": "${{ secrets.MAVEN_PASSWORD }}"
-            },
-            {
-                "id": "github",
-                "username": "${{ secrets.MAVEN_USER }}",
-                "password": "${{ secrets.MAVEN_PASSWORD }}"
-            }]
+      - name: Overwrite m2 settings
+        run: |
+          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
-      - name: Check settings.xml
-        run: cat ~/.m2/settings.xml
+      - run: cat ~/.m2/settings.xml
 
       - name: Run mvn ${{ inputs.maven-lifecycle }}
         run: |
