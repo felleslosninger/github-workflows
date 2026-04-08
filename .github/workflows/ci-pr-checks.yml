@@ -185,9 +185,14 @@ jobs:
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
 
+      # - name: Overwrite m2 settings
+      #   run: |
+      #     echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
+
       - name: Overwrite m2 settings
         run: |
-          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
+          mkdir -p ~/.m2
+          echo "<settings><servers><server><id>github</id><username>${{ secrets.GH_PACKAGES_READ_USER }}</username><password>${{ secrets.GH_PACKAGES_READ_PAT }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
       - run: cat ~/.m2/settings.xml
 
