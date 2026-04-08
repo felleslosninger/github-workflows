@@ -197,6 +197,9 @@ jobs:
                 "password": "${{ secrets.MAVEN_PASSWORD }}"
             }]
 
+      - name: Check settings.xml
+        run: cat ~/.m2/settings.xml
+
       - name: Run mvn ${{ inputs.maven-lifecycle }}
         run: |
           LIFECYCLE="${{ inputs.maven-lifecycle }}"
