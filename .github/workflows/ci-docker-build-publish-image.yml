@@ -90,6 +90,14 @@ on:
         value: ${{ jobs.build-publish-image.outputs.image-digest }}
 
 jobs:
+  inputs-to-summary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write inputs to summary
+        uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
+        with:
+          json-payload: ${{ toJson(inputs) }}
+
   build-publish-image:
     runs-on: ubuntu-latest
 
