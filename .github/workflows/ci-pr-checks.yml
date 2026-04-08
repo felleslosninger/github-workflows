@@ -5,6 +5,8 @@
 
 name: PR Checks
 
+permissions: {}
+
 on:
   workflow_call:
     inputs:
