@@ -140,7 +140,8 @@ jobs:
           java-version: ${{ inputs.java-version }}
 
       - name: Build JAR
-        run: mvn -B clean package -DskipTests
+        run: |
+          mvn -B clean package -DskipTests -pl integrasjonspunkt -am
 
       - name: Set image name
         id: set-image-name
