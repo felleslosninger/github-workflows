@@ -86,7 +86,6 @@ runs:
       with:
         name: ${{ steps.meta.outputs.filename }}
         path: ${{ steps.meta.outputs.filename }}
-        retention-days: 14
 
     - name: Publish upload status to summary
       if: ${{ always() && inputs.upload-artifact == 'true' }}
