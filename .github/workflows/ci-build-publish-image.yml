@@ -1,4 +1,5 @@
 name: Build and publish Docker image
+permissions: {}
 
 on:
   workflow_call:
@@ -138,6 +139,7 @@ on:
 
 jobs:
   inputs-to-summary:
+    permissions: {}
     runs-on: ubuntu-latest
     steps:
       - name: Write inputs to summary
@@ -146,6 +148,7 @@ jobs:
           json-payload: ${{ toJson(inputs) }}
 
   input-checks:
+    permissions: {}
     runs-on: ubuntu-latest
     outputs:
       container-registry: ${{ steps.set-container-registry.outputs.container-registry }}
@@ -174,11 +177,10 @@ jobs:
           else
             echo "Invalid lifecycle type. Supported types are: \`deployment\`, and \`development\`" >> "$GITHUB_STEP_SUMMARY"
           fi
-
   run-spring-boot-build:
     needs: input-checks
     if: inputs.application-type == 'spring-boot'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-build-publish-image.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-build-publish-image.yml@hardening-gh-token-permissions
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
@@ -207,9 +209,12 @@ jobs:
     secrets: inherit
 
   run-quarkus-build:
+    permissions:
+      id-token: write
+      contents: write
     needs: input-checks
     if: inputs.application-type == 'quarkus'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-build-publish-image.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-build-publish-image.yml@hardening-gh-token-permissions
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
@@ -232,9 +237,13 @@ jobs:
     secrets: inherit
 
   run-docker-build:
+    permissions:
+      id-token: write
+      contents: write
+      packages: read
     needs: input-checks
     if: inputs.application-type == 'docker'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-docker-build-publish-image.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-docker-build-publish-image.yml@hardening-gh-token-permissions
     with:
       image-name: ${{ inputs.image-name }}
       image-signing: ${{ inputs.image-signing }}
