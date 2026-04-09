@@ -23,8 +23,9 @@ By default we
   individually for the different scans
 - Ignore unfixed vulnerabilities by default to avoid stopping the pipeline when
   there's no fix available yet (but this can be overridden)
-- We hide the full output from the Trivy scan, and move it out to the step
-  summary if there's something you should look at (but this can be overridden)
+- We show the full output from the Trivy scan, and additionally add it out to
+  the step summary if there's something you should look at. It is possible to
+  hide the output in the action logs via inputs
 - Scan for plaintext secrets
 - Disable the noisy VEX notice that is included in scan results
 
@@ -42,11 +43,11 @@ None
 | `library-disable-scan` | Disable library scan | false | `false` |
 | `library-ignore-unfixed` | Ignore unfixed vulnerabilities in library scan | false | `true` |
 | `library-severity` | When to fail the scan with library vulnerabilities | false | `HIGH,CRITICAL` |
-| `library-hide-progress` | Hide progress output for library scan | false | `true` |
+| `library-hide-progress` | Hide progress output for library scan | false | `false` |
 | `os-disable-scan` | Disable OS scan | false | `false` |
 | `os-ignore-unfixed` | Ignore unfixed vulnerabilities in OS scan | false | `true` |
 | `os-severity` | When to fail the scan with OS vulnerabilities | false | `CRITICAL` |
-| `os-hide-progress` | Hide progress output for OS scan | false | `true` |
+| `os-hide-progress` | Hide progress output for OS scan | false | `false` |
 | `os-exit-code` | Exit code when OS vulnerabilities are found (0 = informational, 1 = blocking) | false | `"0"` |
 | `trivy-version` | Version of Trivy to use for scanning | false | `""` |
 | `trivyignore-warning-threshold` | Number of ignored vulnerabilities before we issue a warning | false | `10` |
