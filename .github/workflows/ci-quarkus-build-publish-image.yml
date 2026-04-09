@@ -224,7 +224,7 @@ jobs:
           artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
 
       - name: Login to ACR
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets[inputs.sp-container-registry-client-id] }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
