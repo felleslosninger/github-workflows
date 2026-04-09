@@ -5,8 +5,6 @@
 
 name: PR Checks
 
-permissions: {}
-
 on:
   workflow_call:
     inputs:
@@ -185,16 +183,9 @@ jobs:
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
 
-      # - name: Overwrite m2 settings
-      #   run: |
-      #     echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
-
-      - name: Overwrite m2 settings
+      - name: Create custom Maven settings.xml
         run: |
-          mkdir -p ~/.m2
-          echo "<settings><servers><server><id>github</id><username>${{ secrets.GH_PACKAGES_READ_USER }}</username><password>${{ secrets.GH_PACKAGES_READ_PAT }}</password></server></servers></settings>" > ~/.m2/settings.xml
-
-      - run: cat ~/.m2/settings.xml
+          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
       - name: Run mvn ${{ inputs.maven-lifecycle }}
         run: |
@@ -218,79 +209,79 @@ jobs:
           name: ${{ inputs.artifact-name }}
           path: ${{ inputs.artifact-path }}
 
-  # call-spring-boot-container-scan:
-  #   name: Call Spring Boot container scan
-  #   if: |
-  #     inputs.enable-trivy-image-scan == true &&
-  #     inputs.application-type == 'spring-boot'
-  #   uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@main
-  #   with:
-  #     image-name: ${{ inputs.image-name }}
-  #     image-pack: ${{ inputs.image-pack }}
-  #     image-pack-tag: ${{ inputs.image-pack-tag }}
-  #     java-version: ${{ inputs.java-version }}
-  #     application-path: ${{ inputs.application-path }}
-  #     trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
-  #     trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
-  #     trivy-library-severity: ${{ inputs.trivy-library-severity }}
-  #     trivy-library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
-  #     trivy-os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
-  #     trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
-  #     trivy-os-severity: ${{ inputs.trivy-os-severity }}
-  #     trivy-os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
-  #     trivy-version: ${{ inputs.trivy-version }}
-  #   secrets: inherit
+  call-spring-boot-container-scan:
+    name: Call Spring Boot container scan
+    if: |
+      inputs.enable-trivy-image-scan == true &&
+      inputs.application-type == 'spring-boot'
+    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@main
+    with:
+      image-name: ${{ inputs.image-name }}
+      image-pack: ${{ inputs.image-pack }}
+      image-pack-tag: ${{ inputs.image-pack-tag }}
+      java-version: ${{ inputs.java-version }}
+      application-path: ${{ inputs.application-path }}
+      trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+      trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+      trivy-library-severity: ${{ inputs.trivy-library-severity }}
+      trivy-library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
+      trivy-os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
+      trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
+      trivy-os-severity: ${{ inputs.trivy-os-severity }}
+      trivy-os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
+      trivy-version: ${{ inputs.trivy-version }}
+    secrets: inherit
 
-  # call-quarkus-container-scan:
-  #   name: Call Quarkus container scan
-  #   if: |
-  #     inputs.enable-trivy-image-scan == true &&
-  #     inputs.application-type == 'quarkus'
-  #   uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@main
-  #   with:
-  #     image-name: ${{ inputs.image-name }}
-  #     image-pack: ${{ inputs.image-pack }}
-  #     image-pack-tag: ${{ inputs.image-pack-tag }}
-  #     java-version: ${{ inputs.java-version }}
-  #     native: ${{ inputs.native }}
-  #     application-path: ${{ inputs.application-path }}
-  #     trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
-  #     trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
-  #     trivy-library-severity: ${{ inputs.trivy-library-severity }}
-  #     trivy-library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
-  #     trivy-os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
-  #     trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
-  #     trivy-os-severity: ${{ inputs.trivy-os-severity }}
-  #     trivy-os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
-  #     trivy-version: ${{ inputs.trivy-version }}
-  #   secrets: inherit
+  call-quarkus-container-scan:
+    name: Call Quarkus container scan
+    if: |
+      inputs.enable-trivy-image-scan == true &&
+      inputs.application-type == 'quarkus'
+    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@main
+    with:
+      image-name: ${{ inputs.image-name }}
+      image-pack: ${{ inputs.image-pack }}
+      image-pack-tag: ${{ inputs.image-pack-tag }}
+      java-version: ${{ inputs.java-version }}
+      native: ${{ inputs.native }}
+      application-path: ${{ inputs.application-path }}
+      trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+      trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+      trivy-library-severity: ${{ inputs.trivy-library-severity }}
+      trivy-library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
+      trivy-os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
+      trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
+      trivy-os-severity: ${{ inputs.trivy-os-severity }}
+      trivy-os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
+      trivy-version: ${{ inputs.trivy-version }}
+    secrets: inherit
 
-  # call-auto-merge:
-  #   name: Call auto-merge
-  #   if: |
-  #     always() &&
-  #     inputs.enable-auto-merge-dependabot == true &&
-  #     (needs.build-and-test-java.result == 'success' || needs.build-and-test-java.result == 'skipped') &&
-  #     (needs.call-spring-boot-container-scan.result == 'success' || needs.call-spring-boot-container-scan.result == 'skipped') &&
-  #     (needs.call-quarkus-container-scan.result == 'success' || needs.call-quarkus-container-scan.result == 'skipped')
-  #   needs:
-  #     [
-  #       build-and-test-java,
-  #       call-spring-boot-container-scan,
-  #       call-quarkus-container-scan,
-  #     ]
-  #   uses: felleslosninger/github-workflows/.github/workflows/misc-approve-and-merge-dependabot-pr.yml@main
-  #   with:
-  #     update-types: ${{ inputs.auto-merge-types }}
-  #   secrets: inherit
+  call-auto-merge:
+    name: Call auto-merge
+    if: |
+      always() &&
+      inputs.enable-auto-merge-dependabot == true &&
+      (needs.build-and-test-java.result == 'success' || needs.build-and-test-java.result == 'skipped') &&
+      (needs.call-spring-boot-container-scan.result == 'success' || needs.call-spring-boot-container-scan.result == 'skipped') &&
+      (needs.call-quarkus-container-scan.result == 'success' || needs.call-quarkus-container-scan.result == 'skipped')
+    needs:
+      [
+        build-and-test-java,
+        call-spring-boot-container-scan,
+        call-quarkus-container-scan,
+      ]
+    uses: felleslosninger/github-workflows/.github/workflows/misc-approve-and-merge-dependabot-pr.yml@main
+    with:
+      update-types: ${{ inputs.auto-merge-types }}
+    secrets: inherit
 
-  # call-build-image:
-  #   name: Call build image
-  #   if: needs.call-auto-merge.outputs.merged == 'true'
-  #   runs-on: ubuntu-latest
-  #   needs: call-auto-merge
-  #   steps:
-  #     - name: call-build-publish-image
-  #       uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # pin@v3.0.0
-  #       with:
-  #         event-type: build-publish-image
+  call-build-image:
+    name: Call build image
+    if: needs.call-auto-merge.outputs.merged == 'true'
+    runs-on: ubuntu-latest
+    needs: call-auto-merge
+    steps:
+      - name: call-build-publish-image
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # pin@v3.0.0
+        with:
+          event-type: build-publish-image
