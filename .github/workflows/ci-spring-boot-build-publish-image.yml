@@ -184,19 +184,8 @@ jobs:
           cache-dependency-path: ${{ inputs.cache-path }}
 
       - name: Maven environment setup
-        uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # pin@v4.0.0
-        with:
-          servers: |
-            [{
-                "id": "github-oidc-sdk",
-                "username": "${{ secrets.GH_PACKAGES_READ_USER }}",
-                "password": "${{ secrets.GH_PACKAGES_READ_PAT }}"
-            },
-            {
-              "id": "github",
-              "username": "${{ secrets.GH_PACKAGES_READ_USER }}",
-              "password": "${{ secrets.GH_PACKAGES_READ_PAT }}"
-            }]
+        run: |
+          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
       - name: Maven update version used in application.yaml
         run: |

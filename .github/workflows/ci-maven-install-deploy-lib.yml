@@ -104,10 +104,9 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set m2 settings to read organization packages
+      - name: Maven environment setup
         run: |
-          mkdir -p ~/.m2
-          echo "<settings><servers><server><id>github</id><username>${{ secrets.GH_PACKAGES_READ_USER }}</username><password>${{ secrets.GH_PACKAGES_READ_PAT }}</password></server></servers></settings>" > ~/.m2/settings.xml
+          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
       - name: Set version
         run: |
@@ -136,10 +135,6 @@ jobs:
           library-severity: ${{ inputs.trivy-library-severity }}
           library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
           trivy-version: ${{ inputs.trivy-version }}
-
-      - name: Overwrite m2 settings to publish libs
-        run: |
-          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
       - name: Maven deploy
         run: |
