@@ -214,7 +214,7 @@ jobs:
     if: |
       inputs.enable-trivy-image-scan == true &&
       inputs.application-type == 'spring-boot'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@PF-2345-migrate-to-custom-settings-xml
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
@@ -237,7 +237,7 @@ jobs:
     if: |
       inputs.enable-trivy-image-scan == true &&
       inputs.application-type == 'quarkus'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@PF-2345-migrate-to-custom-settings-xml
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
