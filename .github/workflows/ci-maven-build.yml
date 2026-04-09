@@ -50,7 +50,7 @@ on:
         description: Hide progress output for Trivy library scan
         type: boolean
         required: false
-        default: true
+        default: false
       trivy-version:
         description: Version of Trivy to use for scanning
         type: string

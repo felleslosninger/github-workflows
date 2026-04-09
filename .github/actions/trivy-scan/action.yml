@@ -29,7 +29,7 @@ inputs:
     required: false
   library-hide-progress:
     description: Hide progress output for library scan
-    default: "true"
+    default: "false"
     required: false
   os-disable-scan:
     description: Disable OS scan
@@ -45,7 +45,7 @@ inputs:
     required: false
   os-hide-progress:
     description: Hide progress output for OS scan
-    default: "true"
+    default: "false"
     required: false
   os-exit-code:
     description: Exit code when OS vulnerabilities are found (0 = informational, 1 = blocking)

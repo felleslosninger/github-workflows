@@ -68,7 +68,7 @@ on:
         description: Hide progress output for Trivy library scan
         type: boolean
         required: false
-        default: true
+        default: false
       trivy-os-disable-scan:
         description: Disable Trivy OS scan
         type: boolean
@@ -88,7 +88,7 @@ on:
         description: Hide progress output for Trivy OS scan
         type: boolean
         required: false
-        default: true
+        default: false
       trivy-os-exit-code:
         description: Exit code for OS vulns (1 = blocking for Dockerfiles)
         type: string
