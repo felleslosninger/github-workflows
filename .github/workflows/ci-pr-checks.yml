@@ -182,10 +182,14 @@ jobs:
           java-version: ${{ inputs.java-version }}
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
+          server-id: github
 
-      - name: Maven environment setup
-        run: |
-          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
+      - name: Check settings.xml
+        run: cat ~/.m2/settings.xml
+
+      # - name: Maven environment setup
+      #   run: |
+      #     echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
       - name: Run mvn ${{ inputs.maven-lifecycle }}
         run: |
