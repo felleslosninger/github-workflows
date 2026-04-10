@@ -138,19 +138,8 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Maven environment setup
-        uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # pin@v4.0.0
-        with:
-          servers: |
-            [{
-                "id": "github-oidc-sdk",
-                "username": "${{ secrets.MAVEN_USER }}",
-                "password": "${{ secrets.MAVEN_PASSWORD }}"
-            },
-            {
-              "id": "github",
-              "username": "${{ secrets.MAVEN_USER }}",
-              "password": "${{ secrets.MAVEN_PASSWORD }}"
-            }]
+        run: |
+          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
       - name: Build image with Maven (module-name, skips tests)
         if: inputs.module-name != ''

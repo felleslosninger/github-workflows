@@ -111,6 +111,11 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # pin@v5.0.0
@@ -123,19 +128,9 @@ jobs:
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
 
-      - uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # pin@v4.0.0
-        with:
-          servers: |
-            [{
-                "id": "github-oidc-sdk",
-                "username": "${{ secrets.MAVEN_USER }}",
-                "password": "${{ secrets.MAVEN_PASSWORD }}"
-            },
-            {
-                "id": "github",
-                "username": "${{ secrets.MAVEN_USER }}",
-                "password": "${{ secrets.MAVEN_PASSWORD }}"
-            }]
+      - name: Maven environment setup
+        run: |
+          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
       - name: Configure private NPM registry authentication
         if: ${{ inputs.setup-npm-auth == true }}

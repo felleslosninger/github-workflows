@@ -178,7 +178,7 @@ jobs:
   run-spring-boot-build:
     needs: input-checks
     if: inputs.application-type == 'spring-boot'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-build-publish-image.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-build-publish-image.yml@PF-2345-migrate-to-custom-settings-xml
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
@@ -209,7 +209,7 @@ jobs:
   run-quarkus-build:
     needs: input-checks
     if: inputs.application-type == 'quarkus'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-build-publish-image.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-build-publish-image.yml@PF-2345-migrate-to-custom-settings-xml
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
