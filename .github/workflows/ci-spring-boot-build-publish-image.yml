@@ -9,7 +9,7 @@ on:
         type: string
       image-pack:
         description: Paketo builder image to use. See https://paketo.io/docs/reference/builders-reference/ for choices
-        default: builder-jammy-java-tiny
+        default: builder-noble-java-tiny
         required: false
         type: string
       image-pack-tag:
