@@ -167,9 +167,9 @@ jobs:
       inputs.application-type == 'quarkus'
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-      packages: read
+    # permissions:
+    #   contents: read
+    #   packages: read
 
     steps:
       - name: Checkout
@@ -182,12 +182,31 @@ jobs:
           java-version: ${{ inputs.java-version }}
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
+          # server-id: github
 
       - name: Maven environment setup
-        run: |
-          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
+        uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # pin@v4.0.0
+        with:
+          servers: |
+            [{
+                "id": "github-oidc-sdk",
+                "username": "${{ secrets.MAVEN_USER }}",
+                "password": "${{ secrets.MAVEN_PASSWORD }}"
+            },
+            {
+                "id": "github",
+                "username": "${{ secrets.MAVEN_USER }}",
+                "password": "${{ secrets.MAVEN_PASSWORD }}"
+            }]
+
+      # - name: Maven environment setup
+      #   run: |
+      #     echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
 
       - name: Run mvn ${{ inputs.maven-lifecycle }}
+        # env:
+        #   GITHUB_ACTOR: ${{ github.actor }}
+        #   GITHUB_TOKEN: ${{ github.token }}
         run: |
           LIFECYCLE="${{ inputs.maven-lifecycle }}"
           case "$LIFECYCLE" in
