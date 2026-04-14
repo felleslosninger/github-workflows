@@ -230,10 +230,10 @@ runs:
       run: |
         if [[ -s trivy-os-scan.txt ]]; then
 
-          echo "=========================="
-          echo "TRIVY LIBRARY SCAN RESULTS"
-          echo "=========================="
-          cat trivy-library-scan.txt
+          echo "====================="
+          echo "TRIVY OS SCAN RESULTS"
+          echo "====================="
+          cat trivy-os-scan.txt
           echo "Note: This table is also available in the workflow Summary tab."
           echo ""
 
