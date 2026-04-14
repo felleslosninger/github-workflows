@@ -170,6 +170,7 @@ runs:
         hide-progress: ${{ inputs.library-hide-progress }}
         output: trivy-library-scan.txt
         exit-code: "1"
+        skip-dirs: "layers,cnb"
 
     - name: Publish Trivy library scan output to step summary
       if: ${{ always() && inputs.library-disable-scan != 'true' }}
