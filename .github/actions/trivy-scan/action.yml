@@ -179,6 +179,15 @@ runs:
         SCAN_OUTCOME: ${{ steps.trivy-library.outcome }}
       run: |
         if [[ -s trivy-library-scan.txt ]]; then
+
+          echo "==============================================================="
+          echo "TRIVY LIBRARY SCAN RESULTS"
+          echo "==============================================================="
+          cat trivy-library-scan.txt
+          echo "==============================================================="
+          echo "Note: This table is also available in the workflow Summary tab."
+          echo ""
+
           {
             echo "#### Library scan results"
 
@@ -229,6 +238,15 @@ runs:
         OS_EXIT_CODE: ${{ inputs.os-exit-code }}
       run: |
         if [[ -s trivy-os-scan.txt ]]; then
+
+          echo "==============================================================="
+          echo "TRIVY OS SCAN RESULTS"
+          echo "==============================================================="
+          cat trivy-os-scan.txt
+          echo "==============================================================="
+          echo "Note: This table is also available in the workflow Summary tab."
+          echo ""
+
           {
             echo "#### OS scan results"
 
