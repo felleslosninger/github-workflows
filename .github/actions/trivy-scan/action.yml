@@ -27,10 +27,6 @@ inputs:
     description: When to fail the scan with library vulnerabilities
     default: "HIGH,CRITICAL"
     required: false
-  library-hide-progress:
-    description: Hide progress output for library scan
-    default: "true"
-    required: false
   os-disable-scan:
     description: Disable OS scan
     default: "false"
@@ -42,10 +38,6 @@ inputs:
   os-severity:
     description: When to fail the scan with OS vulnerabilities
     default: "CRITICAL"
-    required: false
-  os-hide-progress:
-    description: Hide progress output for OS scan
-    default: "true"
     required: false
   os-exit-code:
     description: Exit code when OS vulnerabilities are found (0 = informational, 1 = blocking)
