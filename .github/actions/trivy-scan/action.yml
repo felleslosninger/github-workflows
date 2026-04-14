@@ -167,7 +167,7 @@ runs:
         severity: "${{ inputs.library-severity }}"
         ignore-unfixed: ${{ inputs.library-ignore-unfixed }}
         trivyignores: ${{ steps.trivyignore.outputs.trivyignore-path }}
-        hide-progress: ${{ inputs.library-hide-progress }}
+        hide-progress: true
         output: trivy-library-scan.txt
         exit-code: "1"
         skip-dirs: "layers,cnb"
@@ -221,7 +221,7 @@ runs:
         severity: "${{ inputs.os-severity }}"
         ignore-unfixed: ${{ inputs.os-ignore-unfixed }}
         trivyignores: ${{ steps.trivyignore.outputs.trivyignore-path }}
-        hide-progress: ${{ inputs.os-hide-progress }}
+        hide-progress: true
         output: trivy-os-scan.txt
         exit-code: "${{ inputs.os-exit-code }}"
         # Skip Trivy setup if library scan is not enabled, as the OS scan also
