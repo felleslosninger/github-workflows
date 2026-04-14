@@ -28,6 +28,11 @@ By default we
   hide the output in the action logs via inputs
 - Scan for plaintext secrets
 - Disable the noisy VEX notice that is included in scan results
+- Skip certain dirs in library scanning for dependencies related to Paketo
+  builds (i.e. Spring Boot and Quarkus builds). These are dependencies that
+  developers do not control, and detected vulnerabilities must be added to
+  `.trivyignore` files (which is usually pointless). The dirs are currently
+  hardcoded and must be updated in the composite action
 
 ## Prerequisites
 
