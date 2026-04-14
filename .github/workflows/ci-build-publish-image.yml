@@ -220,7 +220,7 @@ jobs:
   run-docker-build:
     needs: input-checks
     if: inputs.application-type == 'docker'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-docker-build-publish-image.yml@PF-2347-actually-add-scan-results-to-action-logs
+    uses: felleslosninger/github-workflows/.github/workflows/ci-docker-build-publish-image.yml@main
     with:
       image-name: ${{ inputs.image-name }}
       image-signing: ${{ inputs.image-signing }}
