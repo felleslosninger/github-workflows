@@ -167,9 +167,9 @@ jobs:
       inputs.application-type == 'quarkus'
     runs-on: ubuntu-latest
 
-    # permissions:
-    #   contents: read
-    #   packages: read
+    permissions:
+      contents: read
+      packages: read
 
     steps:
       - name: Checkout
