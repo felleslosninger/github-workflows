@@ -101,11 +101,6 @@ on:
         type: string
         required: false
         default: 'HIGH,CRITICAL'
-      trivy-library-hide-progress:
-        description: Hide progress output for Trivy library scan
-        type: boolean
-        required: false
-        default: false
       trivy-os-disable-scan:
         description: Disable Trivy OS scan
         type: boolean
@@ -121,11 +116,6 @@ on:
         type: string
         required: false
         default: 'CRITICAL'
-      trivy-os-hide-progress:
-        description: Hide progress output for Trivy OS scan
-        type: boolean
-        required: false
-        default: false
       trivy-version:
         description: Version of Trivy to use for scanning
         type: string
@@ -230,11 +220,9 @@ jobs:
       trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
       trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
       trivy-library-severity: ${{ inputs.trivy-library-severity }}
-      trivy-library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
       trivy-os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
       trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
       trivy-os-severity: ${{ inputs.trivy-os-severity }}
-      trivy-os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
       trivy-version: ${{ inputs.trivy-version }}
     secrets: inherit
 
@@ -254,11 +242,9 @@ jobs:
       trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
       trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
       trivy-library-severity: ${{ inputs.trivy-library-severity }}
-      trivy-library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
       trivy-os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
       trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
       trivy-os-severity: ${{ inputs.trivy-os-severity }}
-      trivy-os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
       trivy-version: ${{ inputs.trivy-version }}
     secrets: inherit
 

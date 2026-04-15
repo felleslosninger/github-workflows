@@ -64,11 +64,6 @@ on:
         type: string
         required: false
         default: 'HIGH,CRITICAL'
-      trivy-library-hide-progress:
-        description: Hide progress output for Trivy library scan
-        type: boolean
-        required: false
-        default: false
       trivy-os-disable-scan:
         description: Disable Trivy OS scan
         type: boolean
@@ -84,11 +79,6 @@ on:
         type: string
         required: false
         default: 'CRITICAL'
-      trivy-os-hide-progress:
-        description: Hide progress output for Trivy OS scan
-        type: boolean
-        required: false
-        default: false
       trivy-os-exit-code:
         description: Exit code for OS vulns (1 = blocking for Dockerfiles)
         type: string
@@ -167,11 +157,9 @@ jobs:
           library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
           library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
           library-severity: ${{ inputs.trivy-library-severity }}
-          library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
           os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
           os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
           os-severity: ${{ inputs.trivy-os-severity }}
-          os-hide-progress: ${{ inputs.trivy-os-hide-progress }}
           os-exit-code: ${{ inputs.trivy-os-exit-code }}
           trivy-version: ${{ inputs.trivy-version }}
 

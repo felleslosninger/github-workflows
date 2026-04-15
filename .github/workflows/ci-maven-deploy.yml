@@ -51,11 +51,6 @@ on:
         type: string
         required: false
         default: 'HIGH,CRITICAL'
-      trivy-library-hide-progress:
-        description: Hide progress output for Trivy library scan
-        type: boolean
-        required: false
-        default: false
       trivy-version:
         description: Version of Trivy to use for scanning
         type: string
@@ -87,7 +82,6 @@ jobs:
           library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
           library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
           library-severity: ${{ inputs.trivy-library-severity }}
-          library-hide-progress: ${{ inputs.trivy-library-hide-progress }}
           trivy-version: ${{ inputs.trivy-version }}
 
       - name: Set m2 settings
