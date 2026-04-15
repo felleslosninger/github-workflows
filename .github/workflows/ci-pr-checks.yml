@@ -209,7 +209,7 @@ jobs:
       - name: Run mvn ${{ inputs.maven-lifecycle }}
         env:
           GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           LIFECYCLE="${{ inputs.maven-lifecycle }}"
           case "$LIFECYCLE" in
