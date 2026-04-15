@@ -116,6 +116,9 @@ jobs:
           java-version: ${{ inputs.java-version }}
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
+          server-id: github
+          server-username: MAVEN_USER
+          server-password: MAVEN_PASSWORD
 
       - name: Configure private NPM registry authentication
         if: ${{ inputs.setup-npm-auth == true }}
@@ -127,27 +130,18 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Maven environment setup
-        uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # pin@v4.0.0
-        with:
-          servers: |
-            [{
-                "id": "github-oidc-sdk",
-                "username": "${{ secrets.MAVEN_USER }}",
-                "password": "${{ secrets.MAVEN_PASSWORD }}"
-            },
-            {
-              "id": "github",
-              "username": "${{ secrets.MAVEN_USER }}",
-              "password": "${{ secrets.MAVEN_PASSWORD }}"
-            }]
-
       - name: Build image with Maven (module-name, skips tests)
         if: inputs.module-name != ''
+        env:
+          MAVEN_USER: ${{ secrets.MAVEN_USER }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
         run: mvn install -DskipTests -B spring-boot:build-image -pl ${{ inputs.module-name }} -am -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }}
 
       - name: Build image with Maven (application-path, skips tests)
         if: inputs.module-name == ''
+        env:
+          MAVEN_USER: ${{ secrets.MAVEN_USER }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
         run: mvn -DskipTests -B spring-boot:build-image --file ${{ inputs.application-path }}pom.xml -Dspring-boot.build-image.imageName=${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }}
 
       - name: Run Trivy vulnerability scanner
