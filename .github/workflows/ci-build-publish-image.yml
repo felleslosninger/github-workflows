@@ -204,7 +204,9 @@ jobs:
       image-pack-tag: ${{ inputs.image-pack-tag }}
       image-signing: ${{ inputs.image-signing }}
       java-version: ${{ inputs.java-version }}
+      java-distribution: ${{ inputs.java-distribution }}
       slack-channel-id: ${{ inputs.slack-channel-id }}
+      cache-path: ${{ inputs.cache-path }}
       native: ${{ inputs.native }}
       container-registry: ${{ needs.input-checks.outputs.container-registry }}
       sp-container-registry-client-id: ${{ needs.input-checks.outputs.sp-container-registry-client-id }}
