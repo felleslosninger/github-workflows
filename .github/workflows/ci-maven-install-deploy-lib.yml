@@ -88,6 +88,9 @@ jobs:
           java-version: ${{ inputs.java-version }}
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
+          server-id: github
+          server-username: GH_PACKAGES_READ_USER
+          server-password: GH_PACKAGES_READ_PAT
 
       - name: Configure private NPM registry authentication
         if: ${{ inputs.setup-npm-auth == true }}
@@ -99,11 +102,6 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set m2 settings to read organization packages
-        run: |
-          mkdir -p ~/.m2
-          echo "<settings><servers><server><id>github</id><username>${{ secrets.GH_PACKAGES_READ_USER }}</username><password>${{ secrets.GH_PACKAGES_READ_PAT }}</password></server></servers></settings>" > ~/.m2/settings.xml
-
       - name: Set version
         run: |
           if [ "${{ inputs.package-version }}" != "" ]; then
@@ -114,6 +112,9 @@ jobs:
           fi
 
       - name: Maven install
+        env:
+          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
+          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
         run: |
           if [ -n "${{ inputs.profile }}" ]; then
             mvn -B clean install --update-snapshots -P"${{ inputs.profile }}"
