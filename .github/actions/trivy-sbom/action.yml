@@ -1,14 +1,25 @@
 name: Trivy SBOM generation
-description: Composite action for generating and uploading SBOMs using Trivy
+description: Composite action for Trivy SBOM generation
 author: Digdir Platform Team
 
 inputs:
+  scan-type:
+    description: "Type of scan to run ('image' or 'fs')"
+    default: "image"
+    required: false
   artifact-id:
     description: "Unique ID for the artifact (e.g., the app name)"
     required: true
   image-ref:
-    description: "Image reference to scan (e.g. 'my-repo/my-app:v1.0.0')"
-    required: true
+    description: "Image reference to scan (required if scan-type is 'image')"
+    required: false
+  image-tag:
+    description: "Tag to include in the filename (optional, used for image scans)"
+    required: false
+  application-path:
+    description: "Path to scan (required if scan-type is 'fs')"
+    default: "."
+    required: false
   format:
     description: "Output format ('github', 'cyclonedx', 'spdx', 'spdx-json')"
     default: "github"
@@ -28,25 +39,39 @@ runs:
     - name: Start Trivy SBOM generation
       shell: bash
       run: |
-        echo "### Trivy SBOM generation" >> "$GITHUB_STEP_SUMMARY"
+        echo "### Trivy SBOM generation (${{ inputs.scan-type }})" >> "$GITHUB_STEP_SUMMARY"
 
     - name: Write inputs to summary
       uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
       with:
         json-payload: ${{ toJson(inputs) }}
 
+    - name: Validate inputs
+      shell: bash
+      run: |
+        if [[ "${{ inputs.scan-type }}" == "image" && -z "${{ inputs.image-ref }}" ]]; then
+          echo "::error::image-ref is required when scan-type is 'image'"
+          exit 1
+        fi
+
     - name: Prepare SBOM Metadata
       id: meta
       shell: bash
       run: |
-        # Sanitize name: replace slashes/dots with dashes
-        SAFE_NAME=$(echo "${{ inputs.artifact-id }}" | tr '/.' '-')
+        # Sanitize name: replace slashes/dots/spaces with dashes
+        SAFE_NAME=$(echo "${{ inputs.artifact-id }}" | tr '/. ' '-')
 
         # Determine extension
         EXT="json"
         if [[ "${{ inputs.format }}" == "spdx" ]]; then EXT="spdx"; fi
 
-        FILENAME="sbom-${SAFE_NAME}.${EXT}"
+        # Generate Filename
+        # If image-tag is provided, include it. Otherwise, use run numbers for uniqueness.
+        if [[ "${{ inputs.scan-type }}" == "image" && -n "${{ inputs.image-tag }}" ]]; then
+          FILENAME="sbom-${SAFE_NAME}-${{ inputs.image-tag }}.${EXT}"
+        else
+          FILENAME="sbom-${SAFE_NAME}-${{ github.run_number }}-${{ github.run_attempt }}.${EXT}"
+        fi
 
         echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
 
@@ -57,9 +82,12 @@ runs:
         TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
         TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
       with:
-        scan-type: 'image'
+        scan-type: ${{ inputs.scan-type }}
         format: ${{ inputs.format }}
+        # This is used if scan-type is 'image'
         image-ref: ${{ inputs.image-ref }}
+        # This is used if scan-type is 'fs'
+        scan-ref: ${{ inputs.application-path }}
         output: ${{ steps.meta.outputs.filename }}
         github-pat: ${{ github.token }}
         skip-setup-trivy: ${{ inputs.skip-setup }}
@@ -82,10 +110,12 @@ runs:
     - name: Upload SBOM artifact
       if: ${{ inputs.upload-artifact == 'true' && steps.trivy-gen.outcome == 'success' }}
       id: upload
-      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: ${{ steps.meta.outputs.filename }}
         path: ${{ steps.meta.outputs.filename }}
+        archive: false
+        retention-days: 14
 
     - name: Publish upload status to summary
       if: ${{ always() && inputs.upload-artifact == 'true' }}
