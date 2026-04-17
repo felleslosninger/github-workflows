@@ -89,6 +89,7 @@ runs:
         image-ref: ${{ inputs.image-ref }}
         # This is used if scan-type is 'fs'
         scan-ref: ${{ inputs.application-path }}
+        hide-progress: true
         output: ${{ steps.meta.outputs.filename }}
         github-pat: ${{ github.token }}
         skip-setup-trivy: ${{ inputs.skip-setup }}
