@@ -3,21 +3,21 @@ description: Composite action for generating and uploading SBOMs using Trivy
 author: Digdir Platform Team
 
 inputs:
-  sbom-artifact-id:
+  artifact-id:
     description: "Unique ID for the artifact (e.g., the app name)"
     required: true
-  sbom-image-ref:
+  image-ref:
     description: "Image reference to scan (e.g. 'my-repo/my-app:v1.0.0')"
     required: true
-  sbom-format:
+  format:
     description: "Output format ('github', 'cyclonedx', 'spdx', 'spdx-json')"
     default: "github"
     required: false
-  sbom-upload-artifact:
+  upload-artifact:
     description: "Whether to automatically upload the SBOM as a GitHub artifact"
     default: "true"
     required: false
-  sbom-skip-setup:
+  skip-setup:
     description: "Skip Trivy setup if it has already been run in a previous step"
     default: "false"
     required: false
@@ -40,7 +40,7 @@ runs:
       shell: bash
       run: |
         # Sanitize name: replace slashes/dots with dashes
-        SAFE_NAME=$(echo "${{ inputs.sbom-artifact-id }}" | tr '/.' '-')
+        SAFE_NAME=$(echo "${{ inputs.artifact-id }}" | tr '/.' '-')
 
         # Determine extension
         EXT="json"
@@ -58,11 +58,11 @@ runs:
         TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
       with:
         scan-type: 'image'
-        format: ${{ inputs.sbom-format }}
-        image-ref: ${{ inputs.sbom-image-ref }}
+        format: ${{ inputs.format }}
+        image-ref: ${{ inputs.image-ref }}
         output: ${{ steps.meta.outputs.filename }}
         github-pat: ${{ github.token }}
-        skip-setup-trivy: ${{ inputs.sbom-skip-setup }}
+        skip-setup-trivy: ${{ inputs.skip-setup }}
 
     - name: Publish Trivy status to summary
       if: always()
@@ -80,7 +80,7 @@ runs:
         fi >> "$GITHUB_STEP_SUMMARY"
 
     - name: Upload SBOM artifact
-      if: ${{ inputs.sbom-upload-artifact == 'true' && steps.trivy-gen.outcome == 'success' }}
+      if: ${{ inputs.upload-artifact == 'true' && steps.trivy-gen.outcome == 'success' }}
       id: upload
       uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
