@@ -101,7 +101,7 @@ runs:
         FILENAME: ${{ steps.meta.outputs.filename }}
       run: |
         if [[ "$OUTCOME" == "success" ]]; then
-          echo "> [!SUCCESS]"
+          echo "> [!NOTE]"
           echo "> **SBOM generated:** \`$FILENAME\`"
         else
           echo "> [!WARNING]"
