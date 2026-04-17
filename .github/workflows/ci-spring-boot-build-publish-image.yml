@@ -227,6 +227,8 @@ jobs:
           artifact-id: ${{ steps.set-image-name.outputs.image-name }}
           image-ref: "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}"
           version: ${{ steps.set-image-tag.outputs.image-tag }}
+          # This is already done in Trivy vuln scan step
+          skip-setup: true
 
       # - name: Create SBOM artifact name
       #   id: sbom-name
