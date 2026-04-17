@@ -27,6 +27,15 @@ on:
         default: "11"
         required: false
         type: string
+      java-distribution:
+        description: Java distribution to use
+        default: "liberica"
+        required: false
+        type: string
+      cache-path:
+        default: "**/pom.xml"
+        required: false
+        type: string
       native:
         description: Build native image
         required: false
@@ -89,21 +98,16 @@ jobs:
 
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # pin@v5.0.0
 
-      - name: Cache Maven packages
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # pin@v4.2.4
+      - name: Set up JDK ${{ inputs.java-version }}
+        uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # pin@v5.0.0
         with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
-
-      - uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # pin@v4.0.0
-        with:
-          servers: |
-            [{
-              "id": "github",
-              "username": "${{ secrets.MAVEN_USER }}",
-              "password": "${{ secrets.MAVEN_PASSWORD }}"
-            }]
+          distribution: "${{ inputs.java-distribution }}"
+          java-version: ${{ inputs.java-version }}
+          cache: maven
+          cache-dependency-path: ${{ inputs.cache-path }}
+          server-id: github
+          server-username: MAVEN_USER
+          server-password: MAVEN_PASSWORD
 
       - name: Install pack
         run: |
@@ -122,6 +126,9 @@ jobs:
 
       - name: Build native image with Maven/Quarkus
         if: inputs.native == true
+        env:
+          MAVEN_USER: ${{ secrets.MAVEN_USER }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
         run: |
           pack build ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} \
             --path . \
@@ -133,10 +140,15 @@ jobs:
             --env BP_MAVEN_POM_FILE="./pom.xml" \
             --env BP_NATIVE_IMAGE="true" \
             --env LANG="C.UTF-8" \
+            --env MAVEN_USER="${{ env.MAVEN_USER }}" \
+            --env MAVEN_PASSWORD="${{ env.MAVEN_PASSWORD }}" \
             --creation-time now
 
       - name: Build image with Maven/Quarkus
         if: inputs.native == false
+        env:
+          MAVEN_USER: ${{ secrets.MAVEN_USER }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
         run: |
           pack build ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} \
             --path . \
@@ -146,6 +158,8 @@ jobs:
             --volume "${HOME}/.m2:/home/cnb/.m2:rw" \
             --env BP_JVM_VERSION="${{ inputs.java-version }}" \
             --env BP_MAVEN_POM_FILE="./pom.xml" \
+            --env MAVEN_USER="${{ env.MAVEN_USER }}" \
+            --env MAVEN_PASSWORD="${{ env.MAVEN_PASSWORD }}" \
             --creation-time now
 
       - name: Create SBOM artifact-name
