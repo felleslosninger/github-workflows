@@ -13,8 +13,8 @@ inputs:
   image-ref:
     description: "Image reference to scan (required if scan-type is 'image')"
     required: false
-  image-tag:
-    description: "Tag to include in the filename (optional, used for image scans)"
+  version:
+    description: "The version or tag of the artifact"
     required: false
   application-path:
     description: "Path to scan (required if scan-type is 'fs')"
@@ -58,21 +58,22 @@ runs:
       id: meta
       shell: bash
       run: |
-        # Sanitize name: replace slashes/dots/spaces with dashes
+        # Sanitize name: replace slashes, dots, and spaces with dashes
         SAFE_NAME=$(echo "${{ inputs.artifact-id }}" | tr '/. ' '-')
 
         # Determine extension
         EXT="json"
         if [[ "${{ inputs.format }}" == "spdx" ]]; then EXT="spdx"; fi
 
-        # Generate Filename
-        # If image-tag is provided, include it. Otherwise, use run numbers for uniqueness.
-        if [[ "${{ inputs.scan-type }}" == "image" && -n "${{ inputs.image-tag }}" ]]; then
-          FILENAME="sbom-${SAFE_NAME}-${{ inputs.image-tag }}.${EXT}"
+        # Generate Version Suffix
+        # Use provided version if available, otherwise fallback to Run ID/Attempt
+        if [[ -n "${{ inputs.version }}" ]]; then
+          VER_SUFFIX="${{ inputs.version }}"
         else
-          FILENAME="sbom-${SAFE_NAME}-${{ github.run_number }}-${{ github.run_attempt }}.${EXT}"
+          VER_SUFFIX="${{ github.run_number }}-${{ github.run_attempt }}"
         fi
 
+        FILENAME="sbom-${SAFE_NAME}-${VER_SUFFIX}.${EXT}"
         echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
 
     - name: Run Trivy SBOM generation
