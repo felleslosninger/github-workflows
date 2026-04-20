@@ -117,7 +117,7 @@ jobs:
         with:
           scan-type: fs
           artifact-id: ${{ github.event.repository.name }}
-          application-path: ${{ inputs.sbom-path }}
+          application-path: ${{ inputs.application-path }}
           version: ${{ inputs.package-version }}
           # This is already done in Trivy vuln scan step
           skip-setup: true
