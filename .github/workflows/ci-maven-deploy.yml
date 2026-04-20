@@ -112,6 +112,12 @@ jobs:
             mvn -B deploy
           fi
 
-      - uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # pin@v0.20.6
+      - name: Run Trivy SBOM generation
+        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@PF-2233-trivy-sbom-composite-action
         with:
-          path: ${{ inputs.sbom-path }}
+          scan-type: fs
+          artifact-id: ${{ github.event.repository.name }}
+          application-path: ${{ inputs.sbom-path }}
+          version: ${{ inputs.package-version }}
+          # This is already done in Trivy vuln scan step
+          skip-setup: true
