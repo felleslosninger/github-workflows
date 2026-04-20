@@ -230,31 +230,6 @@ jobs:
           # This is already done in Trivy vuln scan step
           skip-setup: true
 
-      # - name: Create SBOM artifact name
-      #   id: sbom-name
-      #   run: |
-      #     SBOM_NAME=$(echo ${{ steps.set-image-name.outputs.image-name }} | tr '/' '-')
-      #     echo "sbom-artifact-id=$SBOM_NAME" >> "$GITHUB_OUTPUT"
-      #     echo "- SBOM: $SBOM_NAME" >> "$GITHUB_STEP_SUMMARY"
-
-      # - name: Run Trivy SBOM generation
-      #   uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # pin@v0.35.0
-      #   env:
-      #     TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
-      #     TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
-      #   with:
-      #     scan-type: image
-      #     format: github
-      #     image-ref: "${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}"
-      #     output: "sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}.json"
-      #     github-pat: ${{ secrets.GITHUB_TOKEN }}
-
-      # - name: Upload trivy report as a Github artifact
-      #   uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin@v4.6.2
-      #   with:
-      #     name: "sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}"
-      #     path: "${{ github.workspace }}/sbom-${{ steps.sbom-name.outputs.sbom-artifact-id }}-${{ steps.set-image-tag.outputs.image-tag }}.json"
-
       # Login to GHCR if container-registry starts with ghcr.io
       - name: Login to GitHub Container Registry
         if: contains(inputs.container-registry, 'ghcr.io')
