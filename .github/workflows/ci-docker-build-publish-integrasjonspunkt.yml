@@ -163,16 +163,6 @@ jobs:
           os-exit-code: ${{ inputs.trivy-os-exit-code }}
           trivy-version: ${{ inputs.trivy-version }}
 
-      - name: Run Trivy SBOM generation
-        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@PF-2233-trivy-sbom-composite-action
-        with:
-          scan-type: image
-          artifact-id: ${{ steps.set-image-name.outputs.image-name }}
-          image-ref: "${{ steps.set-image-name.outputs.image-name }}:${{ inputs.package-version}}"
-          version: ${{ inputs.package-version }}
-          # This is already done in Trivy vuln scan step
-          skip-setup: true
-
       - name: Login to GitHub Container Registry
         uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # pin@v3.4.0
         with:
@@ -192,6 +182,16 @@ jobs:
             | cut -d ']' -f 1)
           echo "image-digest=$image_digest" >> "$GITHUB_OUTPUT"
           echo "- Image digest: $image_digest" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run Trivy SBOM generation
+        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@PF-2233-trivy-sbom-composite-action
+        with:
+          scan-type: image
+          artifact-id: ${{ steps.set-image-name.outputs.image-name }}
+          image-ref: "${{ steps.set-image-name.outputs.image-name }}@${{ steps.set-image-digest.outputs.image-digest }}"
+          version: ${{ inputs.package-version }}
+          # This is already done in Trivy vuln scan step
+          skip-setup: true
 
       - name: Image signing
         if: ${{ inputs.image-signing == true }}
