@@ -20,10 +20,6 @@ inputs:
     description: "Path to scan (required if scan-type is 'fs')"
     default: "."
     required: false
-  format:
-    description: "Output format ('github', 'cyclonedx', 'spdx', 'spdx-json')"
-    default: "github"
-    required: false
   upload-artifact:
     description: "Whether to automatically upload the SBOM as a GitHub artifact"
     default: "true"
@@ -61,10 +57,6 @@ runs:
         # Sanitize name: replace slashes, dots, and spaces with dashes
         SAFE_NAME=$(echo "${{ inputs.artifact-id }}" | tr '/. ' '-')
 
-        # Determine extension
-        EXT="json"
-        if [[ "${{ inputs.format }}" == "spdx" ]]; then EXT="spdx"; fi
-
         # Generate Version Suffix
         # Use provided version if available, otherwise fallback to Run ID/Attempt
         if [[ -n "${{ inputs.version }}" ]]; then
@@ -73,7 +65,7 @@ runs:
           VER_SUFFIX="${{ github.run_number }}-${{ github.run_attempt }}"
         fi
 
-        FILENAME="sbom-${SAFE_NAME}-${VER_SUFFIX}.${EXT}"
+        FILENAME="sbom-${SAFE_NAME}-${VER_SUFFIX}.json"
         echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
 
     - name: Run Trivy SBOM generation
@@ -84,7 +76,7 @@ runs:
         TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
       with:
         scan-type: ${{ inputs.scan-type }}
-        format: ${{ inputs.format }}
+        format: github
         # This is used if scan-type is 'image'
         image-ref: ${{ inputs.image-ref }}
         # This is used if scan-type is 'fs'
