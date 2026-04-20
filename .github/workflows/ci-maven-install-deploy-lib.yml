@@ -103,6 +103,9 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set version
+        env:
+          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
+          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
         run: |
           if [ "${{ inputs.package-version }}" != "" ]; then
             mvn versions:set -B -DnewVersion="${{ inputs.package-version }}"
