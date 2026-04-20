@@ -147,6 +147,9 @@ jobs:
           server-password: MAVEN_PASSWORD
 
       - name: Maven update version used in application.yaml
+        env:
+          MAVEN_USER: ${{ secrets.MAVEN_USER }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
         run: mvn versions:set -B -DnewVersion="$IMAGETAG"
 
       - name: Install pack

@@ -89,6 +89,9 @@ jobs:
           trivy-version: ${{ inputs.trivy-version }}
 
       - name: Set version
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           if [ "${{ inputs.package-version }}" != "" ]; then
             mvn versions:set -B -DnewVersion="${{ inputs.package-version }}"
