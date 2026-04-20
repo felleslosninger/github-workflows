@@ -14,7 +14,7 @@ on:
         required: false
         type: string
       sbom-path:
-        description: Target directory for SBOM generation
+        description: DEPRECATED - Target directory for SBOM generation
         default: ./target/
         required: false
         type: string
