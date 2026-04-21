@@ -131,7 +131,3 @@ jobs:
           library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
           library-severity: ${{ inputs.trivy-library-severity }}
           trivy-version: ${{ inputs.trivy-version }}
-
-      - uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # pin@v0.20.6
-        with:
-          path: ${{ inputs.sbom-path }}
