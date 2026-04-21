@@ -8,17 +8,23 @@ This GitHub Action generates and uploads a Software Bill of Materials (SBOM)
 using Trivy. It supports both container images and filesystem paths (e.g., for
 library repositories). By generating an SBOM, we create a formal,
 machine-readable inventory of all software components and dependencies used in
-our artifacts, which is essential for security auditing and compliance.
+our artifacts, which is essential for security auditing and compliance. The
+result is both added as an artifact, and uploaded to the GitHub Dependency
+Graph.
 
 By default, this action:
 
-- **Standardizes Naming:** Sanitizes the `artifact-id` (replacing `/`, `.`, and spaces with `-`) and constructs filenames following the pattern `sbom-name-version.json` (or `.spdx`).
-- **Handles Dynamic Versioning:** If no `version` is provided, it automatically falls back to the GitHub Run ID and Attempt (`run_number`-`run_attempt`) to ensure unique, traceable filenames.
+- **Standardizes naming:** Sanitizes the `artifact-id` (replacing `/`, `.`, and
+  spaces with `-`) and constructs filenames following the pattern
+  `sbom-name-version.json`
+- **Handles dynamic versioning:** If no `version` is provided, it automatically
+  falls back to the GitHub Run ID and Attempt (`run_number`-`run_attempt`)
 - **Integrates with Dependency Graph:** Hardcoded to the `github` format,
   allowing for native integration with the GitHub Enterprise Dependency Graph to
-  populate the dependency list for the repository.
-- **Optimizes Performance:** Supports skipping Trivy setup (`skip-setup`) if a vulnerability scan has already been performed in the same job, saving compute time and avoiding redundant database downloads.
-- **Enables Browser Viewing:** Utilizes `actions/upload-artifact@v7.0.1` with archiving disabled (`archive: false`), allowing developers to view the SBOM JSON or SPDX content directly in the GitHub Actions summary without downloading a zip file.
+  populate the dependency list for the repository
+- **Enables browser viewing:** Utilizes `actions/upload-artifact` with archiving
+  disabled (`archive: false`), allowing developers to view the SBOM JSON content
+  directly in the GitHub Actions summary without downloading a zip file
 
 ## Prerequisites
 
@@ -45,7 +51,7 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Generate SBOM for image
+      - name: Run Trivy SBOM generation
         uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@main
         with:
           artifact-id: my-application
@@ -60,10 +66,13 @@ jobs:
   library-release:
     runs-on: ubuntu-latest
     steps:
-      - name: Generate SBOM for library
+      - name: Run Trivy SBOM generation
         uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@main
         with:
           scan-type: fs
-          artifact-id: my-shared-library
+          artifact-id: my-maven-library
           version: v1.2.3
 ```
+
+Note that if Trivy scan composite action has been run before this step, you can
+skip the Trivy setup by adding `skip-setup: true`.
