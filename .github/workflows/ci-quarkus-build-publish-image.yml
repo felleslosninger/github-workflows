@@ -241,7 +241,7 @@ jobs:
         run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
 
       - name: Run Trivy SBOM generation
-        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@PF-2233-trivy-sbom-composite-action
+        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@main
         with:
           scan-type: image
           artifact-id: ${{ env.IMAGE-NAME }}

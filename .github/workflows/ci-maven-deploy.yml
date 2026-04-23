@@ -113,7 +113,7 @@ jobs:
           fi
 
       - name: Run Trivy SBOM generation
-        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@PF-2233-trivy-sbom-composite-action
+        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@main
         with:
           scan-type: fs
           artifact-id: ${{ github.event.repository.name }}
