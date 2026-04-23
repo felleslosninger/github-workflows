@@ -34,8 +34,10 @@ runs:
   steps:
     - name: Start Trivy SBOM generation
       shell: bash
+      env:
+        SCAN_TYPE: ${{ inputs.scan-type }}
       run: |
-        echo "### Trivy SBOM generation (${{ inputs.scan-type }})" >> "$GITHUB_STEP_SUMMARY"
+        echo "### Trivy SBOM generation ($SCAN_TYPE)" >> "$GITHUB_STEP_SUMMARY"
 
     - name: Write inputs to summary
       uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
@@ -44,8 +46,11 @@ runs:
 
     - name: Validate inputs
       shell: bash
+      env:
+        SCAN_TYPE: ${{ inputs.scan-type }}
+        IMAGE_REF: ${{ inputs.image-ref }}
       run: |
-        if [[ "${{ inputs.scan-type }}" == "image" && -z "${{ inputs.image-ref }}" ]]; then
+        if [[ "$SCAN_TYPE" == "image" && -z "$IMAGE_REF" ]]; then
           echo "::error::image-ref is required when scan-type is 'image'"
           exit 1
         fi
@@ -53,16 +58,20 @@ runs:
     - name: Prepare SBOM Metadata
       id: meta
       shell: bash
+      env:
+        ARTIFACT_ID: ${{ inputs.artifact-id }}
+        VERSION: ${{ inputs.version }}
+        RUN_NUMBER: ${{ github.run_number }}
+        RUN_ATTEMPT: ${{ github.run_attempt }}
       run: |
         # Sanitize name: replace slashes, dots, and spaces with dashes
-        SAFE_NAME=$(echo "${{ inputs.artifact-id }}" | tr '/. ' '-')
+        SAFE_NAME=$(echo "$ARTIFACT_ID" | tr '/. ' '-')
 
         # Generate Version Suffix
-        # Use provided version if available, otherwise fallback to Run ID/Attempt
-        if [[ -n "${{ inputs.version }}" ]]; then
-          VER_SUFFIX="${{ inputs.version }}"
+        if [[ -n "$VERSION" ]]; then
+          VER_SUFFIX="$VERSION"
         else
-          VER_SUFFIX="${{ github.run_number }}-${{ github.run_attempt }}"
+          VER_SUFFIX="${RUN_NUMBER}-${RUN_ATTEMPT}"
         fi
 
         FILENAME="sbom-${SAFE_NAME}-${VER_SUFFIX}.json"
