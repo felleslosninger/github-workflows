@@ -217,17 +217,6 @@ jobs:
           os-severity: ${{ inputs.trivy-os-severity }}
           trivy-version: ${{ inputs.trivy-version }}
 
-      - name: Create SBOM artifact-name
-        id: sbom-name
-        run: |
-          SBOM_NAME=$(echo ${{env.IMAGE-NAME}} | tr '/' '-')
-          echo "SBOM_ARTIFACT_ID=$SBOM_NAME" >> "$GITHUB_OUTPUT"
-
-      - uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # pin@v0.20.6
-        with:
-          image: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
-          artifact-name: sbom-${{steps.sbom-name.outputs.SBOM_ARTIFACT_ID}}-${{env.IMAGETAG}}.spdx
-
       - name: Login to ACR
         uses: azure/login@v2
         with:
@@ -250,6 +239,16 @@ jobs:
 
       - id: output-image-digest
         run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
+
+      - name: Run Trivy SBOM generation
+        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@main
+        with:
+          scan-type: image
+          artifact-id: ${{ env.IMAGE-NAME }}
+          image-ref: "${{ env.IMAGE-NAME }}@${{ env.IMAGE_DIGEST }}"
+          version: ${{ env.IMAGETAG }}
+          # This is already done in Trivy vuln scan step
+          skip-setup: true
 
       - name: Image signing
         if: ${{ inputs.image-signing == true }}
