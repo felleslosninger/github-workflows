@@ -54,11 +54,6 @@ on:
         default: "true"
         required: false
         type: string
-      setup-npm-auth:
-        description: Configure private NPM registry authentication
-        default: false
-        required: false
-        type: boolean
       application-type:
         default: "spring-boot"
         required: false
@@ -183,7 +178,6 @@ jobs:
       update-versions: ${{ inputs.update-versions }}
       container-registry: ${{ needs.input-checks.outputs.container-registry }}
       sp-container-registry-client-id: ${{ needs.input-checks.outputs.sp-container-registry-client-id }}
-      setup-npm-auth: ${{ inputs.setup-npm-auth }}
       module-name: ${{ inputs.module-name }}
       trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
       trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
