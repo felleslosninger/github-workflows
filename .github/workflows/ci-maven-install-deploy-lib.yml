@@ -175,7 +175,7 @@ jobs:
           echo "id=$ARTIFACT_ID" >> "$GITHUB_OUTPUT"
 
       - name: Run Trivy SBOM generation
-        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@main
+        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@PF-2233-trivy-sbom-composite-action
         with:
           scan-type: fs
           artifact-id: ${{ steps.sbom-meta.outputs.id }}
