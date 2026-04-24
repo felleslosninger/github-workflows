@@ -14,7 +14,7 @@ on:
         required: false
         type: string
       sbom-path:
-        description: DEPRECATED - Target directory for SBOM generation
+        description: Target directory for SBOM generation
         default: ./target/
         required: false
         type: string
@@ -141,12 +141,45 @@ jobs:
 
           $MAVEN_CMD
 
+      # This is a temporary step specifically for handling multi-module
+      # repositories with Trivy SBOM generation for Maven artifacts. We strip
+      # 'target' and slashes to sanitize the path for the new SBOM generation
+      # (Anchore previously used the 'sbom-path' directly, but this caused
+      # issues with Trivy scan and multi-module projects where the path included
+      # 'target' directories).
+      - name: Resolve SBOM Metadata
+        id: sbom-meta
+        env:
+          ARTIFACT_NAME: ${{ inputs.artifact-name }}
+          SBOM_PATH: ${{ inputs.sbom-path }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          APP_PATH: ${{ inputs.application-path }}
+        run: |
+          # Default to 'application-path' or root if 'sbom-path' is empty
+          RAW_PATH="${SBOM_PATH:-${APP_PATH:-.}}"
+          CLEAN_PATH=$(echo "$RAW_PATH" | sed 's/\/target$//' | sed 's/^\.\///' | sed 's/\/$//')
+
+          # Resolve the Artifact ID
+          if [ -n "$ARTIFACT_NAME" ]; then
+            # Use 'artifact-name' if provided
+            ARTIFACT_ID="$ARTIFACT_NAME"
+          elif [ "$CLEAN_PATH" != "." ] && [ -n "$CLEAN_PATH" ]; then
+            # If it's a multi-module path, use the folder name
+            ARTIFACT_ID="$CLEAN_PATH"
+          else
+            # Fallback to repository name
+            ARTIFACT_ID="$REPO_NAME"
+          fi
+
+          echo "path=${CLEAN_PATH:-.}" >> "$GITHUB_OUTPUT"
+          echo "id=$ARTIFACT_ID" >> "$GITHUB_OUTPUT"
+
       - name: Run Trivy SBOM generation
         uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@main
         with:
           scan-type: fs
-          artifact-id: ${{ github.event.repository.name }}
-          application-path: ${{ inputs.application-path }}
+          artifact-id: ${{ steps.sbom-meta.outputs.id }}
+          application-path: ${{ steps.sbom-meta.outputs.path }}
           version: ${{ inputs.package-version }}
           # This is already done in Trivy vuln scan step
           skip-setup: true
