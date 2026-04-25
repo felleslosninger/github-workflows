@@ -127,12 +127,17 @@ jobs:
       contents: write
 
     steps:
-      - name: Set imagetag as env variable
-        run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
+      - name: Set image metadata
+        id: image-metadata
+        uses: felleslosninger/github-workflows/.github/actions/image-metadata@main
+        with:
+          image-name: ${{ inputs.image-name }}
+          container-registry: ${{ inputs.container-registry }}
 
-      - name: Set IMAGE-NAME env variable
+      - name: Set image env variables
         run: |
-          echo "IMAGE-NAME=${{ inputs.container-registry }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
+          echo "IMAGETAG=${{ steps.image-metadata.outputs.image-tag }}" >> "$GITHUB_ENV"
+          echo "IMAGE-NAME=${{ steps.image-metadata.outputs.image-name }}" >> "$GITHUB_ENV"
 
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6.0.2

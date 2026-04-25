@@ -135,17 +135,18 @@ jobs:
         run: |
           mvn -B clean package -DskipTests -pl integrasjonspunkt -am
 
-      - name: Set image name
-        id: set-image-name
-        run: |
-          image_name=${{ inputs.registry-url }}/${{ inputs.image-name || github.event.repository.name }}
-          echo "image-name=$image_name" >> "$GITHUB_OUTPUT"
-          echo "- Image name: $image_name" >> "$GITHUB_STEP_SUMMARY"
+      - name: Set image metadata
+        id: image-metadata
+        uses: felleslosninger/github-workflows/.github/actions/image-metadata@main
+        with:
+          image-name: ${{ inputs.image-name }}
+          registry-url: ${{ inputs.registry-url }}
+          package-version: ${{ inputs.package-version }}
 
       - name: Build image
         run: |
           docker build \
-            --tag ${{ steps.set-image-name.outputs.image-name }}:${{ inputs.package-version }} \
+            --tag ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }} \
             --file ${{ inputs.application-path }}/docker/Dockerfile \
             --build-arg GIT_PACKAGE_TOKEN=${{ secrets.GH_PACKAGES_READ_PAT }} \
             --build-arg GIT_PACKAGE_USERNAME=${{ secrets.GH_PACKAGES_READ_USER }} \
@@ -154,7 +155,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
-          image-ref: ${{ steps.set-image-name.outputs.image-name }}:${{ inputs.package-version }}
+          image-ref: ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}
           application-path: ${{ inputs.application-path }}
           library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
           library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
@@ -173,13 +174,13 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Push image"
-        run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ inputs.package-version }}
+        run: docker push ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}
 
       - name: Set image digest
         id: set-image-digest
         run: |
           image_digest=$(docker inspect \
-            --format='{{.RepoDigests}}' ${{ steps.set-image-name.outputs.image-name }}:${{ inputs.package-version }} \
+            --format='{{.RepoDigests}}' ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }} \
             | cut -d '@' -f 2 \
             | cut -d ']' -f 1)
           echo "image-digest=$image_digest" >> "$GITHUB_OUTPUT"
@@ -199,7 +200,7 @@ jobs:
         if: ${{ inputs.image-signing == true }}
         uses: felleslosninger/github-workflows/.github/actions/image-signing@main
         with:
-          image: ${{ steps.set-image-name.outputs.image-name }}:${{ inputs.package-version }}
+          image: ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}
 
   notify-on-errors:
     runs-on: ubuntu-latest
