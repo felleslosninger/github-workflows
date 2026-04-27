@@ -190,8 +190,8 @@ jobs:
         uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@main
         with:
           scan-type: image
-          artifact-id: ${{ steps.set-image-name.outputs.image-name }}
-          image-ref: "${{ steps.set-image-name.outputs.image-name }}@${{ steps.set-image-digest.outputs.image-digest }}"
+          artifact-id: ${{ steps.image-metadata.outputs.image-name }}
+          image-ref: "${{ steps.image-metadata.outputs.image-name }}@${{ steps.set-image-digest.outputs.image-digest }}"
           version: ${{ inputs.package-version }}
           # This is already done in Trivy vuln scan step
           skip-setup: true
