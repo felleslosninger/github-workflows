@@ -152,5 +152,4 @@ runs:
         fi
 
         echo "image-tag=$image_tag" >> "$GITHUB_OUTPUT"
-        echo "- Image tag: \`$image_tag\` (Source: $tag_source)" >>
-        "$GITHUB_STEP_SUMMARY"
+        echo "- Image tag: \`$image_tag\` (Source: $tag_source)" >> "$GITHUB_STEP_SUMMARY"
