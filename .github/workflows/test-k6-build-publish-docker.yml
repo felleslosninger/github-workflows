@@ -94,7 +94,7 @@ jobs:
     steps:
       - name: Set image metadata
         id: image-metadata
-        uses: felleslosninger/github-workflows/.github/actions/image-metadata@main
+        uses: felleslosninger/github-workflows/.github/actions/image-metadata@PF-2305-image-metadata-composite-action
         with:
           image-name: ${{ inputs.image-name }}
           registry-url: ${{ secrets.REGISTRY_URL }}
