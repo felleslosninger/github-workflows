@@ -125,6 +125,7 @@ jobs:
 
   build-publish-image:
     runs-on: ubuntu-latest
+
     outputs:
       image-tag: ${{ steps.image-metadata.outputs.image-tag }}
       image-digest: ${{ steps.set-image-digest.outputs.image-digest }}
