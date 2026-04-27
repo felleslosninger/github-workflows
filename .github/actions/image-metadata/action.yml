@@ -55,6 +55,11 @@ runs:
       shell: bash
       run: echo "### Image metadata" >> "$GITHUB_STEP_SUMMARY"
 
+    - name: Write inputs to summary
+      uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
+      with:
+        json-payload: ${{ toJson(inputs) }}
+
     - name: Determine image name
       id: get-name
       shell: bash
