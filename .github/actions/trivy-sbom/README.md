@@ -39,7 +39,7 @@ None
 | `image-ref` | Image reference to scan (required if `scan-type` is `image`) | false | `""` |
 | `version` | The version or tag of the artifact (falls back to run info if empty) | false | `""` |
 | `application-path` | Path to scan (required if `scan-type` is `fs`) | false | `.` |
-| `upload-artifact` | Whether to automatically upload the SBOM as a GitHub artifact | false | `true` |
+| `upload-artifact` | Whether to automatically upload the SBOM as a GitHub artifact. This is not exposed in any of our common workflows, but acts as a way to quickly turn this off if we need to | false | `true` |
 | `skip-setup` | Skip Trivy setup if it has already been run in a previous step | false | `false` |
 
 ## Example usage
