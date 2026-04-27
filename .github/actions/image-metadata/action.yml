@@ -43,87 +43,109 @@ inputs:
 outputs:
   image-name:
     description: The fully qualified image name
-    value: ${{ steps.image-metadata.outputs.image-name }}
+    value: ${{ steps.get-name.outputs.image-name }}
   image-tag:
     description: The image tag
-    value: ${{ steps.image-metadata.outputs.image-tag }}
+    value: ${{ steps.get-tag.outputs.image-tag }}
 
 runs:
   using: composite
   steps:
-    - name: Start image metadata
+    - name: Start image metadata summary
       shell: bash
-      run: |
-        echo "### Image metadata" >> "$GITHUB_STEP_SUMMARY"
+      run: echo "### Image metadata" >> "$GITHUB_STEP_SUMMARY"
 
     - name: Determine image name
+      id: get-name
       shell: bash
       env:
-        REPOSITORY_NAME: ${{ env.REPOSITORY_NAME }}
+        CONTAINER_REGISTRY: ${{ inputs.container-registry }}
+        REGISTRY_URL: ${{ inputs.registry-url }}
+        IMAGE_NAME: ${{ inputs.image-name }}
+        REPOSITORY_NAME: ${{ github.event.repository.name }}
+        REPOSITORY_OWNER: ${{ github.repository_owner }}
       run: |
-        registry="${{ inputs.container-registry }}"
-        if [ -z "$registry" ]; then
-          registry="${{ inputs.registry-url }}"
-        fi
+        set -euo pipefail
+
+        registry="${CONTAINER_REGISTRY:-$REGISTRY_URL}"
 
         if [ -z "$registry" ]; then
           echo "::error:: Missing container-registry or registry-url input."
-          echo "> [!WARNING]"
-          echo "> **Input validation failed:** You must provide either container-registry or registry-url." >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "> [!WARNING]"
+            echo "> **Input validation failed:** You must provide either container-registry or registry-url."
+          } >> "$GITHUB_STEP_SUMMARY"
           exit 1
         fi
 
-        image_name="${{ inputs.image-name }}"
-        if [ -z "$image_name" ]; then
-          if [ -n "$REPOSITORY_NAME" ]; then
-            image_name="$REPOSITORY_NAME"
-          else
-            image_name="${{ github.event.repository.name }}"
-          fi
-        fi
+        image_name="${IMAGE_NAME:-$REPOSITORY_NAME}"
 
         if [ "$registry" = "ghcr.io" ]; then
-          image_name="$registry/${{ github.repository_owner }}/$image_name"
+          image_name="$registry/$REPOSITORY_OWNER/$image_name"
         else
           image_name="$registry/$image_name"
         fi
 
         echo "image-name=$image_name" >> "$GITHUB_OUTPUT"
-        echo "- Image name: $image_name" >> "$GITHUB_STEP_SUMMARY"
+        echo "- Image name: \`$image_name\`" >> "$GITHUB_STEP_SUMMARY"
 
     - name: Determine image tag
+      id: get-tag
       shell: bash
+      env:
+        IMAGE_TAG: ${{ inputs.image-tag }}
+        PACKAGE_VERSION: ${{ inputs.package-version }}
+        VERSION: ${{ inputs.version }}
+        VERSION_POM_PATH: ${{ inputs.version-pom-path }}
+        STRIP_SNAPSHOT: ${{ inputs.strip-snapshot }}
+        AUTO_GENERATE_TAG: ${{ inputs.auto-generate-tag }}
       run: |
-        if [ -n "${{ inputs.image-tag }}" ]; then
-          image_tag="${{ inputs.image-tag }}"
-          echo "- Using custom image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
-        elif [ -n "${{ inputs.package-version }}" ]; then
-          image_tag="${{ inputs.package-version }}"
-          echo "- Using package version as image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
-        elif [ -n "${{ inputs.version }}" ]; then
-          image_tag="${{ inputs.version }}"
-          echo "- Using provided version as image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
-        elif [ -n "${{ inputs.version-pom-path }}" ]; then
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout -f "${{ inputs.version-pom-path }}" 2>/dev/null || true)
-          if [ -n "$VERSION" ] && [ "$VERSION" != "null" ]; then
-            image_tag="$VERSION"
-            if [[ "${{ inputs.strip-snapshot }}" == "true" ]] && ([[ "$GITHUB_REF" == "refs/heads/main" ]] || [[ "$GITHUB_REF" =~ ^refs/tags/ ]]); then
+        set -euo pipefail
+
+        auto_tag="$(TZ=UTC date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}"
+        tag_source=""
+
+        if [ -n "$IMAGE_TAG" ]; then
+          image_tag="$IMAGE_TAG"
+          tag_source="custom image tag"
+
+        elif [ -n "$PACKAGE_VERSION" ]; then
+          image_tag="$PACKAGE_VERSION"
+          tag_source="package version"
+
+        elif [ -n "$VERSION" ]; then
+          image_tag="$VERSION"
+          tag_source="provided version"
+
+        elif [ -n "$VERSION_POM_PATH" ]; then
+          set +e
+          pom_version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout -f "$VERSION_POM_PATH" 2>/dev/null)
+          set -e
+
+          if [ -n "$pom_version" ] && [ "$pom_version" != "null" ]; then
+            image_tag="$pom_version"
+            if [[ "$STRIP_SNAPSHOT" == "true" ]] && ([[ "$GITHUB_REF" == "refs/heads/main" ]] || [[ "$GITHUB_REF" == refs/tags/* ]]); then
               image_tag="${image_tag/-SNAPSHOT/}"
             fi
-            echo "- Using Maven version as image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
+            tag_source="Maven version"
           else
-            image_tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}
-            echo "- Fallback auto-generated image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
+            image_tag="$auto_tag"
+            tag_source="fallback auto-generated tag"
           fi
-        elif [[ "${{ inputs.auto-generate-tag }}" == "true" ]]; then
-          image_tag=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}
-          echo "- Auto-generated image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
+
+        elif [[ "$AUTO_GENERATE_TAG" == "true" ]]; then
+          image_tag="$auto_tag"
+          tag_source="auto-generated tag"
+
         else
           echo "::error:: No image tag available. Provide image-tag, package-version, version, or allow auto-generate-tag."
-          echo "> [!WARNING]"
-          echo "> **Input validation failed:** No image tag was provided and auto-generate-tag is disabled." >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "> [!WARNING]"
+            echo "> **Input validation failed:** No image tag was provided and auto-generate-tag is disabled."
+          } >> "$GITHUB_STEP_SUMMARY"
           exit 1
         fi
 
         echo "image-tag=$image_tag" >> "$GITHUB_OUTPUT"
-        echo "- Image tag: $image_tag" >> "$GITHUB_STEP_SUMMARY"
+        echo "- Image tag: \`$image_tag\` (Source: $tag_source)" >>
+        "$GITHUB_STEP_SUMMARY"
