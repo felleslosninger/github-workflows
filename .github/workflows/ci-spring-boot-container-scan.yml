@@ -21,7 +21,7 @@ on:
         type: string
       registry-url:
         description: Image/Container Registery URL
-        default: "my-local-registery"
+        default: "my-local-registry"
         required: false
         type: string
       java-version:
