@@ -134,11 +134,6 @@ jobs:
           image-name: ${{ inputs.image-name }}
           container-registry: ${{ inputs.container-registry }}
 
-      - name: Set image env variables
-        run: |
-          echo "IMAGETAG=${{ steps.image-metadata.outputs.image-tag }}" >> "$GITHUB_ENV"
-          echo "IMAGE-NAME=${{ steps.image-metadata.outputs.image-name }}" >> "$GITHUB_ENV"
-
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6.0.2
 
@@ -157,7 +152,7 @@ jobs:
         env:
           MAVEN_USER: ${{ secrets.MAVEN_USER }}
           MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
-        run: mvn versions:set -B -DnewVersion="$IMAGETAG"
+        run: mvn versions:set -B -DnewVersion="${{ steps.image-metadata.outputs.image-tag }}"
 
       - name: Install pack
         run: |
