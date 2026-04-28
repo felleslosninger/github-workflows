@@ -1,0 +1,133 @@
+name: Trivy SBOM generation
+description: Composite action for Trivy SBOM generation
+author: Digdir Platform Team
+
+inputs:
+  scan-type:
+    description: "Type of scan to run ('image' or 'fs')"
+    default: "image"
+    required: false
+  artifact-id:
+    description: "Unique ID for the artifact (e.g., the app name)"
+    required: true
+  image-ref:
+    description: "Image reference to scan (required if scan-type is 'image')"
+    required: false
+  version:
+    description: "The version or tag of the artifact"
+    required: false
+  application-path:
+    description: "Path to scan (required if scan-type is 'fs')"
+    default: "."
+    required: false
+  upload-artifact:
+    description: "Whether to automatically upload the SBOM as a GitHub artifact"
+    default: "true"
+    required: false
+  skip-setup:
+    description: "Skip Trivy setup if it has already been run in a previous step"
+    default: "false"
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Start Trivy SBOM generation
+      shell: bash
+      env:
+        SCAN_TYPE: ${{ inputs.scan-type }}
+      run: |
+        echo "### Trivy SBOM generation ($SCAN_TYPE)" >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Write inputs to summary
+      uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
+      with:
+        json-payload: ${{ toJson(inputs) }}
+
+    - name: Validate inputs
+      shell: bash
+      env:
+        SCAN_TYPE: ${{ inputs.scan-type }}
+        IMAGE_REF: ${{ inputs.image-ref }}
+      run: |
+        if [[ "$SCAN_TYPE" == "image" && -z "$IMAGE_REF" ]]; then
+          echo "::error::image-ref is required when scan-type is 'image'"
+          exit 1
+        fi
+
+    - name: Prepare SBOM Metadata
+      id: meta
+      shell: bash
+      env:
+        ARTIFACT_ID: ${{ inputs.artifact-id }}
+        VERSION: ${{ inputs.version }}
+        RUN_NUMBER: ${{ github.run_number }}
+        RUN_ATTEMPT: ${{ github.run_attempt }}
+      run: |
+        # Sanitize name: replace slashes, dots, and spaces with dashes
+        SAFE_NAME=$(echo "$ARTIFACT_ID" | tr '/. ' '-')
+
+        # Generate Version Suffix
+        if [[ -n "$VERSION" ]]; then
+          VER_SUFFIX="$VERSION"
+        else
+          VER_SUFFIX="${RUN_NUMBER}-${RUN_ATTEMPT}"
+        fi
+
+        FILENAME="sbom-${SAFE_NAME}-${VER_SUFFIX}.json"
+        echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
+
+    - name: Run Trivy SBOM generation
+      id: trivy-gen
+      uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+      env:
+        TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
+        TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+      with:
+        scan-type: ${{ inputs.scan-type }}
+        format: github
+        # This is used if scan-type is 'image'
+        image-ref: ${{ inputs.image-ref }}
+        # This is used if scan-type is 'fs'
+        scan-ref: ${{ inputs.application-path }}
+        hide-progress: true
+        output: ${{ steps.meta.outputs.filename }}
+        github-pat: ${{ github.token }}
+        skip-setup-trivy: ${{ inputs.skip-setup }}
+
+    - name: Publish Trivy status to summary
+      if: always()
+      shell: bash
+      env:
+        OUTCOME: ${{ steps.trivy-gen.outcome }}
+        FILENAME: ${{ steps.meta.outputs.filename }}
+      run: |
+        if [[ "$OUTCOME" == "success" ]]; then
+          echo "> [!NOTE]"
+          echo "> **SBOM generated:** \`$FILENAME\`"
+        else
+          echo "> [!WARNING]"
+          echo "> **SBOM generation failed:** Check the Trivy logs for details."
+        fi >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Upload SBOM artifact
+      if: ${{ inputs.upload-artifact == 'true' && steps.trivy-gen.outcome == 'success' }}
+      id: upload
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: ${{ steps.meta.outputs.filename }}
+        path: ${{ steps.meta.outputs.filename }}
+        archive: false
+        retention-days: 14
+
+    - name: Publish upload status to summary
+      if: ${{ always() && inputs.upload-artifact == 'true' }}
+      shell: bash
+      env:
+        OUTCOME: ${{ steps.upload.outcome }}
+      run: |
+        if [[ "$OUTCOME" == "success" ]]; then
+          echo "- :white_check_mark: Artifact successfully uploaded to GitHub."
+        else
+          echo "- :x: Artifact upload failed or was skipped due to generation error."
+        fi >> "$GITHUB_STEP_SUMMARY"

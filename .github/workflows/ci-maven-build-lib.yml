@@ -14,15 +14,10 @@ on:
         required: false
         type: string
       sbom-path:
-        description: Target directory for SBOM generation
+        description: DEPRECATED - Target directory for SBOM generation
         default: ./target/
         required: false
         type: string
-      setup-npm-auth:
-        description: Configure private NPM registry authentication
-        default: false
-        required: false
-        type: boolean
       cache-path:
         default: "**/pom.xml"
         required: false
@@ -120,16 +115,6 @@ jobs:
           server-username: GH_PACKAGES_READ_USER
           server-password: GH_PACKAGES_READ_PAT
 
-      - name: Configure private NPM registry authentication
-        if: ${{ inputs.setup-npm-auth == true }}
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # pin@v5.0.0
-        with:
-          node-version: '20.x'
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@felleslosninger'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Build with Maven
         env:
           GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
@@ -146,7 +131,3 @@ jobs:
           library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
           library-severity: ${{ inputs.trivy-library-severity }}
           trivy-version: ${{ inputs.trivy-version }}
-
-      - uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # pin@v0.20.6
-        with:
-          path: ${{ inputs.sbom-path }}
