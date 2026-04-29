@@ -86,6 +86,11 @@ on:
         default: "./"
         required: false
         type: string
+      module-name:
+        description: 'Name of the module to build and scan (for multi-module projects)'
+        type: string
+        required: false
+        default: ''
       trivy-library-disable-scan:
         description: Disable Trivy library scan
         type: boolean
@@ -208,6 +213,7 @@ jobs:
       image-pack-tag: ${{ inputs.image-pack-tag }}
       java-version: ${{ inputs.java-version }}
       application-path: ${{ inputs.application-path }}
+      module-name: ${{ inputs.module-name }}
       trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
       trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
       trivy-library-severity: ${{ inputs.trivy-library-severity }}
