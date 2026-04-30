@@ -11,6 +11,8 @@ env:
 jobs:
   append-internal-commit-string-to-title:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     if: github.event.label.name == 'internal'
     steps:
       - name: Append ${{ env.internal-commit-string }} to PR title
