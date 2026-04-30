@@ -1,5 +1,7 @@
 name: dev.docker build and release to crutvikling (Azure container registry)
 
+permissions: {}
+
 on:
   workflow_call:
     inputs:
