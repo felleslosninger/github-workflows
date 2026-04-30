@@ -1,5 +1,7 @@
 name: On PR label
 
+permissions: {}
+
 on:
   workflow_call:
 
