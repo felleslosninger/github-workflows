@@ -198,6 +198,9 @@ jobs:
     needs: input-checks
     if: inputs.application-type == 'quarkus'
     uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-build-publish-image.yml@main
+    permissions:
+      contents: write
+      id-token: write
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
