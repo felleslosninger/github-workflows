@@ -226,6 +226,9 @@ jobs:
     needs: input-checks
     if: inputs.application-type == 'docker'
     uses: felleslosninger/github-workflows/.github/workflows/ci-docker-build-publish-image.yml@main
+    permissions:
+      contents: write
+      id-token: write
     with:
       image-name: ${{ inputs.image-name }}
       image-signing: ${{ inputs.image-signing }}
