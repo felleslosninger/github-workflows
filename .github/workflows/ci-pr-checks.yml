@@ -262,6 +262,11 @@ jobs:
         call-quarkus-container-scan,
       ]
     uses: felleslosninger/github-workflows/.github/workflows/misc-approve-and-merge-dependabot-pr.yml@main
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      repository-projects: read
     with:
       update-types: ${{ inputs.auto-merge-types }}
     secrets: inherit
