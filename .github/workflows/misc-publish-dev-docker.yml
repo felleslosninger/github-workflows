@@ -1,5 +1,7 @@
 name: dev.docker build and release to crutvikling (Azure container registry)
 
+permissions: {}
+
 on:
   workflow_call:
     inputs:
@@ -12,6 +14,8 @@ on:
 jobs:
   docker-build-publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       REPOSITORY-NAME: ${{ github.event.repository.name }}
     steps:
