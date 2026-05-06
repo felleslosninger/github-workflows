@@ -163,8 +163,8 @@ jobs:
       inputs.application-type == 'spring-boot' ||
       inputs.application-type == 'quarkus'
     runs-on: ubuntu-latest
-    # permissions:
-    #   contents: read
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
@@ -212,6 +212,8 @@ jobs:
       inputs.enable-trivy-image-scan == true &&
       inputs.application-type == 'spring-boot'
     uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@PF-2365-pr-checks-permissions
+    permissions:
+      contents: read
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
