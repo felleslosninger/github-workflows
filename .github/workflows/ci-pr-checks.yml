@@ -271,9 +271,7 @@ jobs:
     uses: felleslosninger/github-workflows/.github/workflows/misc-approve-and-merge-dependabot-pr.yml@PF-2365-pr-checks-permissions
     permissions:
       contents: write
-    #   issues: write
-    #   pull-requests: write
-    #   repository-projects: read
+      pull-requests: write
     with:
       update-types: ${{ inputs.auto-merge-types }}
     secrets: inherit

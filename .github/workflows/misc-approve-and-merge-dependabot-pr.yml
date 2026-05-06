@@ -22,10 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-  #   pull-requests: write
-  #   contents: write
-  #   issues: write
-  #   repository-projects: read
+      pull-requests: write
     outputs:
       merged: ${{ steps.write-summary.outputs.merged }}
 
