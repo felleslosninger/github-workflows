@@ -236,6 +236,8 @@ jobs:
       inputs.enable-trivy-image-scan == true &&
       inputs.application-type == 'quarkus'
     uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@PF-2365-pr-checks-permissions
+    permissions:
+      contents: read
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
