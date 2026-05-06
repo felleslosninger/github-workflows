@@ -269,8 +269,8 @@ jobs:
         call-quarkus-container-scan,
       ]
     uses: felleslosninger/github-workflows/.github/workflows/misc-approve-and-merge-dependabot-pr.yml@PF-2365-pr-checks-permissions
-    # permissions:
-    #   contents: write
+    permissions:
+      contents: write
     #   issues: write
     #   pull-requests: write
     #   repository-projects: read
