@@ -163,8 +163,8 @@ jobs:
       inputs.application-type == 'spring-boot' ||
       inputs.application-type == 'quarkus'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    # permissions:
+    #   contents: read
 
     steps:
       - name: Checkout
@@ -211,7 +211,7 @@ jobs:
     if: |
       inputs.enable-trivy-image-scan == true &&
       inputs.application-type == 'spring-boot'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@PF-2365-pr-checks-permissions
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
@@ -233,7 +233,7 @@ jobs:
     if: |
       inputs.enable-trivy-image-scan == true &&
       inputs.application-type == 'quarkus'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@PF-2365-pr-checks-permissions
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
@@ -264,12 +264,12 @@ jobs:
         call-spring-boot-container-scan,
         call-quarkus-container-scan,
       ]
-    uses: felleslosninger/github-workflows/.github/workflows/misc-approve-and-merge-dependabot-pr.yml@main
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-      repository-projects: read
+    uses: felleslosninger/github-workflows/.github/workflows/misc-approve-and-merge-dependabot-pr.yml@PF-2365-pr-checks-permissions
+    # permissions:
+    #   contents: write
+    #   issues: write
+    #   pull-requests: write
+    #   repository-projects: read
     with:
       update-types: ${{ inputs.auto-merge-types }}
     secrets: inherit

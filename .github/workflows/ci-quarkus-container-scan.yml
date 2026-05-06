@@ -1,5 +1,7 @@
 name: Container scan
 
+permissions: {}
+
 on:
   workflow_call:
     inputs:
