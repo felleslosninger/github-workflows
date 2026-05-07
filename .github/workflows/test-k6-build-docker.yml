@@ -1,5 +1,7 @@
 name: Build k6-docker
 
+permissions: {}
+
 on:
   workflow_call:
     inputs:
@@ -65,6 +67,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       REPOSITORY-NAME: ${{ github.event.repository.name }}
       REGISTRY_URL: my-local-registry

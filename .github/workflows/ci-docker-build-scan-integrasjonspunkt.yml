@@ -1,5 +1,7 @@
 name: Build and scan Docker image
 
+permissions: {}
+
 on:
   workflow_call:
     inputs:
@@ -103,9 +105,7 @@ jobs:
       image-tag: ${{ steps.set-image-tag.outputs.image-tag }}
 
     permissions:
-      id-token: write
-      contents: write
-      packages: write
+      contents: read
 
     steps:
       - name: Checkout repository
