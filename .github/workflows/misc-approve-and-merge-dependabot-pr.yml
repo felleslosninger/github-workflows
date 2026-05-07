@@ -1,6 +1,8 @@
 ---
 name: Dependabot Approve and Merge
 
+permissions: {}
+
 on:
   workflow_call:
     inputs:
@@ -13,16 +15,14 @@ on:
       merged:
         value: ${{ jobs.dependabot.outputs.merged }}
 
-permissions:
-  pull-requests: write
-  contents: write
-  issues: write
-  repository-projects: read
 
 jobs:
   dependabot:
     name: Auto approve
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     outputs:
       merged: ${{ steps.write-summary.outputs.merged }}
 

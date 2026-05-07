@@ -5,6 +5,8 @@
 
 name: PR Checks
 
+permissions: {}
+
 on:
   workflow_call:
     inputs:
@@ -161,6 +163,9 @@ jobs:
       inputs.application-type == 'spring-boot' ||
       inputs.application-type == 'quarkus'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # pin@v5.0.0
@@ -207,6 +212,8 @@ jobs:
       inputs.enable-trivy-image-scan == true &&
       inputs.application-type == 'spring-boot'
     uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@main
+    permissions:
+      contents: read
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
@@ -229,6 +236,8 @@ jobs:
       inputs.enable-trivy-image-scan == true &&
       inputs.application-type == 'quarkus'
     uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@main
+    permissions:
+      contents: read
     with:
       image-name: ${{ inputs.image-name }}
       image-pack: ${{ inputs.image-pack }}
@@ -260,6 +269,9 @@ jobs:
         call-quarkus-container-scan,
       ]
     uses: felleslosninger/github-workflows/.github/workflows/misc-approve-and-merge-dependabot-pr.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
     with:
       update-types: ${{ inputs.auto-merge-types }}
     secrets: inherit

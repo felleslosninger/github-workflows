@@ -1,5 +1,7 @@
 name: Container scan
 
+permissions: {}
+
 on:
   workflow_call:
     inputs:
@@ -84,6 +86,8 @@ on:
 jobs:
   build-and-scan-image:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       REPOSITORY-NAME: ${{ github.event.repository.name }}
       DOCKLE_HOST: "unix:///var/run/docker.sock"
