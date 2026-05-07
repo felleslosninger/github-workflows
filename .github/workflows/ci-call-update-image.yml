@@ -1,6 +1,8 @@
 # This GitHub Action calls workflow to update Docker image
 name: Call Update Image
 
+permissions: {}
+
 on:
   workflow_call:
     inputs:
@@ -56,6 +58,10 @@ jobs:
 
   prepare-payload:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: read
 
     env:
       jira-id: ""
