@@ -1,5 +1,7 @@
 name: Build/publish Docker image
 
+permissions: {}
+
 on:
   workflow_call:
     inputs:
