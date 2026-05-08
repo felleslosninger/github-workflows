@@ -1,5 +1,7 @@
 name: Build, scan and publish Docker image
 
+permissions: {}
+
 on:
   workflow_call:
     inputs:
@@ -113,9 +115,9 @@ jobs:
       image-digest: ${{ steps.set-image-digest.outputs.image-digest }}
 
     permissions:
-      id-token: write
-      contents: write
+      contents: read
       packages: write
+      id-token: write
 
     steps:
       - name: Checkout repository

@@ -1,5 +1,7 @@
 name: Build/publish Docker image
 
+permissions: {}
+
 on:
   workflow_call:
     inputs:
@@ -86,8 +88,8 @@ jobs:
       imagedigest: ${{ steps.output-image-digest.outputs.imagedigest }}
 
     permissions:
+      contents: read
       id-token: write
-      contents: write
 
     steps:
       - name: Set imagetag as env variable
