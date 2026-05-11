@@ -138,7 +138,7 @@ jobs:
     steps:
       - name: Check PR title
         id: check-pr-title
-        uses: felleslosninger/github-actions/validate-pull-request-title@e4ba7c675762d5e9d3eeb48d6b75042e3dd325d3 # pin@v0.7.5
+        uses: felleslosninger/github-actions/validate-pull-request-title@EUW-1427-2
         with:
           pull-request-title: ${{ inputs.pull-request-title }}
           allowed-prefixes: ${{ inputs.pull-request-allowed-prefixes }}
