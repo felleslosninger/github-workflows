@@ -117,7 +117,7 @@ jobs:
           echo "- Image name: $image_name" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # pin@v5.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6.0.2
 
       - name: Build image
         run: |
@@ -141,17 +141,13 @@ jobs:
           os-exit-code: "1"
           trivy-version: ${{ inputs.trivy-version }}
 
-      - name: Login to ACR
-        uses: azure/login@v2
+      - name: ACR login
+        uses: felleslosninger/github-workflows/.github/actions/acr-login@main
         with:
           client-id: ${{ secrets[inputs.sp-container-registry-client-id] }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Login to Azure Container Registry
-        run: az acr login --name "$ACR_NAME"
-        env:
-          ACR_NAME: ${{ inputs.container-registry }}
+          acr-name: ${{ inputs.container-registry }}
 
       - name: "Push image"
         run: docker push ${{ steps.set-image-name.outputs.image-name }}:${{ steps.set-image-tag.outputs.image-tag }}
@@ -191,7 +187,7 @@ jobs:
         slack-channel: ["${{ inputs.slack-channel-id }}", "C05G4B8R2GG"]
     steps:
       - name: Send Slack notification
-        uses: felleslosninger/github-actions/send-slack-notification@e4ba7c675762d5e9d3eeb48d6b75042e3dd325d3 # pin@v0.7.5
+        uses: felleslosninger/github-actions/send-slack-notification@d7888fecafbf48e5845c8a0c76389f71c517ee6d # pin@v0.8.0
         with:
           slack-channel-id: ${{ matrix.slack-channel }}
           slack-bot-token: ${{ secrets.SLACK_CICD_NOTIFICATION_TOKEN }}
