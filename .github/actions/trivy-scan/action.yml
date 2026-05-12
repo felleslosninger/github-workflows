@@ -140,7 +140,7 @@ runs:
 
     - name: Run Trivy vulnerability library scan
       if: ${{ inputs.library-disable-scan != 'true' }}
-      uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # pin@v0.35.0
+      uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # pin@v0.36.0
       id: trivy-library
       env:
         TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
@@ -197,7 +197,7 @@ runs:
 
     - name: Run Trivy vulnerability OS scan
       if: ${{ inputs.os-disable-scan != 'true' && inputs.scan-type == 'image'}}
-      uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # pin@v0.35.0
+      uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # pin@v0.36.0
       id: trivy-os
       env:
         TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
