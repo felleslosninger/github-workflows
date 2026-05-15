@@ -80,7 +80,7 @@ jobs:
           server-password: GITHUB_TOKEN
 
       - name: Run Trivy vulnerability scanner
-        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@PF-2384-node24-upgrade
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
           scan-type: "fs"
           application-path: ${{ inputs.application-path }}
@@ -114,7 +114,7 @@ jobs:
           fi
 
       - name: Run Trivy SBOM generation
-        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@PF-2384-node24-upgrade
+        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@main
         with:
           scan-type: fs
           artifact-id: ${{ github.event.repository.name }}

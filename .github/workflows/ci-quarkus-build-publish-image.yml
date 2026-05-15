@@ -208,7 +208,7 @@ jobs:
             --creation-time now
 
       - name: Run Trivy vulnerability scanner
-        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@PF-2384-node24-upgrade
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
           image-ref: ${{ env.IMAGE-NAME }}:${{ env.IMAGETAG }}
           library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
@@ -220,7 +220,7 @@ jobs:
           trivy-version: ${{ inputs.trivy-version }}
 
       - name: ACR login
-        uses: felleslosninger/github-workflows/.github/actions/acr-login@PF-2384-node24-upgrade
+        uses: felleslosninger/github-workflows/.github/actions/acr-login@main
         with:
           client-id: ${{ secrets[inputs.sp-container-registry-client-id] }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -239,7 +239,7 @@ jobs:
         run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
 
       - name: Run Trivy SBOM generation
-        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@PF-2384-node24-upgrade
+        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@main
         with:
           scan-type: image
           artifact-id: ${{ env.IMAGE-NAME }}

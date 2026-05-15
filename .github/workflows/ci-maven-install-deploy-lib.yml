@@ -116,7 +116,7 @@ jobs:
           fi
 
       - name: Run Trivy vulnerability scanner
-        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@PF-2384-node24-upgrade
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
           scan-type: "fs"
           application-path: ${{ inputs.application-path }}
@@ -179,7 +179,7 @@ jobs:
           echo "id=$ARTIFACT_ID" >> "$GITHUB_OUTPUT"
 
       - name: Run Trivy SBOM generation
-        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@PF-2384-node24-upgrade
+        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@main
         with:
           scan-type: fs
           artifact-id: ${{ steps.sbom-meta.outputs.id }}
