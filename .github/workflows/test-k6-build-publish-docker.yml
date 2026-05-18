@@ -97,7 +97,7 @@ jobs:
         uses: felleslosninger/github-workflows/.github/actions/image-metadata@PF-2305-image-metadata-composite-action
         with:
           image-name: ${{ inputs.image-name }}
-          registry-url: ${{ secrets.REGISTRY_URL }}
+          container-registry: ${{ secrets.REGISTRY_URL }}
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6.0.2
 

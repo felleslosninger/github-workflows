@@ -9,12 +9,7 @@ inputs:
     required: false
   container-registry:
     description: Container registry host (e.g. creiddev.azurecr.io or ghcr.io).
-    default: ""
-    required: false
-  registry-url:
-    description: Alternate registry URL if container-registry is not provided.
-    default: ""
-    required: false
+    required: true
   image-tag:
     description: Custom image tag. If set, this is used instead of auto-generation.
     default: ""
@@ -53,24 +48,13 @@ runs:
       shell: bash
       env:
         CONTAINER_REGISTRY: ${{ inputs.container-registry }}
-        REGISTRY_URL: ${{ inputs.registry-url }}
         IMAGE_NAME: ${{ inputs.image-name }}
         REPOSITORY_NAME: ${{ github.event.repository.name }}
         REPOSITORY_OWNER: ${{ github.repository_owner }}
       run: |
         set -euo pipefail
 
-        registry="${CONTAINER_REGISTRY:-$REGISTRY_URL}"
-
-        if [ -z "$registry" ]; then
-          echo "::error:: Missing container-registry or registry-url input."
-          {
-            echo "> [!WARNING]"
-            echo "> **Input validation failed:** You must provide either container-registry or registry-url."
-          } >> "$GITHUB_STEP_SUMMARY"
-          exit 1
-        fi
-
+        registry="$CONTAINER_REGISTRY"
         image_name="${IMAGE_NAME:-$REPOSITORY_NAME}"
 
         if [ "$registry" = "ghcr.io" ]; then

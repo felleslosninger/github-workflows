@@ -4,15 +4,14 @@ Author: **Digdir Platform Team**
 
 ## Description
 
-This composite action generates Docker image metadata for workflows that need a
-consistent image name and tag.
+This composite action generates Docker image metadata for workflows that need a consistent image name and tag.
 
 It supports:
 
 - Custom image tags via `image-tag`
 - Explicit version strings via `version`
 - Auto-generated tags (date + SHA) when no explicit tag is provided
-- Container registry selection via `container-registry` or `registry-url`
+- Container registry selection via `container-registry`
 - Automatic `image-name` fallback to the current repository name
 
 ## Inputs
@@ -20,8 +19,7 @@ It supports:
 | Input | Description | Required | Default |
 | :---- | :---------- | :------- | :------ |
 | `image-name` | Docker image name without registry. Defaults to repository name if unset. | false | `""` |
-| `container-registry` | Container registry host (e.g. `creiddev.azurecr.io`, `ghcr.io`). | false | `""` |
-| `registry-url` | Alternate registry URL if `container-registry` is not provided. | false | `""` |
+| `container-registry` | Container registry host (e.g. `creiddev.azurecr.io`, `ghcr.io`). | `true` | |
 | `image-tag` | Custom image tag. Overrides auto-generation. | false | `""` |
 | `version` | Use explicit version string as image tag when provided. | false | `""` |
 | `auto-generate-tag` | Generate a tag from the date and SHA when no explicit tag is provided. | false | `true` |
@@ -48,6 +46,6 @@ steps:
 
 ## How it works
 
-The action validates registry and image name inputs, chooses the best available
-tag source, and writes both values to outputs for later build, scan, and
-publishing steps.
+The action generates the full image name (with registry) as `image-name`,
+chooses the best available tag source as `image-tag`, and writes both values to
+outputs for later build, scan, and publishing steps.

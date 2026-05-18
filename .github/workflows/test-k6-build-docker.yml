@@ -71,7 +71,6 @@ jobs:
       contents: read
     env:
       REPOSITORY-NAME: ${{ github.event.repository.name }}
-      REGISTRY_URL: my-local-registry
       DOCKLE_HOST: "unix:///var/run/docker.sock"
     steps:
       - name: Set image metadata
@@ -79,7 +78,7 @@ jobs:
         uses: felleslosninger/github-workflows/.github/actions/image-metadata@PF-2305-image-metadata-composite-action
         with:
           image-name: ${{ inputs.image-name }}
-          registry-url: ${{ env.REGISTRY_URL }}
+          container-registry: "my-local-registry"
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6.0.2
 

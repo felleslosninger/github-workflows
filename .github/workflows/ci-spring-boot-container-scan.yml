@@ -19,11 +19,6 @@ on:
         default: "latest"
         required: false
         type: string
-      registry-url:
-        description: Image/Container Registery URL
-        default: "my-local-registry"
-        required: false
-        type: string
       java-version:
         description: Main version of java
         default: "11"
@@ -101,7 +96,7 @@ jobs:
         uses: felleslosninger/github-workflows/.github/actions/image-metadata@PF-2305-image-metadata-composite-action
         with:
           image-name: ${{ inputs.image-name }}
-          registry-url: ${{ inputs.registry-url }}
+          container-registry: "my-local-registry"
 
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6.0.2
