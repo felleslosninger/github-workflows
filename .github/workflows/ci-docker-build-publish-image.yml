@@ -104,7 +104,7 @@ jobs:
     steps:
       - name: Set image metadata
         id: image-metadata
-        uses: felleslosninger/github-workflows/.github/actions/image-metadata@PF-2305-image-metadata-composite-action
+        uses: felleslosninger/github-workflows/.github/actions/image-metadata@main
         with:
           image-name: ${{ inputs.image-name }}
           container-registry: ${{ inputs.container-registry }}
