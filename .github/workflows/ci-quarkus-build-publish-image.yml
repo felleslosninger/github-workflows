@@ -119,7 +119,6 @@ jobs:
       image-digest: ${{ steps.set-image-digest.outputs.image-digest }}
 
     env:
-      REPOSITORY-NAME: ${{ github.event.repository.name }}
       DOCKLE_HOST: "unix:///var/run/docker.sock"
 
     permissions:

@@ -87,7 +87,6 @@ jobs:
     permissions:
       contents: read
     env:
-      REPOSITORY-NAME: ${{ github.event.repository.name }}
       DOCKLE_HOST: "unix:///var/run/docker.sock"
       TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
     steps:

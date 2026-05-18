@@ -81,7 +81,6 @@ jobs:
   build-publish-image:
     runs-on: ubuntu-latest
     env:
-      REPOSITORY-NAME: ${{ github.event.repository.name }}
       DOCKLE_HOST: "unix:///var/run/docker.sock"
     outputs:
       image-tag: ${{ steps.image-metadata.outputs.image-tag }}
