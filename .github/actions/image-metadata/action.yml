@@ -19,21 +19,9 @@ inputs:
     description: Custom image tag. If set, this is used instead of auto-generation.
     default: ""
     required: false
-  package-version:
-    description: Package version used as image tag when provided.
-    default: ""
-    required: false
   version:
     description: Version string used as image tag when provided.
     default: ""
-    required: false
-  version-pom-path:
-    description: Maven pom.xml path used to derive image tag when version is not provided.
-    default: ""
-    required: false
-  strip-snapshot:
-    description: Strip '-SNAPSHOT' from version when building from main or tag refs.
-    default: "false"
     required: false
   auto-generate-tag:
     description: Whether an image tag should be auto-generated when no explicit tag is provided.
@@ -99,10 +87,7 @@ runs:
       shell: bash
       env:
         IMAGE_TAG: ${{ inputs.image-tag }}
-        PACKAGE_VERSION: ${{ inputs.package-version }}
         VERSION: ${{ inputs.version }}
-        VERSION_POM_PATH: ${{ inputs.version-pom-path }}
-        STRIP_SNAPSHOT: ${{ inputs.strip-snapshot }}
         AUTO_GENERATE_TAG: ${{ inputs.auto-generate-tag }}
       run: |
         set -euo pipefail
@@ -114,36 +99,16 @@ runs:
           image_tag="$IMAGE_TAG"
           tag_source="custom image tag"
 
-        elif [ -n "$PACKAGE_VERSION" ]; then
-          image_tag="$PACKAGE_VERSION"
-          tag_source="package version"
-
         elif [ -n "$VERSION" ]; then
           image_tag="$VERSION"
           tag_source="provided version"
-
-        elif [ -n "$VERSION_POM_PATH" ]; then
-          set +e
-          pom_version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout -f "$VERSION_POM_PATH" 2>/dev/null)
-          set -e
-
-          if [ -n "$pom_version" ] && [ "$pom_version" != "null" ]; then
-            image_tag="$pom_version"
-            if [[ "$STRIP_SNAPSHOT" == "true" ]] && ([[ "$GITHUB_REF" == "refs/heads/main" ]] || [[ "$GITHUB_REF" == refs/tags/* ]]); then
-              image_tag="${image_tag/-SNAPSHOT/}"
-            fi
-            tag_source="Maven version"
-          else
-            image_tag="$auto_tag"
-            tag_source="fallback auto-generated tag"
-          fi
 
         elif [[ "$AUTO_GENERATE_TAG" == "true" ]]; then
           image_tag="$auto_tag"
           tag_source="auto-generated tag"
 
         else
-          echo "::error:: No image tag available. Provide image-tag, package-version, version, or allow auto-generate-tag."
+          echo "::error:: No image tag available. Provide image-tag, version, or allow auto-generate-tag."
           {
             echo "> [!WARNING]"
             echo "> **Input validation failed:** No image tag was provided and auto-generate-tag is disabled."

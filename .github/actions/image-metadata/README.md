@@ -7,13 +7,11 @@ Author: **Digdir Platform Team**
 This composite action generates Docker image metadata for workflows that need a
 consistent image name and tag.
 
-It supports
+It supports:
 
 - Custom image tags via `image-tag`
-- Package-version tags via `package-version`
 - Explicit version strings via `version`
-- Snapshot stripping when building from `main` or tag refs
-- Auto-generated tags when no explicit tag is provided
+- Auto-generated tags (date + SHA) when no explicit tag is provided
 - Container registry selection via `container-registry` or `registry-url`
 - Automatic `image-name` fallback to the current repository name
 
@@ -25,10 +23,7 @@ It supports
 | `container-registry` | Container registry host (e.g. `creiddev.azurecr.io`, `ghcr.io`). | false | `""` |
 | `registry-url` | Alternate registry URL if `container-registry` is not provided. | false | `""` |
 | `image-tag` | Custom image tag. Overrides auto-generation. | false | `""` |
-| `package-version` | Use package version as image tag when provided. | false | `""` |
 | `version` | Use explicit version string as image tag when provided. | false | `""` |
-| `version-pom-path` | Evaluate Maven `pom.xml` to derive the version when no explicit tag is provided. | false | `` |
-| `strip-snapshot` | Strip `-SNAPSHOT` from version when building from `main` or tag refs. | false | `false` |
 | `auto-generate-tag` | Generate a tag from the date and SHA when no explicit tag is provided. | false | `true` |
 
 ## Outputs
@@ -48,10 +43,11 @@ steps:
     with:
       image-name: my-app
       container-registry: creiddev.azurecr.io
+      version: "1.2.0" # Optional: Will fallback to auto-generated tag if omitted
 ```
 
 ## How it works
 
-The action validates registry and image-name inputs, chooses the best available
+The action validates registry and image name inputs, chooses the best available
 tag source, and writes both values to outputs for later build, scan, and
 publishing steps.
