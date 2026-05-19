@@ -141,25 +141,31 @@ jobs:
     steps:
       - name: Check for supported application-type
         id: application-type-check
+        env:
+          APP_TYPE: ${{ inputs.application-type }}
         run: |
-          if [[ ${{ inputs.application-type }} != "spring-boot" && ${{ inputs.application-type }} != "quarkus" && ${{ inputs.application-type }} != "docker" ]]; then
+          if [[ "$APP_TYPE" != "spring-boot" && "$APP_TYPE" != "quarkus" && "$APP_TYPE" != "docker" ]]; then
             echo "Invalid application type. Supported types are: \`spring-boot\`, \`quarkus\` and \`docker\`" >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
 
       - name: Set container registry
         id: set-container-registry
+        env:
+          CR_TYPE: ${{ inputs.cr-type }}
+          LIFECYCLE: ${{ inputs.lifecycle }}
         run: |
-          if [[ "${{ inputs.cr-type }}" == "ghcr" ]]; then
+          if [[ "$CR_TYPE" == "ghcr" ]]; then
             echo "container-registry=ghcr.io" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ inputs.lifecycle }}" == "deployment" ]]; then
+          elif [[ "$LIFECYCLE" == "deployment" ]]; then
             echo "sp-container-registry-client-id=AZURE_CLIENT_ID" >> "$GITHUB_OUTPUT"
             echo "container-registry=${{ vars.CR_DEPLOYMENT_URL }}" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ inputs.lifecycle }}" == "development" ]]; then
+          elif [[ "$LIFECYCLE" == "development" ]]; then
             echo "sp-container-registry-client-id=CR_DEV_USERNAME" >> "$GITHUB_OUTPUT"
             echo "container-registry=${{ vars.CR_DEV_URL }}" >> "$GITHUB_OUTPUT"
           else
             echo "Invalid lifecycle type. Supported types are: \`deployment\`, and \`development\`" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
           fi
 
   run-spring-boot-build:
