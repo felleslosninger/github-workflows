@@ -72,41 +72,40 @@ on:
     outputs:
       image-version:
         description: "Docker image version"
-        value: ${{ jobs.build-publish-image.outputs.imagetag }}
+        value: ${{ jobs.build-publish-image.outputs.image-tag }}
       image-digest:
         description: "Docker image SHA256 digest"
-        value: ${{ jobs.build-publish-image.outputs.imagedigest }}
+        value: ${{ jobs.build-publish-image.outputs.image-digest }}
 
 jobs:
   build-publish-image:
     runs-on: ubuntu-latest
     env:
-      REPOSITORY-NAME: ${{ github.event.repository.name }}
       DOCKLE_HOST: "unix:///var/run/docker.sock"
     outputs:
-      imagetag: ${{ steps.output-image-tag.outputs.imagetag }}
-      imagedigest: ${{ steps.output-image-digest.outputs.imagedigest }}
+      image-tag: ${{ steps.image-metadata.outputs.image-tag }}
+      image-digest: ${{ steps.set-image-digest.outputs.image-digest }}
 
     permissions:
       contents: read
       id-token: write
 
     steps:
-      - name: Set imagetag as env variable
-        run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
-
-      - name: Set IMAGE_NAME env variable
-        run: |
-          echo "IMAGE_NAME=${{ secrets.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
+      - name: Set image metadata
+        id: image-metadata
+        uses: felleslosninger/github-workflows/.github/actions/image-metadata@main
+        with:
+          image-name: ${{ inputs.image-name }}
+          container-registry: ${{ secrets.REGISTRY_URL }}
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6.0.2
 
-      - name: Find and replace image version for ${{ env.IMAGETAG }} in version endpoint
+      - name: Find and replace image version for ${{ steps.image-metadata.outputs.image-tag }} in version endpoint
         uses: jacobtomlinson/gha-find-replace@f1069b438f125e5395d84d1c6fd3b559a7880cb5 # pin@v3.0.5
         id: update-version
         with:
           find: "DEV-SNAPSHOT"
-          replace: "${{ env.IMAGETAG }}"
+          replace: "${{ steps.image-metadata.outputs.image-tag }}"
           include: "docker/version"
           regex: false
 
@@ -117,12 +116,12 @@ jobs:
           cp -R ${{ inputs.k6-libs-folder }}/* docker/${{ inputs.k6-libs-folder }}/
 
       - name: Build the tagged Docker image
-        run: docker build --tag ${{env.IMAGE_NAME}}:${{env.IMAGETAG}} docker/
+        run: docker build --tag ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }} docker/
 
       - name: Run Trivy vulnerability scanner
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
-          image-ref: ${{env.IMAGE_NAME}}:${{env.IMAGETAG}}
+          image-ref: "${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}"
           application-path: ${{ inputs.application-path }}
           library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
           library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
@@ -143,22 +142,23 @@ jobs:
 
       - name: "Build the tagged Docker image"
         run: |
-          docker push ${{env.IMAGE_NAME}}:${{env.IMAGETAG}}
-          docker image tag ${{env.IMAGE_NAME}}:${{env.IMAGETAG}} ${{env.IMAGE_NAME}}:latest && docker push ${{env.IMAGE_NAME}}:latest
+          docker push ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}
+          docker image tag ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }} ${{ steps.image-metadata.outputs.image-name }}:latest && docker push ${{ steps.image-metadata.outputs.image-name }}:latest
 
-      - name: "Set image digest"
+      - name: Set image digest
+        id: set-image-digest
         run: |
-          echo "IMAGE_DIGEST=$(docker inspect --format='{{.RepoDigests}}' ${{env.IMAGE_NAME}}:${{env.IMAGETAG}}|cut -d '@' -f 2|cut -d ']' -f 1)" >> "$GITHUB_ENV"
+          image_digest=$(docker inspect \
+            --format='{{.RepoDigests}}' ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }} \
+            | cut -d '@' -f 2 \
+            | cut -d ']' -f 1)
+          echo "image-digest=$image_digest" >> "$GITHUB_OUTPUT"
+          echo "- Image digest: $image_digest" >> "$GITHUB_STEP_SUMMARY"
 
-      - id: output-image-tag
-        run: echo "imagetag=${{env.IMAGETAG}}" >> "$GITHUB_OUTPUT"
-
-      - id: output-image-digest
-        run: echo "imagedigest=${{env.IMAGE_DIGEST}}" >> "$GITHUB_OUTPUT"
       - name: Image signing
         uses: felleslosninger/github-workflows/.github/actions/image-signing@main
         with:
-          image: ${{env.IMAGE_NAME}}:${{env.IMAGETAG}}
+          image: ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}
 
   notify-on-errors:
     runs-on: ubuntu-latest

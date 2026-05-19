@@ -1,0 +1,104 @@
+name: Image metadata
+description: Composite action for generating container image metadata
+author: Digdir Platform Team
+
+inputs:
+  image-name:
+    description: Container image name without registry. If unset, the repository name is used.
+    default: ""
+    required: false
+  container-registry:
+    description: Container registry host (e.g. creiddev.azurecr.io or ghcr.io).
+    required: true
+  image-tag:
+    description: Custom image tag. If set, this is used instead of auto-generation.
+    default: ""
+    required: false
+  version:
+    description: Version string used as image tag when provided.
+    default: ""
+    required: false
+  auto-generate-tag:
+    description: Whether an image tag should be auto-generated when no explicit tag is provided.
+    default: "true"
+    required: false
+
+outputs:
+  image-name:
+    description: The fully qualified image name
+    value: ${{ steps.get-name.outputs.image-name }}
+  image-tag:
+    description: The image tag
+    value: ${{ steps.get-tag.outputs.image-tag }}
+
+runs:
+  using: composite
+  steps:
+    - name: Start image metadata summary
+      shell: bash
+      run: echo "### Image metadata" >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Write inputs to summary
+      uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
+      with:
+        json-payload: ${{ toJson(inputs) }}
+
+    - name: Determine image name
+      id: get-name
+      shell: bash
+      env:
+        CONTAINER_REGISTRY: ${{ inputs.container-registry }}
+        IMAGE_NAME: ${{ inputs.image-name }}
+        REPOSITORY_NAME: ${{ github.event.repository.name }}
+        REPOSITORY_OWNER: ${{ github.repository_owner }}
+      run: |
+        set -euo pipefail
+
+        registry="$CONTAINER_REGISTRY"
+        image_name="${IMAGE_NAME:-$REPOSITORY_NAME}"
+
+        if [ "$registry" = "ghcr.io" ]; then
+          image_name="$registry/$REPOSITORY_OWNER/$image_name"
+        else
+          image_name="$registry/$image_name"
+        fi
+
+        echo "image-name=$image_name" >> "$GITHUB_OUTPUT"
+        echo "- Image name: \`$image_name\`" >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Determine image tag
+      id: get-tag
+      shell: bash
+      env:
+        IMAGE_TAG: ${{ inputs.image-tag }}
+        VERSION: ${{ inputs.version }}
+        AUTO_GENERATE_TAG: ${{ inputs.auto-generate-tag }}
+      run: |
+        set -euo pipefail
+
+        auto_tag="$(TZ=UTC date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}"
+        tag_source=""
+
+        if [ -n "$IMAGE_TAG" ]; then
+          image_tag="$IMAGE_TAG"
+          tag_source="custom image tag"
+
+        elif [ -n "$VERSION" ]; then
+          image_tag="$VERSION"
+          tag_source="provided version"
+
+        elif [[ "$AUTO_GENERATE_TAG" == "true" ]]; then
+          image_tag="$auto_tag"
+          tag_source="auto-generated tag"
+
+        else
+          echo "::error:: No image tag available. Provide image-tag, version, or allow auto-generate-tag."
+          {
+            echo "> [!WARNING]"
+            echo "> **Input validation failed:** No image tag was provided and auto-generate-tag is disabled."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+        fi
+
+        echo "image-tag=$image_tag" >> "$GITHUB_OUTPUT"
+        echo "- Image tag: \`$image_tag\` (Source: $tag_source)" >> "$GITHUB_STEP_SUMMARY"

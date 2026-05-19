@@ -70,16 +70,14 @@ jobs:
     permissions:
       contents: read
     env:
-      REPOSITORY-NAME: ${{ github.event.repository.name }}
-      REGISTRY_URL: my-local-registry
       DOCKLE_HOST: "unix:///var/run/docker.sock"
     steps:
-      - name: Set imagetag as env variable
-        run: echo "IMAGETAG=$(date +'%Y-%m-%d-%H%M')-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
-
-      - name: Set IMAGE-NAME env variable
-        run: |
-          echo "IMAGE-NAME=${{ env.REGISTRY_URL }}/${{ inputs.image-name || env.REPOSITORY-NAME }}" >> "$GITHUB_ENV"
+      - name: Set image metadata
+        id: image-metadata
+        uses: felleslosninger/github-workflows/.github/actions/image-metadata@main
+        with:
+          image-name: ${{ inputs.image-name }}
+          container-registry: "my-local-registry"
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6.0.2
 
@@ -90,12 +88,12 @@ jobs:
           cp -R ${{ inputs.k6-libs-folder }}/* docker/${{ inputs.k6-libs-folder }}/
 
       - name: Build the tagged Docker image
-        run: docker build --tag ${{env.IMAGE-NAME}}:${{env.IMAGETAG}} docker/
+        run: docker build --tag ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }} docker/
 
       - name: Run Trivy vulnerability scanner
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
-          image-ref: ${{env.IMAGE-NAME}}:${{env.IMAGETAG}}
+          image-ref: ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}
           application-path: ${{ inputs.application-path }}
           library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
           library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
