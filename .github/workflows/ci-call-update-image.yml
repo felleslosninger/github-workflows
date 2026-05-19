@@ -79,8 +79,7 @@ jobs:
         env:
           GIT_MSG: ${{ github.event.head_commit.message }}
         run: |
-          JIID=$(echo "$GIT_MSG" | head -1 |
-          grep -Eo '^([a-zA-Z]{2,6}-[0-9]+)') || JIID=''
+          JIID=$(echo "$GIT_MSG" | head -1 | grep -Eo '^([a-zA-Z]{2,6}-[0-9]+)') || JIID=''
           echo "jira-id=$JIID" >> "$GITHUB_ENV"
 
       - name: Get Labels
@@ -104,58 +103,61 @@ jobs:
 
       - name: Set container registry
         id: set-container-registry
+        env:
+          LIFECYCLE: ${{ inputs.lifecycle }}
         run: |
-          if [[ "${{ inputs.lifecycle }}" == "deployment" ]]; then
+          if [[ "$LIFECYCLE" == "deployment" ]]; then
             echo "container-registry=${{ vars.CR_DEPLOYMENT_URL }}" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ inputs.lifecycle }}" == "development" ]]; then
+          elif [[ "$LIFECYCLE" == "development" ]]; then
             echo "container-registry=${{ vars.CR_DEV_URL }}" >> "$GITHUB_OUTPUT"
           else
             echo "Invalid lifecycle type. Supported types are: \`deployment\`, and \`development\`" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
           fi
 
       - name: Set Dependabot As Jira ID
         id: output-dependabot
         if: |
-          steps.find-jira-id.outputs.match == '' &&
+          env.jira-id == '' &&
           steps.check-dependabot.outputs.dependabot == 'true'
         run: echo "jira-id=Dependabot" >> "$GITHUB_ENV"
 
       - name: Set Author Username, Name, and Email
         id: set-author-info
+        env:
+          PUSHER_NAME: ${{ github.event.pusher.name }}
+          PUSHER_EMAIL: ${{ github.event.pusher.email }}
         run: |
-          actor_name="${{ github.event.pusher.name }}"
-          actor_email="${{ github.event.pusher.name }}"
-
-          # Check if actor_name is null or empty
-          if [ -z "$actor_name" ]; then
-            actor_name="github-actions[bot]"  # Set default value
-          fi
-
-          # Check if actor_email is null or empty
-          if [ -z "$actor_email" ]; then
-            actor_email="41898282+github-actions[bot]@users.noreply.github.com"  # Set default value
-          fi
+          actor_name="${PUSHER_NAME:-github-actions[bot]}"
+          actor_email="${PUSHER_EMAIL:-41898282+github-actions[bot]@users.noreply.github.com}"
 
           {
-            echo "author-username=${{ github.event.pusher.name }}"
-            echo "author-email=${actor_email}@users.noreply.github.com"
-            echo "author-name=${actor_name}"
+            echo "author-username=$actor_name"
+            echo "author-email=$actor_email"
+            echo "author-name=$actor_name"
           } >> "$GITHUB_OUTPUT"
 
       - name: Set Outputs
         id: set-outputs
+        env:
+          IMAGE_NAME: ${{ inputs.image-name }}
+          IMAGE_VERSION: ${{ inputs.image-version }}
+          IMAGE_DIGEST: ${{ inputs.image-digest }}
+          CR_REGISTRY: ${{ steps.set-container-registry.outputs.container-registry }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
         run: |
           {
             echo "author-email=${{ steps.set-author-info.outputs.author-email }}"
             echo "author-name=${{ steps.set-author-info.outputs.author-name }}"
             echo "author-username=${{ steps.set-author-info.outputs.author-username }}"
             echo "dependabot=${{ steps.check-dependabot.outputs.dependabot }}"
-            echo "image-name=${{ inputs.image-name }}"
-            echo "image=${{ steps.set-container-registry.outputs.container-registry }}/${{ inputs.image-name }}:${{ inputs.image-version }}@${{ inputs.image-digest }}"
+            echo "image-name=$IMAGE_NAME"
+            echo "image=$CR_REGISTRY/$IMAGE_NAME:$IMAGE_VERSION@$IMAGE_DIGEST"
             echo "pr-labels=${{ steps.set-pr-labels-and-number.outputs.pr-labels }}"
             echo "pr-number=${{ steps.set-pr-labels-and-number.outputs.pr-number }}"
-            echo "repository=${{ github.repository }}"
-            echo "sha=${{ github.sha }}"
+            echo "repository=$REPO"
+            echo "sha=$SHA"
           } >> "$GITHUB_OUTPUT"
 
       - name: Install Dependencies
@@ -172,21 +174,32 @@ jobs:
 
       - name: Log Outputs
         id: log-outputs
+        env:
+          AUTHOR_EMAIL: ${{ steps.set-author-info.outputs.author-email }}
+          AUTHOR_NAME: ${{ steps.set-author-info.outputs.author-name }}
+          AUTHOR_USERNAME: ${{ steps.set-author-info.outputs.author-username }}
+          DEPENDABOT: ${{ steps.set-outputs.outputs.dependabot }}
+          IMAGE_NAME: ${{ steps.set-outputs.outputs.image-name }}
+          IMAGE_FULL: ${{ steps.set-outputs.outputs.image }}
+          PR_LABELS: ${{ steps.set-outputs.outputs.pr-labels }}
+          PR_NUMBER: ${{ steps.set-outputs.outputs.pr-number }}
+          REPOSITORY: ${{ steps.set-outputs.outputs.repository }}
+          SHA: ${{ steps.set-outputs.outputs.sha }}
         run: |
           {
             echo "# Outputs"
             echo "| Key                     | Value                                                 |"
             echo "| ----------------------- | ----------------------------------------------------- |"
-            echo "| author-email            | ${{ steps.set-author-info.outputs.author-email }}     |"
-            echo "| author-name             | ${{ steps.set-author-info.outputs.author-name }}      |"
-            echo "| author-username         | ${{ steps.set-author-info.outputs.author-username }}  |"
-            echo "| dependabot              | ${{ steps.set-outputs.outputs.dependabot }}           |"
-            echo "| image-name              | ${{ steps.set-outputs.outputs.image-name }}           |"
-            echo "| image                   | ${{ steps.set-outputs.outputs.image }}                |"
-            echo "| pr-labels               | ${{ steps.set-outputs.outputs.pr-labels }}            |"
-            echo "| pr-number               | ${{ steps.set-outputs.outputs.pr-number }}            |"
-            echo "| repository              | ${{ steps.set-outputs.outputs.repository }}           |"
-            echo "| sha                     | ${{ steps.set-outputs.outputs.sha }}                  |"
+            echo "| author-email            | $AUTHOR_EMAIL                                         |"
+            echo "| author-name             | $AUTHOR_NAME                                          |"
+            echo "| author-username         | $AUTHOR_USERNAME                                      |"
+            echo "| dependabot              | $DEPENDABOT                                           |"
+            echo "| image-name              | $IMAGE_NAME                                           |"
+            echo "| image                   | $IMAGE_FULL                                           |"
+            echo "| pr-labels               | $PR_LABELS                                            |"
+            echo "| pr-number               | $PR_NUMBER                                            |"
+            echo "| repository              | $REPOSITORY                                           |"
+            echo "| sha                     | $SHA                                                  |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Call Dispatch To Start Promotion
@@ -197,25 +210,25 @@ jobs:
           repository: "felleslosninger/${{ inputs.kubernetes-repo }}"
           # Wraps everything inside 'data' to get around Github's limit:
           # The maximum number of top-level properties in client_payload is 10.
-          client-payload: |-
+          client-payload: >
             {
               "data": {
-                "application-name": "${{ inputs.application-name }}",
-                "author-email": "${{ steps.set-outputs.outputs.author-email }}",
-                "author-name": "${{ steps.set-outputs.outputs.author-name }}",
-                "author-username": "${{ steps.set-outputs.outputs.author-username }}",
-                "deployment-environment": "${{ inputs.deployment-environment }}",
-                "image-digest": "${{ inputs.image-digest }}",
-                "image-name": "${{ steps.set-outputs.outputs.image-name }}",
-                "image-version": "${{ inputs.image-version }}",
-                "image": "${{ steps.set-container-registry.outputs.container-registry }}/${{ steps.set-outputs.outputs.image-name }}:${{inputs.image-version}}@${{inputs.image-digest}}",
-                "jira-id": "${{ env.jira-id }}",
-                "kubernetes-repo": "${{ inputs.kubernetes-repo }}",
-                "pr-labels": "${{ steps.set-outputs.outputs.pr-labels }}",
-                "pr-number": "${{ steps.set-outputs.outputs.pr-number }}",
-                "product-name": "${{ inputs.product-name }}",
-                "repository": "${{ steps.set-outputs.outputs.repository }}",
-                "sha": "${{ steps.set-outputs.outputs.sha }}",
-                "kustomize-version": "${{ inputs.kustomize-version }}"
+                "application-name": ${{ toJson(inputs.application-name) }},
+                "author-email": ${{ toJson(steps.set-outputs.outputs.author-email) }},
+                "author-name": ${{ toJson(steps.set-outputs.outputs.author-name) }},
+                "author-username": ${{ toJson(steps.set-outputs.outputs.author-username) }},
+                "deployment-environment": ${{ toJson(inputs.deployment-environment) }},
+                "image-digest": ${{ toJson(inputs.image-digest) }},
+                "image-name": ${{ toJson(steps.set-outputs.outputs.image-name) }},
+                "image-version": ${{ toJson(inputs.image-version) }},
+                "image": ${{ toJson(steps.set-outputs.outputs.image) }},
+                "jira-id": ${{ toJson(env.jira-id) }},
+                "kubernetes-repo": ${{ toJson(inputs.kubernetes-repo) }},
+                "pr-labels": ${{ toJson(steps.set-outputs.outputs.pr-labels) }},
+                "pr-number": ${{ toJson(steps.set-outputs.outputs.pr-number) }},
+                "product-name": ${{ toJson(inputs.product-name) }},
+                "repository": ${{ toJson(steps.set-outputs.outputs.repository) }},
+                "sha": ${{ toJson(steps.set-outputs.outputs.sha) }},
+                "kustomize-version": ${{ toJson(inputs.kustomize-version) }}
               }
             }
