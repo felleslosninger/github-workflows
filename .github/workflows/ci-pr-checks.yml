@@ -3,6 +3,10 @@
 # 3. Scans image with Trivy
 # 4. Auto-merges Dependabot PRs (optional)
 
+#This workflow is the golden path for PRs towards main branch. This workflow handles both mvn library builds and containerized builds. 
+#First, it does mvn build with chosen lifecycle followed by a trivy fs scan. Then, it can build and scan container images if configured to do so with enable-image-build. 
+
+
 name: PR Checks
 
 permissions: {}
@@ -10,6 +14,10 @@ permissions: {}
 on:
   workflow_call:
     inputs:
+      enable-image-build:
+        type: boolean
+        default: true
+        description: Set to false to skip the image build and image scan steps.
       application-type:
         type: string
         required: true
@@ -17,9 +25,6 @@ on:
         type: boolean
         default: false
       enable-pr-title-verify:
-        type: boolean
-        default: true
-      enable-trivy-image-scan:
         type: boolean
         default: true
       java-version:
@@ -128,6 +133,7 @@ on:
         type: string
         required: false
         default: ''
+      
 
 jobs:
   verify-pull-request-title:
@@ -197,6 +203,17 @@ jobs:
               ;;
           esac
 
+      - name: Run Trivy vulnerability scanner
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
+        if: inputs.trivy-library-disable-scan == false
+        with:
+          scan-type: "fs"
+          application-path: ${{ inputs.application-path }}
+          library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+          library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+          library-severity: ${{ inputs.trivy-library-severity }}
+          trivy-version: ${{ inputs.trivy-version }}
+
       - name: Upload artifact
         if: |
           !cancelled() &&
@@ -208,8 +225,9 @@ jobs:
 
   call-spring-boot-container-scan:
     name: Call Spring Boot container scan
+    needs: build-and-test-java
     if: |
-      inputs.enable-trivy-image-scan == true &&
+      inputs.enable-image-build == true &&
       inputs.application-type == 'spring-boot'
     uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@main
     permissions:
@@ -232,8 +250,9 @@ jobs:
 
   call-quarkus-container-scan:
     name: Call Quarkus container scan
+    needs: build-and-test-java
     if: |
-      inputs.enable-trivy-image-scan == true &&
+      inputs.enable-image-build == true &&
       inputs.application-type == 'quarkus'
     uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@main
     permissions:
