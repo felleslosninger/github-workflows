@@ -1,18 +1,39 @@
-# This is the golden path for PRs towards main branch. This workflow handles both mvn library builds and containerized builds. 
-# 1. Verifies PR title
-# 2. Builds and runs application from root pom with mvn lifecycle chosen in inputs (default: test).
-# 3. Scans libraries with Trivy FS scan
-# 4. Builds image with using paketo buildpacks. (if enable-image-build is true)
-# 5. Scans image with Trivy image scan for containerized/image-build workflows (gated by enable-image-build and application-type; OS scanning is separately controlled by trivy-os-disable-scan)
-# 6. Auto-merges Dependabot PRs (optional)
-
-# If you are building a library project, you can set enable-image-build to false to skip the image build and image scan steps.
-
-
-# If you have a multi-module project, the mvn lifecycle will first be executed in the root of the project, then the container build will be executed for the module specified with the module-name input.
-# If your multi-module project has multiple bootable modules that you want in separate containers, you can reference this workflow multiple times with different module-name inputs.
-# For non-containerized applications, you can set enable-image-build to false to skip the image build and image scan steps. This will allow you to use this workflow for library projects as well.
-
+# Workflow Name: PR checks
+#
+# Purpose:
+#   This is the golden path for PRs towards main branch. This workflow handles
+#   both Maven library builds and containerized builds.
+#
+#.  Flow:
+#     1. Verifies PR title
+#     2. Builds and runs application from root pom with mvn lifecycle chosen in
+#        inputs (default: test).
+#     3. Scans with Trivy FS scan to fail fast on library vulnerabilities
+#     4. Builds image using paketo buildpacks (if 'enable-image-build' is true)
+#     5. Scans image with Trivy image scan for containerized/image-build
+#.       workflows (gated by 'enable-image-build' and 'application-type'; OS
+#        scanning is separately controlled by trivy-os-disable-scan)
+#     6. Auto-merges Dependabot PRs (optional)
+#
+#   If you are building a library project, you can set 'enable-image-build' to
+#   false to skip the image build and image scan steps. If you have a
+#   multi-module project, the mvn lifecycle will first be executed in the root
+#   of the project, then the container build will be executed for the module
+#   specified with the 'module-name' input. If your multi-module project has
+#   multiple bootable modules that you want in separate containers, you can
+#   reference this workflow multiple times with different module-name inputs.
+#   For non-containerized applications, you can set 'enable-image-build' to .
+#   'false' to skip the image build and image scan steps. This will allow you to
+#   use this workflow for library projects as well.
+#
+# Trigger:
+#   Triggered by workflow calls (workflow_call)
+#
+# Inputs:
+#   See input section
+#
+# Outputs:
+#   None
 
 name: PR Checks
 
@@ -22,19 +43,23 @@ on:
   workflow_call:
     inputs:
       enable-image-build:
+        description: Set to false to skip the image build and image scan steps
         type: boolean
         default: true
-        description: Set to false to skip the image build and image scan steps.
       application-type:
+        description: Type of application to determine container build and scan steps. Supported values are 'spring-boot' and 'quarkus'
         type: string
         required: true
       enable-auto-merge-dependabot:
+        description: Set to true to enable auto-merge for Dependabot PRs
         type: boolean
         default: false
       enable-pr-title-verify:
+        description: Set to true to enable PR title verification
         type: boolean
         default: true
       java-version:
+        description: Java version to use
         default: "21"
         required: false
         type: string
@@ -53,41 +78,51 @@ on:
         required: false
         type: string
       image-pack-tag:
-        description: "Docker image pack version tag. Earlier pinned to 0.0.440 due to lifecycle 0.21.2 regression (see: paketo-buildpacks/builder-noble-java-tiny#191). Now fixed: https://github.com/paketo-buildpacks/builder-noble-java-tiny/issues/191#issuecomment-3897508140"
+        description: "Docker image pack version tag"
         default: "latest"
         required: false
         type: string
       auto-merge-types:
+        description: "Comma-separated list of update types to auto-merge when 'enable-auto-merge-dependabot' is true. Supported values can be seen in 'update-types' under https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#ignore--"
         type: string
       pull-request-title:
+        description: Pull request title to validate
         type: string
         required: true
       pull-request-allowed-prefixes:
+        description: Comma-separated list of allowed prefixes for pull request title validation
         type: string
         required: true
       pull-request-min-length-title:
+        description: Minimum length for pull request title validation
         type: number
         required: false
         default: 10
       pull-request-max-length-title:
+        description: Maximum length for pull request title validation
         type: number
         required: false
         default: 100
       pull-request-case-sensitive-prefix:
+        description: Whether to perform case-sensitive prefix matching for pull request title validation
         type: boolean
         required: false
         default: true
       artifact-name:
+        description: Name of artifact to upload after build and test step. If empty, no artifact will be uploaded
         type: string
         required: false
       artifact-path:
+        description: Path to the artifact to upload
         type: string
         required: false
       native:
+        description: Whether to build a native image with Quarkus (only applicable if application-type is 'quarkus')
         required: false
         type: boolean
         default: false
       cache-path:
+        description: Path to the file used for caching Maven dependencies. Default is set to root pom.xml, but can be set to a specific module pom.xml in multi-module projects to only cache dependencies for that module
         default: "**/pom.xml"
         required: false
         type: string
@@ -97,6 +132,7 @@ on:
         required: false
         default: 'test'
       application-path:
+        description: 'Path to the application to scan with Trivy. Default is root of the repository, but can be set to a specific module in multi-module projects.'
         default: "./"
         required: false
         type: string
@@ -140,7 +176,6 @@ on:
         type: string
         required: false
         default: ''
-      
 
 jobs:
   verify-pull-request-title:
