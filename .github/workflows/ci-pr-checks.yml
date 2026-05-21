@@ -127,10 +127,18 @@ on:
         required: false
         type: string
       maven-lifecycle:
-        description: 'Maven lifecycle phase (test, package, verify, install)'
+        description: Maven lifecycle phase (test, package, verify, install)
         type: string
         required: false
-        default: 'test'
+        default: "test"
+      maven-clean:
+        description: Run the clean phase before the lifecycle phase
+        type: boolean
+        default: false
+      maven-update-snapshots:
+        description: Force update of SNAPSHOT dependencies (-U)
+        type: boolean
+        default: false
       application-path:
         description: 'Path to the application to scan with Trivy. Default is root of the repository, but can be set to a specific module in multi-module projects.'
         default: "./"
@@ -235,15 +243,31 @@ jobs:
           GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
         run: |
           LIFECYCLE="${{ inputs.maven-lifecycle }}"
+
           case "$LIFECYCLE" in
             test|package|verify|install)
-              mvn -B "$LIFECYCLE"
               ;;
             *)
               echo "Invalid Maven lifecycle: $LIFECYCLE"
               exit 1
               ;;
           esac
+
+          # Build the Maven command dynamically
+          ARGS=("-B")
+
+          if [ "${{ inputs.maven-clean }}" == "true" ]; then
+            ARGS+=("clean")
+          fi
+
+          ARGS+=("$LIFECYCLE")
+
+          if [ "${{ inputs.maven-update-snapshots }}" == "true" ]; then
+            ARGS+=("--update-snapshots")
+          fi
+
+          # Execute the Maven command
+          mvn "${ARGS[@]}"
 
       - name: Run Trivy vulnerability scanner
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
