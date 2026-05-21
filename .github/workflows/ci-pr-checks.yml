@@ -226,13 +226,13 @@ jobs:
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
           server-id: github
-          server-username: MAVEN_USER
-          server-password: MAVEN_PASSWORD
+          server-username: GH_PACKAGES_READ_USER
+          server-password: GH_PACKAGES_READ_PAT
 
       - name: Run mvn ${{ inputs.maven-lifecycle }}
         env:
-          MAVEN_USER: ${{ secrets.MAVEN_USER }}
-          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
+          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
         run: |
           LIFECYCLE="${{ inputs.maven-lifecycle }}"
           case "$LIFECYCLE" in

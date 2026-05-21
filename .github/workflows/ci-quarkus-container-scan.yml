@@ -104,8 +104,8 @@ jobs:
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
           server-id: github
-          server-username: MAVEN_USER
-          server-password: MAVEN_PASSWORD
+          server-username: GH_PACKAGES_READ_USER
+          server-password: GH_PACKAGES_READ_PAT
 
       - name: Install pack
         run: |
@@ -125,8 +125,8 @@ jobs:
       - name: Build native image with Maven/Quarkus
         if: inputs.native == true
         env:
-          MAVEN_USER: ${{ secrets.MAVEN_USER }}
-          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
+          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
         run: |
           pack build ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }} \
             --path . \
@@ -138,15 +138,15 @@ jobs:
             --env BP_MAVEN_POM_FILE="./pom.xml" \
             --env BP_NATIVE_IMAGE="true" \
             --env LANG="C.UTF-8" \
-            --env MAVEN_USER="${{ env.MAVEN_USER }}" \
-            --env MAVEN_PASSWORD="${{ env.MAVEN_PASSWORD }}" \
+            --env GH_PACKAGES_READ_USER="${{ env.GH_PACKAGES_READ_USER }}" \
+            --env GH_PACKAGES_READ_PAT="${{ env.GH_PACKAGES_READ_PAT }}" \
             --creation-time now
 
       - name: Build image with Maven/Quarkus
         if: inputs.native == false
         env:
-          MAVEN_USER: ${{ secrets.MAVEN_USER }}
-          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
+          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
         run: |
           pack build ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }} \
             --path . \
@@ -156,8 +156,8 @@ jobs:
             --volume "${HOME}/.m2:/home/cnb/.m2:rw" \
             --env BP_JVM_VERSION="${{ inputs.java-version }}" \
             --env BP_MAVEN_POM_FILE="./pom.xml" \
-            --env MAVEN_USER="${{ env.MAVEN_USER }}" \
-            --env MAVEN_PASSWORD="${{ env.MAVEN_PASSWORD }}" \
+            --env GH_PACKAGES_READ_USER="${{ env.GH_PACKAGES_READ_USER }}" \
+            --env GH_PACKAGES_READ_PAT="${{ env.GH_PACKAGES_READ_PAT }}" \
             --creation-time now
 
       - name: Run Trivy vulnerability scanner
