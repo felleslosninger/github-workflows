@@ -187,17 +187,6 @@ jobs:
           server-username: MAVEN_USER
           server-password: MAVEN_PASSWORD
 
-      - name: Run Trivy vulnerability scanner
-        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
-        if: inputs.trivy-library-disable-scan == false
-        with:
-          scan-type: "fs"
-          application-path: ${{ inputs.application-path }}
-          library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
-          library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
-          library-severity: ${{ inputs.trivy-library-severity }}
-          trivy-version: ${{ inputs.trivy-version }}
-
       - name: Run mvn ${{ inputs.maven-lifecycle }}
         env:
           MAVEN_USER: ${{ secrets.MAVEN_USER }}
@@ -213,6 +202,17 @@ jobs:
               exit 1
               ;;
           esac
+
+      - name: Run Trivy vulnerability scanner
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
+        if: inputs.trivy-library-disable-scan == false
+        with:
+          scan-type: "fs"
+          application-path: ${{ inputs.application-path }}
+          library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+          library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+          library-severity: ${{ inputs.trivy-library-severity }}
+          trivy-version: ${{ inputs.trivy-version }}
 
       - name: Upload artifact
         if: |
