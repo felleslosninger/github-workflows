@@ -1,10 +1,17 @@
+# This is the golden path for PRs towards main branch. This workflow handles both mvn library builds and containerized builds. 
 # 1. Verifies PR title
-# 2. Builds and runs application
-# 3. Scans image with Trivy
-# 4. Auto-merges Dependabot PRs (optional)
+# 2. Builds and runs application from root pom with mvn lifecycle chosen in inputs (default: test).
+# 3. Scans libraries with Trivy FS scan
+# 4. Builds image with using paketo buildpacks. (if enable-image-build is true)
+# 5. Scans image with Trivy image scan (if inputs.enable-image-build == true && inputs.trivy-library-disable-scan == false)
+# 6. Auto-merges Dependabot PRs (optional)
 
-#This workflow is the golden path for PRs towards main branch. This workflow handles both mvn library builds and containerized builds. 
-#First, it does mvn build with chosen lifecycle followed by a trivy fs scan. Then, it can build and scan container images if configured to do so with enable-image-build. 
+# If you are building a library project, you can set enable-image-build to false which will skip steps 4->.
+
+
+#If you have a multi module project, the mvn lifecycle will first be executed in the root of the project, then the container build will be executed for the module specified with module-name input. 
+#If your multi module project has multiple bootable modules you want in separate containers, you can reference this workflow multiple times with different module-name inputs.
+#For non-containerized applications, you can set enable-image-build to false to skip the image build and image scan steps. This will allow you to use this workflow for library projects as well.
 
 
 name: PR Checks
@@ -94,7 +101,7 @@ on:
         required: false
         type: string
       module-name:
-        description: 'Name of the module to build and scan (for multi-module projects)'
+        description: 'Only for container builds, the module in multi module projects which is bootable inside the container.'
         type: string
         required: false
         default: ''
