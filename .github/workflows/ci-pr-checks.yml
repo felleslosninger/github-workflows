@@ -3,7 +3,7 @@
 # 2. Builds and runs application from root pom with mvn lifecycle chosen in inputs (default: test).
 # 3. Scans libraries with Trivy FS scan
 # 4. Builds image with using paketo buildpacks. (if enable-image-build is true)
-# 5. Scans image with Trivy image scan (if inputs.enable-image-build == true && inputs.trivy-library-disable-scan == false)
+# 5. Scans image with Trivy image scan for containerized/image-build workflows (gated by enable-image-build and application-type; OS scanning is separately controlled by trivy-os-disable-scan)
 # 6. Auto-merges Dependabot PRs (optional)
 
 # If you are building a library project, you can set enable-image-build to false which will skip steps 4->.
