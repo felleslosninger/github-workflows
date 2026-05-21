@@ -6,12 +6,12 @@
 # 5. Scans image with Trivy image scan for containerized/image-build workflows (gated by enable-image-build and application-type; OS scanning is separately controlled by trivy-os-disable-scan)
 # 6. Auto-merges Dependabot PRs (optional)
 
-# If you are building a library project, you can set enable-image-build to false which will skip steps 4->.
+# If you are building a library project, you can set enable-image-build to false to skip the image build and image scan steps.
 
 
-#If you have a multi module project, the mvn lifecycle will first be executed in the root of the project, then the container build will be executed for the module specified with module-name input. 
-#If your multi module project has multiple bootable modules you want in separate containers, you can reference this workflow multiple times with different module-name inputs.
-#For non-containerized applications, you can set enable-image-build to false to skip the image build and image scan steps. This will allow you to use this workflow for library projects as well.
+# If you have a multi-module project, the mvn lifecycle will first be executed in the root of the project, then the container build will be executed for the module specified with the module-name input.
+# If your multi-module project has multiple bootable modules that you want in separate containers, you can reference this workflow multiple times with different module-name inputs.
+# For non-containerized applications, you can set enable-image-build to false to skip the image build and image scan steps. This will allow you to use this workflow for library projects as well.
 
 
 name: PR Checks
