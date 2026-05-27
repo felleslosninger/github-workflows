@@ -55,8 +55,10 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Start Trivy vulnerability scan
+    - name: Start Trivy vulnerability scan ($SCAN_TYPE)
       shell: bash
+      env:
+        SCAN_TYPE: ${{ inputs.scan-type }}
       run: |
         echo "### Trivy vulnerability scan" >> "$GITHUB_STEP_SUMMARY"
 
