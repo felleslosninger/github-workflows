@@ -295,7 +295,7 @@ jobs:
     if: |
       inputs.enable-image-build == true &&
       inputs.application-type == 'spring-boot'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@PF-2386-harmonize-pipeling
+    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@main
     permissions:
       contents: read
     with:
@@ -320,7 +320,7 @@ jobs:
     if: |
       inputs.enable-image-build == true &&
       inputs.application-type == 'quarkus'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@PF-2386-harmonize-pipeling
+    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@main
     permissions:
       contents: read
     with:
