@@ -2,7 +2,9 @@
 #
 # Purpose:
 #   This is the golden path for PRs towards main branch. This workflow handles
-#   both Maven library builds and containerized builds.
+#   both Maven library builds and containerized builds. It works as a proxy
+#   workflow for the container image build and scan steps, but Maven library
+#   builds are handled within this workflow without calling other workflows.
 #
 #.  Flow:
 #     1. Verifies PR title
