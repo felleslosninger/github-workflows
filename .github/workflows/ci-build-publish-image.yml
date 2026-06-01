@@ -21,7 +21,7 @@ on:
         type: string
       image-signing:
         description: Flag to toggle image signing on/off - default off
-        default: true
+        default: false
         required: false
         type: boolean
       image-tag:
