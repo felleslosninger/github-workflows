@@ -1,5 +1,7 @@
 # Workflow Name: PR checks
 #
+# Owner: Digdir Platform team
+
 # Purpose:
 #   This is the golden path for PRs towards main branch. This workflow handles
 #   both Maven library builds and containerized builds. It works as a proxy
