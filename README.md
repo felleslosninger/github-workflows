@@ -98,8 +98,9 @@ for more information.
 
 - [check-syntax.yml](.github/workflows/check-syntax.yml): Validates workflow
   files with actionlint in this repository (local workflow)
-- [on-pr-label.yml](.github/workflows/on-pr-label.yml): Marks internal PRs when
-  labeled ([internal usage docs](https://paotvers.io/docs/default/Domain/application-platform/Application/Repository/workflows/on-pr-label/))
+- [on-pr-label.yml](.github/workflows/on-pr-label.yml): Triggers updates to PRs
+  on specific labels in app repos ([internal usage
+  docs](https://paotvers.io/docs/default/Domain/application-platform/Application/Repository/workflows/on-pr-label/))
 - [misc-publish-dev-docker.yml](.github/workflows/misc-publish-dev-docker.yml):
   Publishes development Docker images to ACR ([internal usage docs](https://paotvers.io/docs/default/Domain/application-platform/Application/Repository/workflows/deployment-image-dev/))
 
