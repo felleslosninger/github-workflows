@@ -365,6 +365,14 @@ jobs:
       update-types: ${{ inputs.auto-merge-types }}
     secrets: inherit
 
+  # PS! At some point, after GitHub made changes to how Dependabot permissions
+  # worked, this step was skipped automatically. The Platform team thinks this
+  # is actually good, as we do not really want to support this behaviour because
+  # of supply-chain security concerns. It means that the Platform team do not
+  # want to encourage automatic image deployment of automatically merged
+  # Dependabot PRs without human oversight. This step will probably be removed
+  # in the future, but for now it is left in the workflow until it has been
+  # discussed further.
   call-build-image:
     name: Call build image
     if: needs.call-auto-merge.outputs.merged == 'true'
