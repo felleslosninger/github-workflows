@@ -1,3 +1,30 @@
+# Workflow Name: On PR label
+#
+# Owner: Digdir Platform team / Digdir development teams
+#
+# Purpose:
+#   This workflow is responsible for appending an internal commit string to the
+#   title of a pull request when the 'internal' label is added. This could be
+#   expanded in the future to include other actions based on different labels,
+#   but for now it serves the specific purpose of marking PRs as internal by
+#   appending a predefined string to the PR title. PRs updated using this
+#   workflow will be ignored when generating public release notes.
+#
+#   Flow:
+#     1. When a label is added to a PR, check if the label is 'internal'
+#     2. If the label is 'internal', append the internal commit string to the PR
+#        title if it is not already present
+#
+# Trigger:
+#   Triggered by workflow calls (workflow_call)
+#
+# Inputs:
+#   None
+#
+# Outputs:
+#   None
+#
+
 name: On PR label
 
 permissions: {}
