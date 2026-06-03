@@ -34,13 +34,15 @@ runs:
     - name: Login to Azure Container Registry
       id: acr_login
       shell: bash
-      run: az acr login --name "$ACR_NAME"
       env:
         ACR_NAME: ${{ inputs.acr-name }}
+      run: az acr login --name "$ACR_NAME"
 
     - name: Write step summary
       if: ${{ always() }}
       shell: bash
+      env:
+        ACR_NAME: ${{ inputs.acr-name }}
       run: |
         {
           echo "### ACR login"
@@ -55,5 +57,3 @@ runs:
           fi
           echo "| registry | ${ACR_NAME} |"
         } >> "$GITHUB_STEP_SUMMARY"
-      env:
-        ACR_NAME: ${{ inputs.acr-name }}
