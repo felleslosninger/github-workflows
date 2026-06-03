@@ -129,3 +129,9 @@ workflow
 
 Note that the Platform team might still update these to use new composite
 actions when applicable.
+
+## Development guidelines
+
+Check out the [internal usage
+docs](https://paotvers.io/docs/default/Domain/application-platform/Github/Actions/development-guidelines/)
+for more information.
