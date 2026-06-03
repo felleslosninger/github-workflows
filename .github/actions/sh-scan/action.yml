@@ -24,8 +24,8 @@ runs:
             "bun_environment.js"
         )
 
-        # Will only compute the hashes of the files in IOC_SHA256_FILES 
-        # Then check if they match any of the hashes in IOC_SHA256 
+        # Will only compute the hashes of the files in IOC_SHA256_FILES
+        # Then check if they match any of the hashes in IOC_SHA256
         IOC_SHA256_FILES=(
             "bundle.js"
         )
@@ -38,7 +38,7 @@ runs:
 
         )
 
-        # Check if INSTALL_METHOD is set and non-empty env variable 
+        # Check if INSTALL_METHOD is set and non-empty env variable
         if [[ -z "${INSTALL_METHOD:-}" ]]; then
             echo "ERROR: INSTALL_METHOD needs to be npm | yarn | ci | pnpm" >&2
             exit 1
@@ -51,7 +51,7 @@ runs:
 
         if [[ ! -r "$f" ]]; then
             echo "WARNING: Cannot read file for hashing: $f" >&2
-            printf '\n' 
+            printf '\n'
             return 0
         fi
 
@@ -88,20 +88,20 @@ runs:
                     found=1
                     echo "FAIL: Found suspicious NPM file: $file"
                     echo "$matches"
-                fi 
-            done 
+                fi
+            done
 
             if [[ "$found" -eq 1 ]]; then
-                return 1 
-            fi 
+                return 1
+            fi
 
             echo "OK: No suspicious NPM files found in $base_dir"
             return 0
         }
 
-        function scan_for_hashes() {    
+        function scan_for_hashes() {
             local base_dir="$1"
-            
+
             [[ -d "$base_dir" ]] || {
                 echo "WARNING: Directory not found (skipping hash scan): $base_dir" >&2
                 return 0
@@ -116,17 +116,17 @@ runs:
 
                 # Find all paths matching this filename
                 matches="$(find "$base_dir" -type f -name "$file" -print 2>/dev/null || true)"
-                
+
                 # If none found, continue
                 [[ -z "$matches" ]] && continue
 
-                # Iterate each matched path 
+                # Iterate each matched path
                 while IFS= read -r path; do
                     [[ -z "$path" ]] && continue
 
                     match_hash="$(get_sha256_filehash "$path")"
-                    [[ -z "$match_hash" ]] && continue  # hashing failed, continue 
-                    
+                    [[ -z "$match_hash" ]] && continue  # hashing failed, continue
+
                     for hash in "${IOC_SHA256[@]}"; do
                         if [[ "$match_hash" == "$hash" ]]; then
                         found=1
@@ -149,12 +149,12 @@ runs:
 
 
         if [[ "$INSTALL_METHOD" == "npm" ]]; then
-            npm install --ignore-scripts 
+            npm install --ignore-scripts
             scan_files "$NODE_MODULES_DIR"
             scan_for_hashes "$NODE_MODULES_DIR"
 
         elif [[ "$INSTALL_METHOD" == "yarn" ]]; then
-            yarn install --frozen-lockfile --ignore-scripts 
+            yarn install --frozen-lockfile --ignore-scripts
             scan_files "$NODE_MODULES_DIR"
             scan_for_hashes "$NODE_MODULES_DIR"
 
@@ -162,7 +162,7 @@ runs:
             npm ci --ignore-scripts
             scan_files "$NODE_MODULES_DIR"
             scan_for_hashes "$NODE_MODULES_DIR"
-        
+
         elif [[ "$INSTALL_METHOD" == "pnpm" ]]; then
             pnpm install --frozen-lockfile --ignore-scripts
             scan_files "$NODE_MODULES_DIR"
@@ -172,8 +172,4 @@ runs:
             echo "ERROR: Unsupported INSTALL_METHOD: $INSTALL_METHOD (use: npm | yarn | ci)" >&2
             exit 2
 
-        fi    
-
-
-
-
+        fi
