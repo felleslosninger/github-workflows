@@ -44,8 +44,8 @@ For new projects, you should use the following workflows depending on your needs
 [ci-pr-checks.yml](.github/workflows/ci-pr-checks.yml): Golden path for PRs to
 main. Handles Maven library builds and containerized applications. Verifies PR
 titles, runs builds and security scans, optionally builds container images with
-Paketo buildpacks, and can auto-merge Dependabot PRs. This workflow will trigger
-one of the following application-specific workflows
+Paketo buildpacks, and can auto-merge Dependabot PRs. If build container image
+is set to true, it will run one of the following application-specific workflows
 
 - [ci-spring-boot-container-scan.yml](.github/workflows/ci-spring-boot-container-scan.yml):
   Builds and scans temporary Spring Boot container images
