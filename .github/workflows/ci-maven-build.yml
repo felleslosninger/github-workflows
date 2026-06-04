@@ -1,4 +1,39 @@
-name: Maven build java
+# Workflow Name: Maven build java (PR)
+#
+# PS! This workflow is deprecated, and should not be used for new projects. The
+# ci-pr-checks.yml workflow have been updated to support all functionality of
+# this workflow, and should be used instead. This workflow will remain
+# available for existing projects that have not yet migrated to the
+# ci-pr-checks.yml workflow, but will be removed in the future. Please reach
+# out to the Digdir Platform team if you have any questions or need assistance
+# with migration.
+#
+# Owner: Digdir Platform team / Digdir development teams
+#
+# Purpose:
+#   This workflow is designed to perform a Maven build of a Java application,
+#   run a Trivy vulnerability 'fs' scan to detect vulnerabilities fast in a PR.
+#   It runs 2 jobs in parallel: one to verify the pull request title, and
+#   another to perform the build and scan.
+#
+#   Flow:
+#     1. Checkout repository
+#     2. Set up JDK
+#     3. Build with Maven (supports lifecycle phases: test, package, verify,
+#        install)
+#     4. Run Trivy vulnerability scanner ('fs' scan)
+#
+# Trigger:
+#   Triggered by workflow calls (workflow_call)
+#
+# Inputs:
+#   See input section
+#
+# Outputs:
+#   None
+#
+
+name: Maven build java (PR)
 
 permissions: {}
 
@@ -16,10 +51,12 @@ on:
         required: false
         type: string
       application-path:
+        description: Path to the application directory to scan with Trivy, relative to the repository root
         default: "./"
         required: false
         type: string
       cache-path:
+        description: Path to cache dependencies, relative to the repository root
         default: "**/pom.xml"
         required: false
         type: string

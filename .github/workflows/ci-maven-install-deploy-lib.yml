@@ -1,4 +1,39 @@
-name: Release to github packages
+# Workflow Name: Maven build and publish to GitHub packages
+#
+# Owner: Digdir Platform team / Digdir development teams
+#
+# Purpose:
+#   This workflow is designed to perform a Maven build of a Java application,
+#   and publish the built artifact to GitHub packages. It should be used when
+#   you have internal Maven dependencies in your project. The workflow will
+#   optionally run mvn versions:set to set the version of the package, and can
+#   be configured to deploy to a specific repository. The workflow will also
+#   run a Trivy vulnerability 'fs' scan to detect vulnerabilities fast. If you
+#   have no internal dependencies, please use the ci-maven-deploy-lib.yml
+#   workflow instead, which is simpler.
+#
+#   Flow:
+#     1. Checkout repository
+#     2. Set up JDK
+#.    3. Optionally set version with `mvn versions:set`
+#     4. Run 'mvn install' to get internal dependencies
+#     5. Run Trivy vulnerability scanner ('fs' scan)
+#.    6. Overwrite m2 settings to be allowed to publish to GitHub packages
+#     7. Deploy to Maven GitHub packages repository
+#.    8. Run Trivy SBOM generation (incl. temporayy step to resolve SBOM
+#        metadata for multi-module projects)
+#
+# Trigger:
+#   Triggered by workflow calls (workflow_call)
+#
+# Inputs:
+#   See input section
+#
+# Outputs:
+#   None
+#
+
+name: Maven build and publish to GitHub packages
 
 permissions: {}
 

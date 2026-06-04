@@ -1,4 +1,45 @@
----
+# Workflow Name: Dependabot Approve and Merge
+#
+# Owner: Digdir Platform team
+#
+# Purpose:
+#   This is part of the golden path for PRs towards main branch. The workflow
+#   should not be used directly, but is called from the ci-pr-checks
+#   workflow, which checks certain things before calling this workflow with the
+#   correct parameters. This workflow will only run for PRs created by
+#   Dependabot, and will auto-approve and auto-merge the PR if the update type
+#   is supported. The supported update types are defined in the input section,
+#   and the workflow will check the update type of the PR against the supported
+#   types before attempting to approve and merge. If the update type is not
+#   supported, the workflow will skip the PR and write a summary note about the
+#   unsupported update type. The workflow will also write a summary note about
+#   the result of the workflow, whether it was auto-merged or skipped due to
+#   unsupported update type. The workflow is designed to be flexible and can be
+#   easily extended to support more update types by simply updating the input
+#   parameter with the new supported types. The workflow uses the GitHub CLI
+#   (gh) to interact with the PR, which allows for more control and flexibility
+#   in the approval and merging process. The workflow also uses the Dependabot/
+#   fetch-metadata action to fetch the metadata of the Dependabot PR, which
+#   includes the update type, allowing the workflow to make informed decisions
+#   about whether to approve and merge the PR based on the update type.
+#
+#   Flow:
+#     1. Checkout repository
+#     2. Fetch update types from input parameter
+#     3. Fetch Dependabot metadata (including update type)
+#     4. If the update type is supported, approve and auto-merge the PR
+#     5. Write summary note about the result of the workflow
+#
+# Trigger:
+#   Triggered by workflow calls (workflow_call)
+#
+# Inputs:
+#   See input section
+#
+# Outputs:
+#   See output section
+#
+
 name: Dependabot Approve and Merge
 
 permissions: {}
@@ -7,14 +48,13 @@ on:
   workflow_call:
     inputs:
       update-types:
-        description: Update types
+        description: Dependabot update types to auto-merge (check out possible 'update-types' in https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#allow--). The default will ensure auto-merge of patch and minor version updates
         default: "version-update:semver-patch;version-update:semver-minor"
         required: false
         type: string
     outputs:
       merged:
         value: ${{ jobs.dependabot.outputs.merged }}
-
 
 jobs:
   dependabot:

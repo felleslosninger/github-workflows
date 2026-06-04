@@ -1,4 +1,37 @@
-name: Release to github packages
+# Workflow Name: Maven build and publish to GitHub packages
+#
+# Owner: Digdir Platform team / Digdir development teams
+#
+# Purpose:
+#   This workflow is designed to perform a Maven build of a Java application,
+#   and publish the built artifact to GitHub packages. It should be used when
+#   you have no internal Maven dependencies in your project. The workflow will
+#   optionally run mvn versions:set to set the version of the package, and can
+#   be configured to deploy to a specific repository. The workflow will also
+#   run a Trivy vulnerability 'fs' scan to detect vulnerabilities fast. If you
+#   have internal dependencies, please use the ci-maven-install-deploy-lib.yml
+#   workflow instead, which supports this use case.
+#
+#   Flow:
+#     1. Checkout repository
+#     2. Set up JDK
+#     3. Run Trivy vulnerability scanner ('fs' scan)
+#.    4. Optionally set version with `mvn versions:set`
+#     5. Build with Maven
+#     6. Deploy to Maven GitHub packages repository
+#     7. Run Trivy SBOM generation
+#
+# Trigger:
+#   Triggered by workflow calls (workflow_call)
+#
+# Inputs:
+#   See input section
+#
+# Outputs:
+#   None
+#
+
+name: Maven build and publish to GitHub packages
 
 permissions: {}
 
@@ -31,10 +64,12 @@ on:
         required: false
         type: string
       cache-path:
+        description: Path to cache dependencies, relative to the repository root
         default: "**/pom.xml"
         required: false
         type: string
       application-path:
+        description: Path to the application directory to scan with Trivy, relative to the repository root
         default: "./"
         required: false
         type: string
@@ -101,7 +136,7 @@ jobs:
             echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Deploy to maven repository
+      - name: Deploy to Maven GitHub packages repository
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ github.token }}
