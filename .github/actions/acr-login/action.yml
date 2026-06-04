@@ -39,7 +39,7 @@ runs:
       run: az acr login --name "$ACR_NAME"
 
     - name: Write step summary
-      if: ${{ always() }}
+      if: always()
       shell: bash
       env:
         ACR_NAME: ${{ inputs.acr-name }}
