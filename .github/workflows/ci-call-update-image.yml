@@ -158,17 +158,14 @@ jobs:
             echo "sha=${{ github.sha }}"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Install Dependencies
-        run: npm install @octokit/app@v13.1.8
-
       - name: Generate Token
-        uses: felleslosninger/github-actions/github-app-token@d7888fecafbf48e5845c8a0c76389f71c517ee6d # pin@v0.8.0
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # pin@v3.2.0
         id: token
         with:
-          app-id: ${{ secrets.DIGDIR_PLATFORM_CI_APP_ID }}
+          client-id: ${{ secrets.DIGDIR_PLATFORM_CI_APP_ID }}
           private-key: ${{ secrets.DIGDIR_PLATFORM_CI_APP_PRIVATE_KEY }}
-          installation-id: ${{ secrets.DIGDIR_PLATFORM_CI_APP_INSTALLATION_ID }}
-          repository: ${{ inputs.kubernetes-repo }}
+          owner: felleslosninger
+          repositories: ${{ inputs.kubernetes-repo }}
 
       - name: Log Outputs
         id: log-outputs
