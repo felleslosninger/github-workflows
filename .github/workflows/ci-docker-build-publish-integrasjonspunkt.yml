@@ -1,3 +1,6 @@
+# PS! This is a custom workflow not maintained by the Platform team. This will
+# be removed in the future.
+
 name: Build, scan and publish Docker image
 
 permissions: {}

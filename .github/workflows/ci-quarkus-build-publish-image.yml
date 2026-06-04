@@ -1,4 +1,47 @@
-name: Build/publish Docker image
+# Workflow Name: Build/publish Quarkus container image
+#
+# Owner: Digdir Platform team
+#
+# Purpose:
+#   This is the golden path workflow for building and publishing Quarkus
+#   container images. The workflow should not be used directly, but called from
+#.  the ci-build-publish-image workflow, which will handle input validation and
+#   trigger this workflow with the correct parameters. The workflow will build
+#   a Quarkus image based on the 'native' input parameter, which determines
+#   whether to build a JVM or GraalVM native image. The workflow will use
+#   Paketo buildpacks for building the image, and the specific builder image
+#   can be configured through inputs. After building the image, the workflow
+#   will run Trivy vulnerability scans, push the image to the specified
+#   container registry, and optionally sign the image. The workflow will also
+#   set outputs for the image version and digest, which can be used in
+#   subsequent steps or workflows. If any step fails, a Slack notification will
+#   be sent to the specified channel(s).
+#
+#   Flow:
+#     1. Set image metadata (name and tag)
+#     2. Checkout repository
+#     3. Set up JDK
+#     4. Build Quarkus image using Paketo buildpacks. The image will either be a
+#        JVM or GraalVM native image based on the 'native' input parameter
+#     5. Run Trivy vulnerability scan on the built image
+#     6. Login to container registry
+#     7. Push image to container registry
+#     8. Set image digest output
+#     9. Run Trivy SBOM generation
+#     10. Optionally sign the image
+#     11. If any step fails, send Slack notification to specified channel(s)
+#
+# Trigger:
+#   Triggered by workflow calls (workflow_call)
+#
+# Inputs:
+#   See input section
+#
+# Outputs:
+#   See output section
+#
+
+name: Build/publish Quarkus container image
 
 permissions: {}
 
@@ -15,7 +58,7 @@ on:
         required: false
         type: string
       image-pack-tag:
-        description: "Docker image pack version tag. Earlier pinned to 0.0.440 due to lifecycle 0.21.2 regression (see: paketo-buildpacks/builder-noble-java-tiny#191). Now fixed: https://github.com/paketo-buildpacks/builder-noble-java-tiny/issues/191#issuecomment-3897508140"
+        description: Docker image pack version tag
         default: "latest"
         required: false
         type: string
@@ -35,6 +78,7 @@ on:
         required: false
         type: string
       cache-path:
+        description: Path to cache dependencies, relative to the repository root
         default: "**/pom.xml"
         required: false
         type: string
@@ -54,10 +98,10 @@ on:
         required: false
         type: string
       sp-container-registry-client-id:
+        description: Service Principal used for container registry in inputs
         required: false
         default: "AZURE_CLIENT_ID"
         type: string
-        description: Service Principal used for container registry in inputs
       trivy-library-disable-scan:
         description: Disable Trivy library scan
         type: boolean
@@ -168,6 +212,7 @@ jobs:
         env:
           PACK_VERSION: 0.39.1
 
+      # Build GraalVM native image with Paketo buildpacks
       - name: Build native image with Maven/Quarkus
         if: inputs.native == true
         env:
@@ -188,6 +233,7 @@ jobs:
             --env MAVEN_PASSWORD="${{ env.MAVEN_PASSWORD }}" \
             --creation-time now
 
+      # Build JVM image with Paketo buildpacks
       - name: Build image with Maven/Quarkus
         if: inputs.native == false
         env:

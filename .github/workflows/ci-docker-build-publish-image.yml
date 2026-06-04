@@ -1,4 +1,42 @@
-name: Build/publish Docker image
+# Workflow Name: Build/publish custom Docker image
+#
+# Owner: Digdir Platform team
+#
+# Purpose:
+#   This is the golden path workflow for building and publishing custom Docker
+#   images. The workflow should not be used directly, but called from the
+#   ci-build-publish-image workflow, which will handle input validation and
+#   trigger this workflow with the correct parameters. The workflow will build
+#   a Docker image based on the Dockerfile in the specified application path,
+#   run Trivy vulnerability scans, push the image to the specified container
+#   registry, and optionally sign the image. The workflow will also set outputs
+#   for the image version and digest, which can be used in subsequent steps or
+#   workflows. If any step fails, a Slack notification will be sent to the
+#   specified channel(s).
+#
+#   Flow:
+#     1. Set image metadata (name and tag)
+#     2. Checkout repository
+#     3. Build Docker image
+#     4. Run Trivy vulnerability scan on the built image
+#     5. Login to container registry
+#     6. Push image to container registry
+#     7. Set image digest output
+#     8. Run Trivy SBOM generation
+#     9. Optionally sign the image
+#     10. If any step fails, send Slack notification to specified channel(s)
+#
+# Trigger:
+#   Triggered by workflow calls (workflow_call)
+#
+# Inputs:
+#   See input section
+#
+# Outputs:
+#   See output section
+#
+
+name: Build/publish custom Docker image
 
 permissions: {}
 
@@ -20,6 +58,7 @@ on:
         required: false
         type: string
       application-path:
+        description: Path to the application directory containing the Dockerfile
         default: "./"
         required: false
         type: string
@@ -33,10 +72,10 @@ on:
         required: false
         type: string
       sp-container-registry-client-id:
-        required: false
-        default: "AZURE_CLIENT_ID"
-        type: string
         description: Service Principal used for container registry in inputs
+        default: "AZURE_CLIENT_ID"
+        required: false
+        type: string
       trivy-library-disable-scan:
         description: Disable Trivy library scan
         type: boolean

@@ -1,4 +1,49 @@
-name: Build and publish Docker image
+# Workflow Name: Build/publish Spring Boot container image
+#
+# Owner: Digdir Platform team
+#
+# Purpose:
+#   This is the golden path workflow for building and publishing Spring Boot
+#   container images. The workflow should not be used directly, but called from
+#.  the ci-build-publish-image workflow, which will handle input validation and
+#   trigger this workflow with the correct parameters. The workflow will build
+#   a Spring Boot image based on the 'application-path' and 'module-name' input
+#.  parameters, which determines whether to build from a module or the root
+#   application. The workflow will use Paketo buildpacks for building the
+#   image, and the specific builder image can be configured through inputs.
+#   After building the image, the workflow will run Trivy vulnerability scans,
+#   push the image to the specified container registry, and optionally sign the
+#   image. The workflow will also set outputs for the image version and digest,
+#   which can be used in subsequent steps or workflows. If any step fails, a
+#   Slack notification will be sent to the specified channel(s).
+#
+#   Flow:
+#     1. Set image metadata (name and tag)
+#     2. Checkout repository
+#     3. Set up JDK
+#.    4. Optionally update versions in application.yaml with the generated
+#        image tag
+#     5. Build Spring Boot image using Paketo buildpacks. The image will be
+#        built based on the application path or module name (if provided)
+#     6. Run Trivy vulnerability scan on the built image
+#     7. Login to container registry
+#     8. Push image to container registry
+#     9. Set image digest output
+#     10. Run Trivy SBOM generation
+#     11. Optionally sign the image
+#     12. If any step fails, send Slack notification to specified channel(s)
+#
+# Trigger:
+#   Triggered by workflow calls (workflow_call)
+#
+# Inputs:
+#   See input section
+#
+# Outputs:
+#   See output section
+#
+
+name: Build and publish Spring Boot container image
 
 permissions: {}
 
@@ -15,7 +60,7 @@ on:
         required: false
         type: string
       image-pack-tag:
-        description: "Docker image pack version tag. Earlier pinned to 0.0.440 due to lifecycle 0.21.2 regression (see: paketo-buildpacks/builder-noble-java-tiny#191). Now fixed: https://github.com/paketo-buildpacks/builder-noble-java-tiny/issues/191#issuecomment-3897508140"
+        description: Docker image pack version tag
         default: "latest"
         required: false
         type: string
@@ -40,10 +85,12 @@ on:
         required: false
         type: string
       application-path:
+        description: Path to the application to build, relative to the repository root
         default: "./"
         required: false
         type: string
       module-name:
+        description: Name of the module to build, if using a multi-module Maven project. If not provided, the workflow will attempt to build the application based on the application-path input
         default: ""
         required: false
         type: string
@@ -53,10 +100,12 @@ on:
         required: false
         type: string
       cache-path:
+        description: Path to cache dependencies, relative to the repository root
         default: "**/pom.xml"
         required: false
         type: string
       update-versions:
+        description: Flag to toggle whether to update versions in application.yaml with the generated image tag
         default: "true"
         required: false
         type: string
@@ -66,10 +115,10 @@ on:
         required: false
         type: string
       sp-container-registry-client-id:
+        description: Service Principal used for container registry in inputs
         required: false
         default: "AZURE_CLIENT_ID"
         type: string
-        description: Service Principal used for container registry in inputs
       trivy-library-disable-scan:
         description: Disable Trivy library scan
         type: boolean
