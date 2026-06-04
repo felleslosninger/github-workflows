@@ -1,4 +1,31 @@
-name: Build and publish Docker image
+# Workflow Name: Build and publish container image
+#
+# Owner: Digdir Platform team
+#
+# Purpose:
+#   This is the proxy workflow for the golden path for container image builds
+#   after a commit to main. This workflow will trigger the corresponding Spring
+#   Boot, Quarkus, or generic Docker build and publish workflow based on the
+#   'application-type' input. It will also run input checks to determine the
+#   container registry to publish to based on the 'cr-type' and 'lifecycle'
+#   inputs.
+#
+#   Flow:
+#     1. Input checks
+#     2. Trigger Spring Boot, Quarkus, or Docker build and publish workflow
+#        based on 'application-type' input
+#
+# Trigger:
+#   Triggered by workflow calls (workflow_call)
+#
+# Inputs:
+#   See input section
+#
+# Outputs:
+#   See output section
+#
+
+name: Build and publish container image
 
 permissions: {}
 
@@ -6,7 +33,7 @@ on:
   workflow_call:
     inputs:
       image-name:
-        description: Name of Docker image
+        description: Name of container image
         required: false
         type: string
       image-pack:
@@ -15,12 +42,12 @@ on:
         required: false
         type: string
       image-pack-tag:
-        description: "Docker image pack version tag. Earlier pinned to 0.0.440 due to lifecycle 0.21.2 regression (see: paketo-buildpacks/builder-noble-java-tiny#191). Now fixed: https://github.com/paketo-buildpacks/builder-noble-java-tiny/issues/191#issuecomment-3897508140"
+        description: Docker image pack version tag
         default: "latest"
         required: false
         type: string
       image-signing:
-        description: Flag to toggle image signing on/off - default off
+        description: Flag to toggle image signing
         default: true
         required: false
         type: boolean
@@ -45,33 +72,42 @@ on:
         required: false
         type: string
       application-path:
+        description: Path to the application to build, relative to the repository root
         default: "./"
         required: false
         type: string
       cache-path:
+        description: Path to cache dependencies, relative to the repository root
         default: "**/pom.xml"
         required: false
         type: string
       update-versions:
+        description: Whether to update versions of dependencies in pom.xml before building (only applies to Spring Boot applications)
         default: "true"
         required: false
         type: string
       application-type:
+        description: Type of application to build. Supported values are 'spring-boot', 'quarkus', and 'docker'. This will determine which build workflow to trigger
         default: "spring-boot"
         required: false
         type: string
       add-git-package-token:
+        description: Flag to toggle adding Git package token to the build environment variables, which is required for accessing private repositories when building Docker images. Only applies to 'docker' application type
+        default: false
         required: false
         type: boolean
       native:
+        description: Whether to build a native image (only applies to Quarkus applications)
+        default: false
         required: false
         type: boolean
-        default: false
       lifecycle:
+        description: Lifecycle environment to determine container registry to publish to. Supported values are 'deployment' and 'development'. This will determine the container registry and credentials used for publishing the image
         required: false
         default: "deployment"
         type: string
       cr-type:
+        description: Container registry type. Supported values are 'acr' and 'ghcr'. This will determine the container registry to publish to, with 'acr' publishing to Azure Container Registry and 'ghcr' publishing to GitHub Container Registry
         required: false
         default: "acr"
         type: string

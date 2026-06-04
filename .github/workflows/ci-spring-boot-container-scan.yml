@@ -1,4 +1,36 @@
-name: Container scan
+# Workflow Name: Spring Boot container scan
+#
+# Owner: Digdir Platform team
+#
+# Purpose:
+#   This is part of the golden path for PRs towards main branch. The workflow
+#   should not normally be used directly, but called from the ci-pr-checks
+#   workflow, which checks certain things before calling this workflow with the
+#   correct parameters. This workflow will build a temporary Sprion Boot image
+#   based on the 'application-path' and 'module-name' input parameters. The
+#   workflow will use Paketo buildpacks for building the image, and the
+#   specific builder image can be configured through inputs. After building the
+#.  image, the workflow will run Trivy vulnerability scans.
+#
+#   Flow:
+#     1. Set image metadata (name and tag)
+#     2. Checkout repository
+#     3. Set up JDK
+#     4. Build Spring Boot image using Paketo buildpacks. The image will be
+#        built based on the application path or module name (if provided)
+#     6. Run Trivy vulnerability scan on the built image
+#
+# Trigger:
+#   Triggered by workflow calls (workflow_call)
+#
+# Inputs:
+#   See input section
+#
+# Outputs:
+#   None
+#
+
+name: Spring Boot container scan
 
 permissions: {}
 
@@ -15,7 +47,7 @@ on:
         required: false
         type: string
       image-pack-tag:
-        description: "Docker image pack version tag. Earlier pinned to 0.0.440 due to lifecycle 0.21.2 regression (see: paketo-buildpacks/builder-noble-java-tiny#191). Now fixed: https://github.com/paketo-buildpacks/builder-noble-java-tiny/issues/191#issuecomment-3897508140"
+        description: Docker image pack version tag
         default: "latest"
         required: false
         type: string
@@ -34,14 +66,17 @@ on:
         default: false
         type: boolean
       application-path:
+        description: Path to the application directory to scan with Trivy, relative to the repository root
         default: "./"
         required: false
         type: string
       module-name:
+        description: Name of the module to build, if using a multi-module Maven project. If not provided, the workflow will attempt to build the application based on the application-path input
         default: ""
         required: false
         type: string
       cache-path:
+        description: Path to cache dependencies, relative to the repository root
         default: "**/pom.xml"
         required: false
         type: string

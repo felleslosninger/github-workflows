@@ -1,4 +1,38 @@
-name: dev.docker build and release to crutvikling (Azure container registry)
+# Workflow Name: Build/publish custom Docker development image to ACR
+#
+# Owner: Digdir Platform team / Digdir development teams
+#
+# Purpose:
+#   This workflow is responsible for building and publishing a custom Docker
+#   development image to Azure Container Registry (ACR). The workflow is
+#   designed to be triggered by an app repo workflow on a new main commit. The
+#   workflow will build a Docker image based on a specified Dockerfile in the
+#   app repos, and push it to our 'crutvikling' development ACR. The image will
+#   always be tagged with 'latest' to ensure that the most recent development
+#   image is easily accessible. The workflow uses Docker Buildx to build
+#   multi-platform images for both amd64 and arm64 architectures, ensuring
+#   compatibility with a wide range of development environments. The workflow
+#   also includes a step to set up QEMU, which allows for building images for
+#   different architectures on the same runner.
+#
+#   Flow:
+#     1. Set up QEMU for multi-platform builds
+#     2. Set up Docker Buildx
+#     3. Login to 'crutvikling' Azure Container Registry (ACR)
+#     4. Build and push Docker image to ACR with 'latest' tag for both amd64
+#        and arm64 platforms
+#
+# Trigger:
+#   Triggered by workflow calls (workflow_call)
+#
+# Inputs:
+#   See input section
+#
+# Outputs:
+#   None
+#
+
+name: Build/publish custom Docker development image to ACR
 
 permissions: {}
 
