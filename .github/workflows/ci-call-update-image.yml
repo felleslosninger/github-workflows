@@ -151,10 +151,15 @@ jobs:
         id: set-author-info
         env:
           PUSHER_NAME: ${{ github.event.pusher.name }}
-          PUSHER_EMAIL: ${{ github.event.pusher.email }}
         run: |
-          actor_name="${PUSHER_NAME:-github-actions[bot]}"
-          actor_email="${PUSHER_EMAIL:-41898282+github-actions[bot]@users.noreply.github.com}"
+          # Set bot default if actor name is empty
+          if [ -z "$PUSHER_NAME" ]; then
+            actor_name="github-actions[bot]"
+            actor_email="41898282+github-actions[bot]@users.noreply.github.com"
+          else
+            actor_name="$PUSHER_NAME"
+            actor_email="$PUSHER_NAME@users.noreply.github.com"
+          fi
 
           {
             echo "author-username=$actor_name"
