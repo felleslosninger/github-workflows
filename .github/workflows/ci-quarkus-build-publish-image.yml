@@ -310,7 +310,7 @@ jobs:
           skip-setup: true
 
       - name: Image signing
-        if: ${{ inputs.image-signing == true }}
+        if: inputs.image-signing == true
         uses: felleslosninger/github-workflows/.github/actions/image-signing@main
         with:
           image: "${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}"
