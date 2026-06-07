@@ -245,9 +245,10 @@ jobs:
         env:
           GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
           GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
+          LIFECYCLE: ${{ inputs.maven-lifecycle }}
+          MAVEN_CLEAN: ${{ inputs.maven-clean }}
+          UPDATE_SNAPSHOTS: ${{ inputs.maven-update-snapshots }}
         run: |
-          LIFECYCLE="${{ inputs.maven-lifecycle }}"
-
           case "$LIFECYCLE" in
             test|package|verify|install)
               ;;
@@ -260,13 +261,13 @@ jobs:
           # Build the Maven command dynamically
           ARGS=("-B")
 
-          if [ "${{ inputs.maven-clean }}" == "true" ]; then
+          if [ "$MAVEN_CLEAN" == "true" ]; then
             ARGS+=("clean")
           fi
 
           ARGS+=("$LIFECYCLE")
 
-          if [ "${{ inputs.maven-update-snapshots }}" == "true" ]; then
+          if [ "$UPDATE_SNAPSHOTS" == "true" ]; then
             ARGS+=("--update-snapshots")
           fi
 
