@@ -188,13 +188,13 @@ jobs:
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
           server-id: github
-          server-username: MAVEN_USER
-          server-password: MAVEN_PASSWORD
+          server-username: GH_PACKAGES_READ_USER
+          server-password: GH_PACKAGES_READ_PAT
 
       - name: Maven update version used in application.yaml
         env:
-          MAVEN_USER: ${{ secrets.MAVEN_USER }}
-          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
+          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
           IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
         run: mvn versions:set -B -DnewVersion="$IMAGE_TAG"
 
@@ -217,8 +217,8 @@ jobs:
       - name: Build native image with Maven/Quarkus
         if: inputs.native == true
         env:
-          MAVEN_USER: ${{ secrets.MAVEN_USER }}
-          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
+          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
           IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
           IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
           IMAGE_PACK: ${{ inputs.image-pack }}
@@ -235,16 +235,16 @@ jobs:
             --env BP_MAVEN_POM_FILE="./pom.xml" \
             --env BP_NATIVE_IMAGE="true" \
             --env LANG="C.UTF-8" \
-            --env MAVEN_USER="$MAVEN_USER" \
-            --env MAVEN_PASSWORD="$MAVEN_PASSWORD" \
+            --env GH_PACKAGES_READ_USER="$GH_PACKAGES_READ_USER" \
+            --env GH_PACKAGES_READ_PAT="$GH_PACKAGES_READ_PAT" \
             --creation-time now
 
       # Build JVM image with Paketo buildpacks
       - name: Build image with Maven/Quarkus
         if: inputs.native == false
         env:
-          MAVEN_USER: ${{ secrets.MAVEN_USER }}
-          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
+          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
           IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
           IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
           IMAGE_PACK: ${{ inputs.image-pack }}
@@ -259,8 +259,8 @@ jobs:
             --volume "${HOME}/.m2:/home/cnb/.m2:rw" \
             --env BP_JVM_VERSION="$JAVA_VERSION" \
             --env BP_MAVEN_POM_FILE="./pom.xml" \
-            --env MAVEN_USER="$MAVEN_USER" \
-            --env MAVEN_PASSWORD="$MAVEN_PASSWORD" \
+            --env GH_PACKAGES_READ_USER="$GH_PACKAGES_READ_USER" \
+            --env GH_PACKAGES_READ_PAT="$GH_PACKAGES_READ_PAT" \
             --creation-time now
 
       - name: Run Trivy vulnerability scanner
