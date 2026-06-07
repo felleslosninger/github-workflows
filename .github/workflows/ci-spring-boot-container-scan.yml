@@ -61,10 +61,6 @@ on:
         default: "liberica"
         required: false
         type: string
-      container-scan-offline-mode:
-        description: Container-scan is default download updated CVE definitions via Trivy, enable offline on download problems
-        default: false
-        type: boolean
       application-path:
         description: Path to the application directory to scan with Trivy, relative to the repository root
         default: "./"
@@ -121,9 +117,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    env:
-      DOCKLE_HOST: "unix:///var/run/docker.sock"
-      TRIVY_OFFLINE_SCAN: ${{ inputs.container-scan-offline-mode }}
+
     steps:
       - name: Set image metadata
         id: image-metadata
@@ -151,14 +145,32 @@ jobs:
         env:
           GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
           GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
-        run: mvn install -DskipTests -B spring-boot:build-image -pl ${{ inputs.module-name }} -am -Dspring-boot.build-image.imageName=${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }}
+          MODULE_NAME: ${{ inputs.module-name }}
+          IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
+          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
+          IMAGE_PACK: ${{ inputs.image-pack }}
+          IMAGE_PACK_TAG: ${{ inputs.image-pack-tag }}
+        run: |
+          mvn install -DskipTests -B spring-boot:build-image \
+            -pl "$MODULE_NAME" -am \
+            -Dspring-boot.build-image.imageName="$IMAGE_NAME:$IMAGE_TAG" \
+            -Dspring-boot.build-image.builder="paketobuildpacks/$IMAGE_PACK:$IMAGE_PACK_TAG"
 
       - name: Build image with Maven (application-path, skips tests)
         if: inputs.module-name == ''
         env:
           GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
           GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
-        run: mvn -DskipTests -B spring-boot:build-image --file ${{ inputs.application-path }}pom.xml -Dspring-boot.build-image.imageName=${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }} -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }}
+          APP_PATH: ${{ inputs.application-path }}
+          IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
+          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
+          IMAGE_PACK: ${{ inputs.image-pack }}
+          IMAGE_PACK_TAG: ${{ inputs.image-pack-tag }}
+        run: |
+          mvn -DskipTests -B spring-boot:build-image \
+            --file "${APP_PATH}pom.xml" \
+            -Dspring-boot.build-image.imageName="$IMAGE_NAME:$IMAGE_TAG" \
+            -Dspring-boot.build-image.builder="paketobuildpacks/$IMAGE_PACK:$IMAGE_PACK_TAG"
 
       - name: Run Trivy vulnerability scanner
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
