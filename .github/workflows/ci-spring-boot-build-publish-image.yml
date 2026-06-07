@@ -168,7 +168,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Write inputs to summary
-        uses: felleslosninger/github-workflows/.github/actions/json-to-summary@PF-2417-sanitize-composite-actions
+        uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
         with:
           json-payload: ${{ toJson(inputs) }}
 
@@ -187,7 +187,7 @@ jobs:
     steps:
       - name: Set image metadata
         id: image-metadata
-        uses: felleslosninger/github-workflows/.github/actions/image-metadata@PF-2417-sanitize-composite-actions
+        uses: felleslosninger/github-workflows/.github/actions/image-metadata@main
         with:
           image-name: ${{ inputs.image-name }}
           container-registry: ${{ inputs.container-registry }}
@@ -244,7 +244,7 @@ jobs:
             -Dspring-boot.build-image.createdDate=now
 
       - name: Run Trivy vulnerability scanner
-        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@PF-2417-sanitize-composite-actions
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
           image-ref: ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}
           application-path: ${{ inputs.application-path }}
@@ -267,7 +267,7 @@ jobs:
 
       - name: ACR login
         if: contains(inputs.container-registry, 'azurecr.io')
-        uses: felleslosninger/github-workflows/.github/actions/acr-login@PF-2417-sanitize-composite-actions
+        uses: felleslosninger/github-workflows/.github/actions/acr-login@main
         with:
           client-id: ${{ secrets[inputs.sp-container-registry-client-id] }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -288,7 +288,7 @@ jobs:
           echo "- Image digest: $image_digest" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run Trivy SBOM generation
-        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@PF-2417-sanitize-composite-actions
+        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@main
         with:
           scan-type: image
           artifact-id: ${{ steps.image-metadata.outputs.image-name }}
@@ -299,7 +299,7 @@ jobs:
 
       - name: Image signing
         if: ${{ inputs.image-signing == true }}
-        uses: felleslosninger/github-workflows/.github/actions/image-signing@PF-2417-sanitize-composite-actions
+        uses: felleslosninger/github-workflows/.github/actions/image-signing@main
         with:
           image: ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}
 
