@@ -162,9 +162,6 @@ jobs:
       image-tag: ${{ steps.image-metadata.outputs.image-tag }}
       image-digest: ${{ steps.set-image-digest.outputs.image-digest }}
 
-    env:
-      DOCKLE_HOST: "unix:///var/run/docker.sock"
-
     permissions:
       id-token: write
       contents: write
