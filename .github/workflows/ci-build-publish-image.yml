@@ -207,7 +207,7 @@ jobs:
   run-spring-boot-build:
     needs: input-checks
     if: inputs.application-type == 'spring-boot'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-build-publish-image.yml@PF-2414-sanitize-main-image-build-workflows
+    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-build-publish-image.yml@main
     permissions:
       contents: write
       packages: write
@@ -239,7 +239,7 @@ jobs:
   run-quarkus-build:
     needs: input-checks
     if: inputs.application-type == 'quarkus'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-build-publish-image.yml@PF-2414-sanitize-main-image-build-workflows
+    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-build-publish-image.yml@main
     permissions:
       contents: write
       id-token: write
@@ -267,7 +267,7 @@ jobs:
   run-docker-build:
     needs: input-checks
     if: inputs.application-type == 'docker'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-docker-build-publish-image.yml@PF-2414-sanitize-main-image-build-workflows
+    uses: felleslosninger/github-workflows/.github/workflows/ci-docker-build-publish-image.yml@main
     permissions:
       contents: write
       id-token: write
