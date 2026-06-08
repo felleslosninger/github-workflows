@@ -95,7 +95,15 @@ on:
         default: ''
 
 jobs:
-  build:
+  inputs-to-summary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write inputs to summary
+        uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
+        with:
+          json-payload: ${{ toJson(inputs) }}
+
+  build-publish-package:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -128,9 +136,10 @@ jobs:
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ github.token }}
+          PACKAGE_VERSION: ${{ inputs.package-version }}
         run: |
-          if [ "${{ inputs.package-version }}" != "" ]; then
-            mvn versions:set -B -DnewVersion="${{ inputs.package-version }}"
+          if [ "$PACKAGE_VERSION" != "" ]; then
+            mvn versions:set -B -DnewVersion="$PACKAGE_VERSION"
             echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
@@ -140,12 +149,14 @@ jobs:
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ github.token }}
+          DEPLOYMENT_REPO: ${{ inputs.deployment-repository }}
         run: |
-          if [ "${{ inputs.deployment-repository }}" != "" ]; then
-            mvn -B deploy -DaltDeploymentRepository="github::default::https://maven.pkg.github.com/${{ inputs.deployment-repository }}"
-            echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$DEPLOYMENT_REPO" != "" ]; then
+            mvn -B deploy -DaltDeploymentRepository="github::https://maven.pkg.github.com/$DEPLOYMENT_REPO"
+            echo "- \`mvn deploy\` was executed with custom repository" >> "$GITHUB_STEP_SUMMARY"
           else
             mvn -B deploy
+            echo "- \`mvn deploy\` was executed without repository override" >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Run Trivy SBOM generation
