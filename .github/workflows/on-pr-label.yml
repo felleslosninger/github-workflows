@@ -33,7 +33,7 @@ on:
   workflow_call:
 
 env:
-  internal-commit-string: "(INTERNAL-COMMIT)"
+  INTERNAL_COMMIT_STRING: "(INTERNAL-COMMIT)"
 
 jobs:
   append-internal-commit-string-to-title:
@@ -42,22 +42,23 @@ jobs:
       pull-requests: write
     if: github.event.label.name == 'internal'
     steps:
-      - name: Append ${{ env.internal-commit-string }} to PR title
+      - name: Append ${{ env.INTERNAL_COMMIT_STRING }} to PR title
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # pin@v9.0.0
         with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
+          github-token: ${{ github.token }}
           script: |
             const { pull_request } = context.payload;
-            const newTitle = `${pull_request.title} ${{ env.internal-commit-string }}`;
+            const commitString = process.env.INTERNAL_COMMIT_STRING;
+            const newTitle = `${pull_request.title} ${commitString}`;
 
-            if (!pull_request.title.includes("${{ env.internal-commit-string }}")) {
+            if (!pull_request.title.includes(commitString)) {
               const response = await github.rest.pulls.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: pull_request.number,
                 title: newTitle,
               });
-              core.info("PR title updated to " + response.data.title);
+              core.info(`PR title updated to ${response.data.title}`);
             } else {
-              core.info("PR title already contains ${{ env.internal-commit-string }}");
+              core.info(`PR title already contains ${commitString}`);
             }
