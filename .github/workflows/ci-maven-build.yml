@@ -173,7 +173,7 @@ jobs:
               ;;
           esac
 
-      - name: Run Trivy vulnerability scanner
+      - name: Run Trivy vulnerability scanner (fs)
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
           scan-type: "fs"
