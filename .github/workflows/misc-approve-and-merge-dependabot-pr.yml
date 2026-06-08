@@ -67,7 +67,7 @@ jobs:
     outputs:
       merged: ${{ steps.write-summary.outputs.merged }}
 
-    # if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6.0.2
@@ -85,17 +85,17 @@ jobs:
           echo "types=${arr[*]}" >> "$GITHUB_OUTPUT"
           echo "count=${count}" >> "$GITHUB_OUTPUT"
 
-      # - name: Fetch Dependabot metadata
-      #   if: fromJson(steps.update-types.outputs.count) > 0
-      #   id: dependabot-metadata
-      #   uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # pin@v3.1.0
+      - name: Fetch Dependabot metadata
+        if: fromJson(steps.update-types.outputs.count) > 0
+        id: dependabot-metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # pin@v3.1.0
 
       - name: Approve and auto-merge
         id: auto-merge
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # if: fromJson(steps.update-types.outputs.count) > 0 && contains(steps.update-types.outputs.types, steps.dependabot-metadata.outputs.update-type)
+        if: fromJson(steps.update-types.outputs.count) > 0 && contains(steps.update-types.outputs.types, steps.dependabot-metadata.outputs.update-type)
         run: |
           gh pr edit "$PR_URL" --add-label "auto-merged"
           gh pr review --approve "$PR_URL"
@@ -106,7 +106,7 @@ jobs:
         id: write-summary
         env:
           MERGE_STATUS: ${{ steps.auto-merge.outputs.status }}
-          #UPDATE_TYPE: ${{ steps.dependabot-metadata.outputs.update-type }}
+          UPDATE_TYPE: ${{ steps.dependabot-metadata.outputs.update-type }}
           INPUT_TYPES: ${{ inputs.update-types }}
         run: |
           echo "### Dependabot auto-merge results" >> "$GITHUB_STEP_SUMMARY"
