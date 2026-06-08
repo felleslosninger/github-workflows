@@ -203,7 +203,7 @@ jobs:
             --env GH_PACKAGES_READ_PAT="$GH_PACKAGES_READ_PAT" \
             --creation-time now
 
-      - name: Run Trivy vulnerability scanner
+      - name: Run Trivy vulnerability scanner (image)
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
           image-ref: "${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}"

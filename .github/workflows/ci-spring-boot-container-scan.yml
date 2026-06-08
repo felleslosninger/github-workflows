@@ -172,7 +172,7 @@ jobs:
             -Dspring-boot.build-image.imageName="$IMAGE_NAME:$IMAGE_TAG" \
             -Dspring-boot.build-image.builder="paketobuildpacks/$IMAGE_PACK:$IMAGE_PACK_TAG"
 
-      - name: Run Trivy vulnerability scanner
+      - name: Run Trivy vulnerability scanner (image)
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
           image-ref: ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}

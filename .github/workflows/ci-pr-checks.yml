@@ -274,7 +274,7 @@ jobs:
           # Execute the Maven command
           mvn "${ARGS[@]}"
 
-      - name: Run Trivy vulnerability scanner
+      - name: Run Trivy vulnerability scanner (fs)
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         if: inputs.trivy-library-disable-scan == false
         with:
