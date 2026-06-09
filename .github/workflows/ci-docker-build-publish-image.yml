@@ -152,11 +152,17 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6.0.2
 
       - name: Build image
+        env:
+          APP_PATH: ${{ inputs.application-path }}
+          IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
+          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
+          ADD_TOKEN: ${{ inputs.add-git-package-token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ "${{ inputs.add-git-package-token }}" = "true" ]; then
-            docker build --tag ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }} --file docker/Dockerfile --build-arg GIT_PACKAGE_TOKEN=${{ secrets.GITHUB_TOKEN }} .
+          if [ "$ADD_TOKEN" = "true" ]; then
+            docker build --tag "$IMAGE_NAME:$IMAGE_TAG" --file docker/Dockerfile --build-arg GIT_PACKAGE_TOKEN="$GITHUB_TOKEN" .
           else
-            docker build --tag ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }} --file ${{ inputs.application-path }}/Dockerfile .
+            docker build --tag "$IMAGE_NAME:$IMAGE_TAG" --file "$APP_PATH/Dockerfile" .
           fi
 
       - name: Run Trivy vulnerability scanner
@@ -182,13 +188,19 @@ jobs:
           acr-name: ${{ inputs.container-registry }}
 
       - name: "Push image"
-        run: docker push ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}
+        env:
+          IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
+          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
+        run: docker push "$IMAGE_NAME:$IMAGE_TAG"
 
       - name: Set image digest
         id: set-image-digest
+        env:
+          IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
+          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
         run: |
           image_digest=$(docker inspect \
-            --format='{{.RepoDigests}}' ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }} \
+            --format='{{.RepoDigests}}' "$IMAGE_NAME:$IMAGE_TAG" \
             | cut -d '@' -f 2 \
             | cut -d ']' -f 1)
           echo "image-digest=$image_digest" >> "$GITHUB_OUTPUT"
@@ -205,7 +217,7 @@ jobs:
           skip-setup: true
 
       - name: Image signing
-        if: ${{ inputs.image-signing == true }}
+        if: inputs.image-signing == true
         uses: felleslosninger/github-workflows/.github/actions/image-signing@main
         with:
           image: ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}

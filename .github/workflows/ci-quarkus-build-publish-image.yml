@@ -162,9 +162,6 @@ jobs:
       image-tag: ${{ steps.image-metadata.outputs.image-tag }}
       image-digest: ${{ steps.set-image-digest.outputs.image-digest }}
 
-    env:
-      DOCKLE_HOST: "unix:///var/run/docker.sock"
-
     permissions:
       id-token: write
       contents: write
@@ -188,16 +185,19 @@ jobs:
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
           server-id: github
-          server-username: MAVEN_USER
-          server-password: MAVEN_PASSWORD
+          server-username: GH_PACKAGES_READ_USER
+          server-password: GH_PACKAGES_READ_PAT
 
       - name: Maven update version used in application.yaml
         env:
-          MAVEN_USER: ${{ secrets.MAVEN_USER }}
-          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
-        run: mvn versions:set -B -DnewVersion="${{ steps.image-metadata.outputs.image-tag }}"
+          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
+          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
+          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
+        run: mvn versions:set -B -DnewVersion="$IMAGE_TAG"
 
       - name: Install pack
+        env:
+          PACK_VERSION: 0.39.1
         run: |
           #!/usr/bin/env bash
           set -euo pipefail
@@ -209,47 +209,55 @@ jobs:
             --silent \
             "https://github.com/buildpacks/pack/releases/download/v${PACK_VERSION}/pack-v${PACK_VERSION}-linux.tgz" \
           | sudo tar -C /usr/local/bin --no-same-owner -xzv pack
-        env:
-          PACK_VERSION: 0.39.1
 
       # Build GraalVM native image with Paketo buildpacks
       - name: Build native image with Maven/Quarkus
         if: inputs.native == true
         env:
-          MAVEN_USER: ${{ secrets.MAVEN_USER }}
-          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
+          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
+          IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
+          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
+          IMAGE_PACK: ${{ inputs.image-pack }}
+          IMAGE_PACK_TAG: ${{ inputs.image-pack-tag }}
+          JAVA_VERSION: ${{ inputs.java-version }}
         run: |
-          pack build ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }} \
+          pack build "$IMAGE_NAME:$IMAGE_TAG" \
             --path . \
             --buildpack docker://paketobuildpacks/quarkus \
             --buildpack docker://paketobuildpacks/java-native-image \
-            --builder paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }} \
+            --builder "paketobuildpacks/$IMAGE_PACK:$IMAGE_PACK_TAG" \
             --volume "${HOME}/.m2:/home/cnb/.m2:rw" \
-            --env BP_JVM_VERSION="${{ inputs.java-version }}" \
+            --env BP_JVM_VERSION="$JAVA_VERSION" \
             --env BP_MAVEN_POM_FILE="./pom.xml" \
             --env BP_NATIVE_IMAGE="true" \
             --env LANG="C.UTF-8" \
-            --env MAVEN_USER="${{ env.MAVEN_USER }}" \
-            --env MAVEN_PASSWORD="${{ env.MAVEN_PASSWORD }}" \
+            --env GH_PACKAGES_READ_USER="$GH_PACKAGES_READ_USER" \
+            --env GH_PACKAGES_READ_PAT="$GH_PACKAGES_READ_PAT" \
             --creation-time now
 
       # Build JVM image with Paketo buildpacks
       - name: Build image with Maven/Quarkus
         if: inputs.native == false
         env:
-          MAVEN_USER: ${{ secrets.MAVEN_USER }}
-          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
+          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
+          IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
+          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
+          IMAGE_PACK: ${{ inputs.image-pack }}
+          IMAGE_PACK_TAG: ${{ inputs.image-pack-tag }}
+          JAVA_VERSION: ${{ inputs.java-version }}
         run: |
-          pack build ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }} \
+          pack build "$IMAGE_NAME:$IMAGE_TAG" \
             --path . \
             --buildpack docker://paketobuildpacks/quarkus \
             --buildpack docker://paketobuildpacks/java \
-            --builder paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }} \
+            --builder "paketobuildpacks/$IMAGE_PACK:$IMAGE_PACK_TAG" \
             --volume "${HOME}/.m2:/home/cnb/.m2:rw" \
-            --env BP_JVM_VERSION="${{ inputs.java-version }}" \
+            --env BP_JVM_VERSION="$JAVA_VERSION" \
             --env BP_MAVEN_POM_FILE="./pom.xml" \
-            --env MAVEN_USER="${{ env.MAVEN_USER }}" \
-            --env MAVEN_PASSWORD="${{ env.MAVEN_PASSWORD }}" \
+            --env GH_PACKAGES_READ_USER="$GH_PACKAGES_READ_USER" \
+            --env GH_PACKAGES_READ_PAT="$GH_PACKAGES_READ_PAT" \
             --creation-time now
 
       - name: Run Trivy vulnerability scanner
@@ -273,13 +281,19 @@ jobs:
           acr-name: ${{ inputs.container-registry }}
 
       - name: Push image
-        run: docker push ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}
+        env:
+          IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
+          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
+        run: docker push "$IMAGE_NAME:$IMAGE_TAG"
 
       - name: Set image digest
         id: set-image-digest
+        env:
+          IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
+          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
         run: |
           image_digest=$(docker inspect \
-            --format='{{.RepoDigests}}' ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }} \
+            --format='{{.RepoDigests}}' "$IMAGE_NAME:$IMAGE_TAG" \
             | cut -d '@' -f 2 \
             | cut -d ']' -f 1)
           echo "image-digest=$image_digest" >> "$GITHUB_OUTPUT"
@@ -296,7 +310,7 @@ jobs:
           skip-setup: true
 
       - name: Image signing
-        if: ${{ inputs.image-signing == true }}
+        if: inputs.image-signing == true
         uses: felleslosninger/github-workflows/.github/actions/image-signing@main
         with:
           image: "${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}"

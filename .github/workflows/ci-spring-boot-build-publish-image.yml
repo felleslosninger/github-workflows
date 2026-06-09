@@ -204,16 +204,18 @@ jobs:
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
           server-id: github
-          server-username: MAVEN_USER
-          server-password: MAVEN_PASSWORD
+          server-username: GH_PACKAGES_READ_USER
+          server-password: GH_PACKAGES_READ_PAT
 
       - name: Maven update version used in application.yaml
         env:
-          MAVEN_USER: ${{ secrets.MAVEN_USER }}
-          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
+          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
+          UPDATE_VERSIONS: ${{ inputs.update-versions }}
+          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
         run: |
-          if [ "${{ inputs.update-versions }}" == "true" ]; then
-            mvn versions:set -B -DnewVersion="${{ steps.image-metadata.outputs.image-tag }}"
+          if [ "$UPDATE_VERSIONS" == "true" ]; then
+            mvn versions:set -B -DnewVersion="$IMAGE_TAG"
             echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
@@ -222,25 +224,35 @@ jobs:
       - name: Build image with Maven/Spring Boot (module-name)
         if: inputs.module-name != ''
         env:
-          MAVEN_USER: ${{ secrets.MAVEN_USER }}
-          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
+          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
+          MODULE_NAME: ${{ inputs.module-name }}
+          IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
+          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
+          IMAGE_PACK: ${{ inputs.image-pack }}
+          IMAGE_PACK_TAG: ${{ inputs.image-pack-tag }}
         run: |
           mvn install -B spring-boot:build-image \
-            -pl ${{ inputs.module-name }} -am  \
-            -Dspring-boot.build-image.imageName=${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }} \
-            -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }} \
+            -pl "$MODULE_NAME" -am  \
+            -Dspring-boot.build-image.imageName="$IMAGE_NAME:$IMAGE_TAG" \
+            -Dspring-boot.build-image.builder="paketobuildpacks/$IMAGE_PACK:$IMAGE_PACK_TAG" \
             -Dspring-boot.build-image.createdDate=now
 
       - name: Build image with Maven/Spring Boot (application-path)
         if: inputs.module-name == ''
         env:
-          MAVEN_USER: ${{ secrets.MAVEN_USER }}
-          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
+          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
+          APP_PATH: ${{ inputs.application-path }}
+          IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
+          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
+          IMAGE_PACK: ${{ inputs.image-pack }}
+          IMAGE_PACK_TAG: ${{ inputs.image-pack-tag }}
         run: |
           mvn -B spring-boot:build-image \
-            --file ${{ inputs.application-path }}pom.xml \
-            -Dspring-boot.build-image.imageName=${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }} \
-            -Dspring-boot.build-image.builder=paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }} \
+            --file "${APP_PATH}pom.xml" \
+            -Dspring-boot.build-image.imageName="$IMAGE_NAME:$IMAGE_TAG" \
+            -Dspring-boot.build-image.builder="paketobuildpacks/$IMAGE_PACK:$IMAGE_PACK_TAG" \
             -Dspring-boot.build-image.createdDate=now
 
       - name: Run Trivy vulnerability scanner
@@ -275,13 +287,19 @@ jobs:
           acr-name: ${{ inputs.container-registry }}
 
       - name: Push image
-        run: docker push ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}
+        env:
+          IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
+          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
+        run: docker push "$IMAGE_NAME:$IMAGE_TAG"
 
       - name: Set image digest
         id: set-image-digest
+        env:
+          IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
+          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
         run: |
           image_digest=$(docker inspect \
-            --format='{{.RepoDigests}}' ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }} \
+            --format='{{.RepoDigests}}' "$IMAGE_NAME:$IMAGE_TAG" \
             | cut -d '@' -f 2 \
             | cut -d ']' -f 1)
           echo "image-digest=$image_digest" >> "$GITHUB_OUTPUT"
@@ -298,7 +316,7 @@ jobs:
           skip-setup: true
 
       - name: Image signing
-        if: ${{ inputs.image-signing == true }}
+        if: inputs.image-signing == true
         uses: felleslosninger/github-workflows/.github/actions/image-signing@main
         with:
           image: ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}
