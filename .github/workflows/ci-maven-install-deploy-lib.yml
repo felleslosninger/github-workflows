@@ -106,7 +106,15 @@ on:
         default: ''
 
 jobs:
-  build:
+  inputs-to-summary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write inputs to summary
+        uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
+        with:
+          json-payload: ${{ toJson(inputs) }}
+
+  build-publish-package:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -131,9 +139,10 @@ jobs:
         env:
           GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
           GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
+          PACKAGE_VERSION: ${{ inputs.package-version }}
         run: |
-          if [ "${{ inputs.package-version }}" != "" ]; then
-            mvn versions:set -B -DnewVersion="${{ inputs.package-version }}"
+          if [ -n "$PACKAGE_VERSION" ]; then
+            mvn versions:set -B -DnewVersion="$PACKAGE_VERSION"
             echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
@@ -143,14 +152,15 @@ jobs:
         env:
           GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
           GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
+          PROFILE: ${{ inputs.profile }}
         run: |
-          if [ -n "${{ inputs.profile }}" ]; then
-            mvn -B clean install --update-snapshots -P"${{ inputs.profile }}"
+          if [ -n "$PROFILE" ]; then
+            mvn -B clean install --update-snapshots -P"$PROFILE"
           else
             mvn -B clean install --update-snapshots
           fi
 
-      - name: Run Trivy vulnerability scanner
+      - name: Run Trivy vulnerability scanner (fs)
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
           scan-type: "fs"
@@ -161,24 +171,32 @@ jobs:
           trivy-version: ${{ inputs.trivy-version }}
 
       - name: Overwrite m2 settings to publish libs
+        env:
+          PUBLISH_ACTOR: ${{ github.actor }}
+          PUBLISH_TOKEN: ${{ github.token }}
         run: |
-          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ github.token }}</password></server></servers></settings>" > ~/.m2/settings.xml
+          echo "<settings><servers><server><id>github</id><username>${PUBLISH_ACTOR}</username><password>${PUBLISH_TOKEN}</password></server></servers></settings>" > ~/.m2/settings.xml
 
       - name: Maven deploy
+        env:
+          PROFILE: ${{ inputs.profile }}
+          DEPLOYMENT_REPO: ${{ inputs.deployment-repository }}
+          APP_PATH: ${{ inputs.application-path }}
         run: |
-          MAVEN_CMD="mvn -B deploy"
+          TARGET_DIR="${APP_PATH:-.}"
+          cd "$TARGET_DIR" || exit 1
 
-          if [ "${{ inputs.profile }}" != "" ]; then
-            MAVEN_CMD="$MAVEN_CMD -P${{ inputs.profile }}"
+          MAVEN_ARGS=("-B" "deploy")
+
+          if [ -n "$PROFILE" ]; then
+            MAVEN_ARGS+=("-P$PROFILE")
           fi
 
-          if [ "${{ inputs.deployment-repository }}" != "" ]; then
-            MAVEN_CMD="$MAVEN_CMD -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/${{ inputs.deployment-repository }}"
+          if [ -n "$DEPLOYMENT_REPO" ]; then
+            MAVEN_ARGS+=("-DaltDeploymentRepository=github::https://maven.pkg.github.com/$DEPLOYMENT_REPO")
           fi
 
-          cd ${{ inputs.application-path }} # Move into module path if multi module project, default is "./" so no operation if not specified.
-
-          $MAVEN_CMD
+          mvn "${MAVEN_ARGS[@]}"
 
       # This is a temporary step specifically for handling multi-module
       # repositories with Trivy SBOM generation for Maven artifacts. We strip

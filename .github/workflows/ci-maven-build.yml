@@ -154,15 +154,15 @@ jobs:
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
           server-id: github
-          server-username: MAVEN_USER
-          server-password: MAVEN_PASSWORD
+          server-username: GH_PACKAGES_READ_USER
+          server-password: GH_PACKAGES_READ_PAT
 
       - name: Run mvn ${{ inputs.maven-lifecycle }}
         env:
-          MAVEN_USER: ${{ secrets.MAVEN_USER }}
-          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
+          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
+          LIFECYCLE: ${{ inputs.maven-lifecycle }}
         run: |
-          LIFECYCLE="${{ inputs.maven-lifecycle }}"
           case "$LIFECYCLE" in
             test|package|verify|install)
               mvn -B "$LIFECYCLE"
@@ -173,7 +173,7 @@ jobs:
               ;;
           esac
 
-      - name: Run Trivy vulnerability scanner
+      - name: Run Trivy vulnerability scanner (fs)
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
           scan-type: "fs"
