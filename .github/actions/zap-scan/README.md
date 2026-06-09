@@ -58,9 +58,9 @@ on:
 jobs:
   zap:
     runs-on: ubuntu-latest
-    timeout-minutes: 20 # Arbitrary value, consider increasing it if needed. 
+    timeout-minutes: 20 # Arbitrary value, consider increasing it if needed.
     steps:
-      - uses: felleslosninger/github-workflows/.github/actions/zap-scan@main 
+      - uses: felleslosninger/github-workflows/.github/actions/zap-scan@main
         with:
           target: "https://example-url.no"
           scan_api: "false"
@@ -82,14 +82,14 @@ name: ZAP api scan <appname>
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 2 15 * *" # Example of running the workflow every month on the 15th at 02:00 UTC. 
+    - cron: "0 2 15 * *" # Example of running the workflow every month on the 15th at 02:00 UTC.
 
 jobs:
   zap:
     runs-on: ubuntu-latest
-    timeout-minutes: 20 # Arbitrary value, consider increasing it if needed. 
+    timeout-minutes: 20 # Arbitrary value, consider increasing it if needed.
     steps:
-      - uses: felleslosninger/github-workflows/.github/actions/zap-scan@main 
+      - uses: felleslosninger/github-workflows/.github/actions/zap-scan@main
         with:
           target: "https://example-url.no/openapi.json"
           scan_api: "true"

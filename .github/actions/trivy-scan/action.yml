@@ -69,25 +69,25 @@ runs:
 
     - name: Validate inputs
       shell: bash
+      env:
+        SCAN_TYPE: ${{ inputs.scan-type }}
+        IMAGE_REF: ${{ inputs.image-ref }}
       run: |
-        if [[ "${{ inputs.scan-type }}" == "image" && -z "${{ inputs.image-ref }}" ]]; then
-          echo "::error:: Invalid inputs: 'image-ref' is required when
-          'scan-type' is set to 'image'."
+        if [[ "$SCAN_TYPE" == "image" && -z "$IMAGE_REF" ]]; then
+          echo "::error:: Invalid inputs: 'image-ref' is required when 'scan-type' is set to 'image'."
           {
             echo "> [!WARNING]"
-            echo "> **Input validation failed:** You requested an 'image' scan
-            but did not provide the 'image-ref' parameter. Please provide a valid image reference to scan."
-          } >> $GITHUB_STEP_SUMMARY
+            echo "> **Input validation failed:** You requested an 'image' scan but did not provide the 'image-ref' parameter. Please provide a valid image reference to scan."
+          } >> "$GITHUB_STEP_SUMMARY"
           exit 1
         fi
 
-        if [[ "${{ inputs.scan-type }}" != "image" && "${{ inputs.scan-type }}" != "fs" ]]; then
-          echo "::error:: Invalid inputs: 'scan-type' must be either 'image' or
-          'fs'."
+        if [[ "$SCAN_TYPE" != "image" && "$SCAN_TYPE" != "fs" ]]; then
+          echo "::error:: Invalid inputs: 'scan-type' must be either 'image' or 'fs'."
           {
             echo "> [!WARNING]"
             echo "> **Input validation failed:** 'scan-type' must be either 'image' or 'fs'."
-          } >> $GITHUB_STEP_SUMMARY
+          } >> "$GITHUB_STEP_SUMMARY"
           exit 1
         fi
 
@@ -141,7 +141,7 @@ runs:
         } >> "$GITHUB_STEP_SUMMARY"
 
     - name: Run Trivy vulnerability library scan
-      if: ${{ inputs.library-disable-scan != 'true' }}
+      if: inputs.library-disable-scan != 'true'
       uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # pin@v0.36.0
       id: trivy-library
       env:
@@ -167,7 +167,7 @@ runs:
         skip-dirs: "layers,cnb"
 
     - name: Publish Trivy library scan output to step summary
-      if: ${{ always() && inputs.library-disable-scan != 'true' }}
+      if: always() && inputs.library-disable-scan != 'true'
       shell: bash
       env:
         SCAN_OUTCOME: ${{ steps.trivy-library.outcome }}
@@ -198,7 +198,7 @@ runs:
         fi
 
     - name: Run Trivy vulnerability OS scan
-      if: ${{ inputs.os-disable-scan != 'true' && inputs.scan-type == 'image'}}
+      if: inputs.os-disable-scan != 'true' && inputs.scan-type == 'image'
       uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # pin@v0.36.0
       id: trivy-os
       env:
@@ -224,7 +224,7 @@ runs:
         skip-setup-trivy: ${{ inputs.library-disable-scan != 'true' }}
 
     - name: Publish Trivy OS scan output to step summary
-      if: ${{ always() && inputs.os-disable-scan != 'true' && inputs.scan-type == 'image' }}
+      if: always() && inputs.os-disable-scan != 'true' && inputs.scan-type == 'image'
       shell: bash
       env:
         SCAN_OUTCOME: ${{ steps.trivy-os.outcome }}

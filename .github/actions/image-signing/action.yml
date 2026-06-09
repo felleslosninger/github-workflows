@@ -12,6 +12,8 @@ runs:
   steps:
     - name: Log image signing inputs
       shell: bash
+      env:
+        IMAGE: ${{ inputs.image }}
       run: |
         {
           echo "### Image signing"
@@ -19,7 +21,7 @@ runs:
           echo "#### Image signing inputs"
           echo "| Key                 | Value |"
           echo "| ------------------- | ----- |"
-          echo "| image | ${{ inputs.image }} |"
+          echo "| image | $IMAGE |"
         } >> "$GITHUB_STEP_SUMMARY"
 
     - name: Install Cosign
@@ -67,48 +69,71 @@ runs:
 
     - name: Generate provenance metadata
       shell: bash
+      env:
+        SUBJECT_NAME: ${{ steps.set-signing-metadata.outputs.subject-name }}
+        IMAGE_DIGEST: ${{ steps.set-signing-metadata.outputs.image-digest }}
+        COMMIT_SHA: ${{ github.sha }}
+        ACTOR: ${{ github.actor }}
+        JOB: ${{ github.job }}
+        REPO_OWNER_ID: ${{ github.repository_owner_id }}
+        WORKFLOW_REF: ${{ github.workflow_ref }}
+        RUN_ID: ${{ github.run_id }}
+        REPO: ${{ github.repository }}
       run: |
         # Generate according to spec https://slsa.dev/spec/v1.0/provenance
-        cat <<EOF > ./provenance.json
-        {
-          "_type": "https://slsa.dev/provenance/v1",
-          "subject": [
-            {
-              "name": "${{ steps.set-signing-metadata.outputs.subject-name }}",
-              "digest": {
-                "sha256": "${{ steps.set-signing-metadata.outputs.image-digest }}"
+        # Using jq ensures all variables are safely JSON-escaped
+        STARTED_ON=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+        jq -n \
+          --arg subject "$SUBJECT_NAME" \
+          --arg digest "$IMAGE_DIGEST" \
+          --arg image "$TARGET_IMAGE" \
+          --arg commit "$COMMIT_SHA" \
+          --arg author "$ACTOR" \
+          --arg job "$JOB" \
+          --arg ownerId "$REPO_OWNER_ID" \
+          --arg builder "$WORKFLOW_REF" \
+          --arg runId "$RUN_ID" \
+          --arg repo "$REPO" \
+          --arg startedOn "$STARTED_ON" \
+          '{
+            "_type": "https://slsa.dev/provenance/v1",
+            "subject": [
+              {
+                "name": $subject,
+                "digest": {
+                  "sha256": $digest
+                }
               }
-            }
-          ],
-          "buildDefinition": {
-            "buildType": "https://github.com/github-actions/build",
-            "externalParameters": {
-              "image": "$TARGET_IMAGE",
-              "commit": "${{ github.sha }}",
-              "author": "${{ github.actor }}",
-              "job": "${{ github.job }}",
-              "repositoryOwnerId": "${{ github.repository_owner_id }}"
-            }
-          },
-          "runDetails": {
-            "builder": {
-              "id": "${{ github.workflow_ref }}"
+            ],
+            "buildDefinition": {
+              "buildType": "https://github.com/github-actions/build",
+              "externalParameters": {
+                "image": $image,
+                "commit": $commit,
+                "author": $author,
+                "job": $job,
+                "repositoryOwnerId": $ownerId
+              }
             },
-            "metadata": {
-              "invocationId": "${{ github.run_id }}",
-              "startedOn": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-            }
-          },
-          "materials": [
-            {
-              "uri": "git+https://github.com/${{ github.repository }}.git",
-              "digest": {
-                "sha1": "${{ github.sha }}"
+            "runDetails": {
+              "builder": {
+                "id": $builder
+              },
+              "metadata": {
+                "invocationId": $runId,
+                "startedOn": $startedOn
               }
-            }
-          ]
-        }
-        EOF
+            },
+            "materials": [
+              {
+                "uri": ("git+https://github.com/" + $repo + ".git"),
+                "digest": {
+                  "sha1": $commit
+                }
+              }
+            ]
+          }' > ./provenance.json
 
     - name: Sign and attest the image
       shell: bash
