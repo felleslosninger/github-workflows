@@ -54,6 +54,7 @@ on:
         type: string
     outputs:
       merged:
+        description: Whether the PR was merged or not (true|false)
         value: ${{ jobs.dependabot.outputs.merged }}
 
 jobs:
@@ -76,43 +77,49 @@ jobs:
         env:
           UPDATE_TYPES: ${{ inputs.update-types }}
         run: |
-          arr="(${UPDATE_TYPES//;/ })"
+          IFS=';' read -ra arr <<< "$UPDATE_TYPES"
           count=${#arr[@]}
+
           echo "Types: ${arr[*]}"
           echo "Count: ${count}"
           echo "types=${arr[*]}" >> "$GITHUB_OUTPUT"
           echo "count=${count}" >> "$GITHUB_OUTPUT"
 
       - name: Fetch Dependabot metadata
-        if: ${{ fromJson(steps.update-types.outputs.count) > 0 }}
+        if: fromJson(steps.update-types.outputs.count) > 0
         id: dependabot-metadata
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # pin@v3.1.0
 
       - name: Approve and auto-merge
         id: auto-merge
-        if: ${{ fromJson(steps.update-types.outputs.count) > 0 && contains(steps.update-types.outputs.types, steps.dependabot-metadata.outputs.update-type) }}
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: fromJson(steps.update-types.outputs.count) > 0 && contains(steps.update-types.outputs.types, steps.dependabot-metadata.outputs.update-type)
         run: |
           gh pr edit "$PR_URL" --add-label "auto-merged"
           gh pr review --approve "$PR_URL"
           gh pr merge --auto --squash "$PR_URL"
           echo "status=true" >> "$GITHUB_OUTPUT"
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Write summary
         id: write-summary
+        env:
+          MERGE_STATUS: ${{ steps.auto-merge.outputs.status }}
+          UPDATE_TYPE: ${{ steps.dependabot-metadata.outputs.update-type }}
+          INPUT_TYPES: ${{ inputs.update-types }}
         run: |
-          echo "# Results" >> "$GITHUB_STEP_SUMMARY"
-          if [ ${{ steps.auto-merge.outputs.status }} == "true" ]; then
-            echo "- Done with auto-merge! :white_check_mark:" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Dependabot auto-merge results" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$MERGE_STATUS" == "true" ]; then
+            echo "- :white_check_mark: Done with auto-merge!" >> "$GITHUB_STEP_SUMMARY"
             echo "merged=true" >> "$GITHUB_OUTPUT"
           else
             {
-              echo "- Skipped because of unsupported update type, ${{ steps.dependabot-metadata.outputs.update-type}} :x:"
+              echo "- :x: Skipped because of unsupported update type: $UPDATE_TYPE"
               echo "> [!NOTE]"
               echo "> Supported types are:"
-              echo "> ${{ inputs.update-types }}"
+              echo "> $INPUT_TYPES"
             } >> "$GITHUB_STEP_SUMMARY"
             echo "merged=false" >> "$GITHUB_OUTPUT"
           fi
