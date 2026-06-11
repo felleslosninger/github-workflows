@@ -170,7 +170,7 @@ jobs:
           fi
 
           {
-            echo "author-username=$actor_name"
+            echo "author-username=$PUSHER_NAME"
             echo "author-email=$actor_email"
             echo "author-name=$actor_name"
           } >> "$GITHUB_OUTPUT"
@@ -223,18 +223,18 @@ jobs:
         run: |
           {
             echo "# Outputs"
-            echo "| Key                     | Value                                                 |"
-            echo "| ----------------------- | ----------------------------------------------------- |"
-            echo "| author-email            | $AUTHOR_EMAIL                                         |"
-            echo "| author-name             | $AUTHOR_NAME                                          |"
-            echo "| author-username         | $AUTHOR_USERNAME                                      |"
-            echo "| dependabot              | $DEPENDABOT                                           |"
-            echo "| image-name              | $IMAGE_NAME                                           |"
-            echo "| image                   | $IMAGE_FULL                                           |"
-            echo "| pr-labels               | $PR_LABELS                                            |"
-            echo "| pr-number               | $PR_NUMBER                                            |"
-            echo "| repository              | $REPOSITORY                                           |"
-            echo "| sha                     | $SHA                                                  |"
+            echo "| Key             | Value            |"
+            echo "| --------------- | ---------------- |"
+            echo "| author-email    | $AUTHOR_EMAIL    |"
+            echo "| author-name     | $AUTHOR_NAME     |"
+            echo "| author-username | $AUTHOR_USERNAME |"
+            echo "| dependabot      | $DEPENDABOT      |"
+            echo "| image-name      | $IMAGE_NAME      |"
+            echo "| image           | $IMAGE_FULL      |"
+            echo "| pr-labels       | $PR_LABELS       |"
+            echo "| pr-number       | $PR_NUMBER       |"
+            echo "| repository      | $REPOSITORY      |"
+            echo "| sha             | $SHA             |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Call Dispatch To Start Promotion
