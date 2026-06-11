@@ -170,7 +170,7 @@ jobs:
           fi
 
           {
-            echo "author-username=$actor_name"
+            echo "author-username=$PUSHER_NAME"
             echo "author-email=$actor_email"
             echo "author-name=$actor_name"
           } >> "$GITHUB_OUTPUT"
