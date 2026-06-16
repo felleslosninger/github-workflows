@@ -1,0 +1,90 @@
+name: Validate PR Title
+description: Validation for Pull Request titles
+author: Digdir Platform Team / Digdir Development Team
+
+inputs:
+  pull-request-title:
+    description: The title of the pull request
+    required: true
+  allowed-prefixes:
+    description: Comma-separated list of allowed prefixes
+    required: false
+    default: "Bump,ID-,MIN-,PBLEID-,MP-,KRR-,PF-,AOS-,SP-,EIN-,EUW-,MOVE-"
+  min-length-title:
+    description: Minimum length of the title
+    required: false
+    default: '10'
+  max-length-title:
+    description: Maximum length of the title (-1 to disable)
+    required: false
+    default: '100'
+  case-sensitive-prefix:
+    description: Whether prefix validation is case-sensitive ("true" or "false")
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Write inputs to summary
+      uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
+      with:
+        json-payload: ${{ toJson(inputs) }}
+
+    - name: Validate Pull Request Title
+      shell: bash
+      env:
+        PR_TITLE: ${{ inputs.pull-request-title }}
+        ALLOWED_PREFIXES: ${{ inputs.allowed-prefixes }}
+        MIN_LENGTH: ${{ inputs.min-length-title }}
+        MAX_LENGTH: ${{ inputs.max-length-title }}
+        CASE_SENSITIVE: ${{ inputs.case-sensitive-prefix }}
+        REGEX_MATCH: ${{ inputs.regex-match }}
+      run: |
+        # Length checks
+        TITLE_LEN=${#PR_TITLE}
+
+        if [[ "$TITLE_LEN" -lt "$MIN_LENGTH" ]]; then
+          echo "::error::Pull Request title '$PR_TITLE' is shorter than the minimum length ($MIN_LENGTH)."
+          exit 1
+        fi
+
+        if [[ "$MAX_LENGTH" -gt 0 ]] && [[ "$TITLE_LEN" -gt "$MAX_LENGTH" ]]; then
+          echo "::error::Pull Request title '$PR_TITLE' is longer than the maximum length ($MAX_LENGTH)."
+          exit 1
+        fi
+
+        # Prefix check
+        if [[ -n "$ALLOWED_PREFIXES" ]]; then
+          # Convert comma-separated string to an array
+          IFS=',' read -ra PREFIX_ARRAY <<< "$ALLOWED_PREFIXES"
+          MATCH_FOUND=false
+
+          for RAW_PREFIX in "${PREFIX_ARRAY[@]}"; do
+            # Trim leading/trailing whitespace using xargs
+            PREFIX=$(echo "$RAW_PREFIX" | xargs)
+
+            if [[ "$CASE_SENSITIVE" == "true" ]]; then
+              if [[ "$PR_TITLE" == "$PREFIX"* ]]; then
+                MATCH_FOUND=true
+                break
+              fi
+            else
+              # Case-insensitive match using bash parameter expansion
+              TITLE_LOWER="${PR_TITLE,,}"
+              PREFIX_LOWER="${PREFIX,,}"
+
+              if [[ "$TITLE_LOWER" == "$PREFIX_LOWER"* ]]; then
+                MATCH_FOUND=true
+                break
+              fi
+            fi
+          done
+
+          if [[ "$MATCH_FOUND" == "false" ]]; then
+            echo "::error::Pull Request title '$PR_TITLE' did not start with any of the allowed prefixes: $ALLOWED_PREFIXES"
+            exit 1
+          fi
+        fi
+
+        echo "::notice::Pull request title passed all validation checks!"
