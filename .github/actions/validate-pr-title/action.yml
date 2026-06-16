@@ -39,7 +39,6 @@ runs:
         MIN_LENGTH: ${{ inputs.min-length-title }}
         MAX_LENGTH: ${{ inputs.max-length-title }}
         CASE_SENSITIVE: ${{ inputs.case-sensitive-prefix }}
-        REGEX_MATCH: ${{ inputs.regex-match }}
       run: |
         # Length checks
         TITLE_LEN=${#PR_TITLE}
