@@ -190,33 +190,20 @@ on:
         default: ''
 
 jobs:
-  verify-pull-request-title:
+  validate-pr-title:
     if: |
       inputs.enable-pr-title-verify == true &&
       github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - name: Check PR title
-        id: check-pr-title
-        uses: felleslosninger/github-actions/validate-pull-request-title@d7888fecafbf48e5845c8a0c76389f71c517ee6d # pin@v0.8.0
+      - name: Validate PR title
+        uses: felleslosninger/github-workflows/.github/actions/validate-pr-title@main
         with:
           pull-request-title: ${{ inputs.pull-request-title }}
-          allowed-prefixes: ${{ inputs.pull-request-allowed-prefixes }}
           min-length-title: ${{ inputs.pull-request-min-length-title }}
           max-length-title: ${{ inputs.pull-request-max-length-title }}
           case-sensitive-prefix: ${{ inputs.pull-request-case-sensitive-prefix }}
-
-      - name: Write inputs to summary
-        uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
-        with:
-          json-payload: ${{ toJson(inputs) }}
-
-      - name: Fail if PR title is not valid
-        if: steps.check-pr-title.outputs.is-valid == 'false'
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # pin@v9.0.0
-        with:
-          script: |
-            core.setFailed('${{ steps.check-pr-title.outputs.error-message }}')
+          allowed-prefixes: ${{ inputs.pull-request-allowed-prefixes }}
 
   build-and-test-java:
     if: |
