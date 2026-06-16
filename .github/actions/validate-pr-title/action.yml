@@ -9,7 +9,7 @@ inputs:
   allowed-prefixes:
     description: Comma-separated list of allowed prefixes
     required: false
-    default: "Bump,ID-,MIN-,PBLEID-,MP-,KRR-,PF-,AOS-,SP-,EIN-,EUW-,MOVE-"
+    default: "Bump,Revert,ID-,MIN-,PBLEID-,MP-,KRR-,PF-,AOS-,SP-,EIN-,EUW-,MOVE-"
   min-length-title:
     description: Minimum length of the title
     required: false

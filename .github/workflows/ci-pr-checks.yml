@@ -97,6 +97,7 @@ on:
         description: Comma-separated list of allowed prefixes for pull request title validation
         type: string
         required: false
+        default: "Bump,Revert,ID-,MIN-,PBLEID-,MP-,KRR-,PF-,AOS-,SP-,EIN-,EUW-,MOVE-"
       pull-request-min-length-title:
         description: Minimum length for pull request title validation
         type: number
