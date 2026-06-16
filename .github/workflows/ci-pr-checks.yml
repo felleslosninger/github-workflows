@@ -197,7 +197,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Validate PR title
-        uses: felleslosninger/github-workflows/.github/actions/validate-pr-title@main
+        uses: felleslosninger/github-workflows/.github/actions/validate-pr-title@PF-2464-verify-pr-title-composite-action
         with:
           pull-request-title: ${{ inputs.pull-request-title }}
           min-length-title: ${{ inputs.pull-request-min-length-title }}
