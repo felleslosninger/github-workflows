@@ -199,7 +199,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Validate PR title
-        uses: felleslosninger/github-workflows/.github/actions/validate-pr-title@PF-2464-verify-pr-title-composite-action
+        uses: felleslosninger/github-workflows/.github/actions/validate-pr-title@main
         with:
           pull-request-title: ${{ inputs.pull-request-title }}
           allowed-prefixes: ${{ inputs.pull-request-allowed-prefixes }}
