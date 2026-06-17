@@ -90,28 +90,30 @@ on:
         description: "Comma-separated list of update types to auto-merge when 'enable-auto-merge-dependabot' is true. Supported values can be seen in 'update-types' under https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#ignore--"
         type: string
       pull-request-title:
-        description: Pull request title to validate
+        description: Optional override for PR title (defaults to actual PR title)
         type: string
-        required: true
+        required: false
+        default: ''
       pull-request-allowed-prefixes:
-        description: Comma-separated list of allowed prefixes for pull request title validation
+        description: Override allowed prefixes (defaults to standard prefixes)
         type: string
-        required: true
+        required: false
+        default: ''
       pull-request-min-length-title:
-        description: Minimum length for pull request title validation
-        type: number
+        description:  Override minimum length (defaults to 10)
+        type: string
         required: false
-        default: 10
+        default: ''
       pull-request-max-length-title:
-        description: Maximum length for pull request title validation
-        type: number
+        description: Override maximum length (defaults to 100, -1 to disable)
+        type: string
         required: false
-        default: 100
+        default: ''
       pull-request-case-sensitive-prefix:
-        description: Whether to perform case-sensitive prefix matching for pull request title validation
-        type: boolean
+        description: Override case sensitivity ('true' or 'false'). Leave empty to use the standard default (false)
+        type: string
         required: false
-        default: true
+        default: ''
       artifact-name:
         description: Name of artifact to upload after build and test step. If empty, no artifact will be uploaded
         type: string
@@ -190,33 +192,20 @@ on:
         default: ''
 
 jobs:
-  verify-pull-request-title:
+  validate-pr-title:
     if: |
       inputs.enable-pr-title-verify == true &&
       github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - name: Check PR title
-        id: check-pr-title
-        uses: felleslosninger/github-actions/validate-pull-request-title@d7888fecafbf48e5845c8a0c76389f71c517ee6d # pin@v0.8.0
+      - name: Validate PR title
+        uses: felleslosninger/github-workflows/.github/actions/validate-pr-title@main
         with:
           pull-request-title: ${{ inputs.pull-request-title }}
           allowed-prefixes: ${{ inputs.pull-request-allowed-prefixes }}
           min-length-title: ${{ inputs.pull-request-min-length-title }}
           max-length-title: ${{ inputs.pull-request-max-length-title }}
           case-sensitive-prefix: ${{ inputs.pull-request-case-sensitive-prefix }}
-
-      - name: Write inputs to summary
-        uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
-        with:
-          json-payload: ${{ toJson(inputs) }}
-
-      - name: Fail if PR title is not valid
-        if: steps.check-pr-title.outputs.is-valid == 'false'
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # pin@v9.0.0
-        with:
-          script: |
-            core.setFailed('${{ steps.check-pr-title.outputs.error-message }}')
 
   build-and-test-java:
     if: |

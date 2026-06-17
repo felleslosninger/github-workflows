@@ -65,6 +65,35 @@ on:
         type: string
         required: false
         default: 'test'
+      enable-pr-title-verify:
+        description: Set to true to enable PR title verification
+        type: boolean
+        default: true
+      pull-request-title:
+        description: Optional override for PR title (defaults to actual PR title)
+        type: string
+        required: false
+        default: ''
+      pull-request-allowed-prefixes:
+        description: Override allowed prefixes (defaults to standard prefixes)
+        type: string
+        required: false
+        default: ''
+      pull-request-min-length-title:
+        description:  Override minimum length (defaults to 10)
+        type: string
+        required: false
+        default: ''
+      pull-request-max-length-title:
+        description: Override maximum length (defaults to 100, -1 to disable)
+        type: string
+        required: false
+        default: ''
+      pull-request-case-sensitive-prefix:
+        description: Override case sensitivity ('true' or 'false'). Leave empty to use the standard default (false)
+        type: string
+        required: false
+        default: ''
       trivy-library-disable-scan:
         description: Disable Trivy library scan
         type: boolean
@@ -87,56 +116,20 @@ on:
         default: ''
 
 jobs:
-  verify-pull-request-title:
-    if: ${{ github.event_name == 'pull_request'}}
+  validate-pr-title:
+    if: |
+      inputs.enable-pr-title-verify == true &&
+      github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # pin@v9.0.0
+      - name: Validate PR title
+        uses: felleslosninger/github-workflows/.github/actions/validate-pr-title@main
         with:
-          script: |
-            const REGEX = new RegExp("^[^…]+$");  // Title must match this regex
-            const MIN_LENGTH = 10;                 // Min length of the title
-            const MAX_LENGTH = 100;                // Max length of the title (-1 is no max)
-            const ALLOWED_PREFIXES = ['Bump','ID-','MIN-','PBLEID-','MP-','KRR-','PF-','AOS-','SP-','EIN-','EUW-','MOVE-'];          // Title must start with one of these prefixes
-            const PREFIX_CASE_SENSITIVE = false;  // Whether the prefix is case sensitive
-
-            const validateTitlePrefix = (title, prefix) =>
-              PREFIX_CASE_SENSITIVE
-                ? title.startsWith(prefix)
-                : title.toLowerCase().startsWith(prefix.toLowerCase());
-
-            const { title } = context.payload.pull_request;
-            if (!REGEX.test(title)) {
-              core.setFailed(
-                `Pull Request title "${title}" failed to match regex - ${REGEX}`
-              );
-              return;
-            }
-
-            if (title.length < MIN_LENGTH) {
-              core.setFailed(
-                `Pull Request title "${title}" is smaller than the minimum length - ${MIN_LENGTH}`
-              );
-              return;
-            }
-
-            if (MAX_LENGTH > 0 && title.length > MAX_LENGTH) {
-              core.setFailed(
-                `Pull Request title "${title}" is greater than the maximum length - ${MAX_LENGTH}`
-              );
-              return;
-            }
-
-            core.info(`Allowed Prefixes: ${ALLOWED_PREFIXES}`);
-            if (
-              ALLOWED_PREFIXES.length &&
-              !ALLOWED_PREFIXES.some((prefix) => validateTitlePrefix(title, prefix))
-            ) {
-              core.setFailed(
-                `Pull Request title "${title}" did not start with any of the required prefixes - ${ALLOWED_PREFIXES}`
-              );
-              return;
-            }
+          pull-request-title: ${{ inputs.pull-request-title }}
+          allowed-prefixes: ${{ inputs.pull-request-allowed-prefixes }}
+          min-length-title: ${{ inputs.pull-request-min-length-title }}
+          max-length-title: ${{ inputs.pull-request-max-length-title }}
+          case-sensitive-prefix: ${{ inputs.pull-request-case-sensitive-prefix }}
 
   build:
     runs-on: ubuntu-latest
