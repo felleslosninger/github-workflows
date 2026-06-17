@@ -49,7 +49,7 @@ runs:
         CASE_SENSITIVE="${INPUT_CASE_SENSITIVE:-false}"
 
         # This is the only place to maintain default prefixes
-        STANDARD_PREFIXES="Bump, ID-, MIN-, PBLEID-, MP-, KRR-, PF-, AOS-, SP-, EUW-, MOVE-"
+        STANDARD_PREFIXES="Bump, ID-, MIN-, MP-, KRR-, PF-, AOS-, SP-, EUW-, MOVE-"
         ACTIVE_PREFIXES="${INPUT_PREFIXES:-$STANDARD_PREFIXES}"
 
         # Length checks
