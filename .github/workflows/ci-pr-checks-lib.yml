@@ -46,6 +46,11 @@ on:
         default: "**/pom.xml"
         required: false
         type: string
+      application-path:
+        description: Path to the directory to scan with Trivy (also used to locate a module-local .trivyignore), relative to the repository root
+        default: "./"
+        required: false
+        type: string
       enable-auto-merge-dependabot:
         description: Set to true to enable auto-merge for Dependabot PRs
         type: boolean
