@@ -152,9 +152,9 @@ jobs:
         run: |
           if [ -n "$PACKAGE_VERSION" ]; then
             mvn versions:set -B -DnewVersion="$PACKAGE_VERSION"
-            echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
+            echo "- \`mvn versions:set\` was executed" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
+            echo "- \`mvn versions:set\` was not executed" >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Maven install
@@ -184,6 +184,7 @@ jobs:
           PUBLISH_ACTOR: ${{ github.actor }}
           PUBLISH_TOKEN: ${{ github.token }}
         run: |
+          mkdir -p ~/.m2
           echo "<settings><servers><server><id>github</id><username>${PUBLISH_ACTOR}</username><password>${PUBLISH_TOKEN}</password></server></servers></settings>" > ~/.m2/settings.xml
 
       - name: Maven deploy
