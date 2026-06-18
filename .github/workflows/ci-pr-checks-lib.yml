@@ -1,0 +1,231 @@
+# Workflow Name: PR Checks for Maven Libraries
+#
+# Owner: Digdir Platform team
+#
+# Purpose:
+#   This is the golden path for PRs towards main branch for Maven libraries.
+#   This workflow handles Maven library builds and NOT containerized builds.
+#
+#   Flow:
+#     1. Verifies PR title
+#     2. Builds and tests from root pom with mvn lifecycle chosen in
+#        inputs (default: test).
+#     3. Scans with Trivy FS scan to fail fast on library vulnerabilities
+#     4. Uploads build artifact (optional)
+#     5. Auto-merges Dependabot PRs (optional)
+#
+# Trigger:
+#   Triggered by workflow calls (workflow_call)
+#
+# Inputs:
+#   See input section
+#
+# Outputs:
+#   None
+
+name: PR Checks for Maven Libraries
+
+permissions: {}
+
+on:
+  workflow_call:
+    inputs:
+      artifact-name:
+        description: Name of artifact to upload after build and test step. If empty, no artifact will be uploaded
+        type: string
+        required: false
+      artifact-path:
+        description: Path to the artifact to upload
+        type: string
+        required: false
+      auto-merge-types:
+        description: "Comma-separated list of update types to auto-merge when 'enable-auto-merge-dependabot' is true. Supported values can be seen in 'update-types' under https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#ignore--"
+        type: string
+      cache-path:
+        description: Path to the file used for caching Maven dependencies. Default is set to root pom.xml, but can be set to a specific module pom.xml in multi-module projects to only cache dependencies for that module
+        default: "**/pom.xml"
+        required: false
+        type: string
+      enable-auto-merge-dependabot:
+        description: Set to true to enable auto-merge for Dependabot PRs
+        type: boolean
+        default: false
+      enable-pr-title-verify:
+        description: Set to true to enable PR title verification
+        type: boolean
+        default: true
+      java-distribution:
+        description: Java distribution to use
+        default: "liberica"
+        required: false
+        type: string
+      java-version:
+        description: Java version to use
+        default: "21"
+        required: false
+        type: string
+      maven-clean:
+        description: Run the clean phase before the lifecycle phase
+        type: boolean
+        default: false
+      maven-lifecycle:
+        description: Maven lifecycle phase (test, package, verify, install)
+        type: string
+        required: false
+        default: "test"
+      maven-update-snapshots:
+        description: Force update of SNAPSHOT dependencies (-U)
+        type: boolean
+        default: false
+      pull-request-allowed-prefixes:
+        description: Override allowed prefixes (defaults to standard prefixes)
+        type: string
+        required: false
+        default: ''
+      pull-request-case-sensitive-prefix:
+        description: Override case sensitivity ('true' or 'false'). Leave empty to use the standard default (false)
+        type: string
+        required: false
+        default: ''
+      pull-request-max-length-title:
+        description: Override maximum length (defaults to 100, -1 to disable)
+        type: string
+        required: false
+        default: ''
+      pull-request-min-length-title:
+        description:  Override minimum length (defaults to 10)
+        type: string
+        required: false
+        default: ''
+      pull-request-title:
+        description: Optional override for PR title (defaults to actual PR title)
+        type: string
+        required: false
+        default: ''
+      trivy-library-disable-scan:
+        description: Disable Trivy library scan
+        type: boolean
+        required: false
+        default: false
+      trivy-library-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy library scan
+        type: boolean
+        required: false
+        default: true
+      trivy-library-severity:
+        description: When to fail the scan with Trivy library vulnerabilities
+        type: string
+        required: false
+        default: 'HIGH,CRITICAL'
+      trivy-version:
+        description: Version of Trivy to use for scanning
+        type: string
+        required: false
+        default: ''
+
+jobs:
+  validate-pr-title:
+    if: |
+      inputs.enable-pr-title-verify == true &&
+      github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title
+        uses: felleslosninger/github-workflows/.github/actions/validate-pr-title@main
+        with:
+          pull-request-title: ${{ inputs.pull-request-title }}
+          allowed-prefixes: ${{ inputs.pull-request-allowed-prefixes }}
+          min-length-title: ${{ inputs.pull-request-min-length-title }}
+          max-length-title: ${{ inputs.pull-request-max-length-title }}
+          case-sensitive-prefix: ${{ inputs.pull-request-case-sensitive-prefix }}
+
+  build-and-test-java:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6.0.2
+
+      - name: Set up JDK ${{ inputs.java-version }}
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # pin@v5.2.0
+        with:
+          distribution: "${{ inputs.java-distribution }}"
+          java-version: ${{ inputs.java-version }}
+          cache: maven
+          cache-dependency-path: ${{ inputs.cache-path }}
+          server-id: github
+          server-username: GH_PACKAGES_READ_USER
+          server-password: GH_PACKAGES_READ_PAT
+
+      - name: Run mvn ${{ inputs.maven-lifecycle }}
+        env:
+          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
+          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
+          LIFECYCLE: ${{ inputs.maven-lifecycle }}
+          MAVEN_CLEAN: ${{ inputs.maven-clean }}
+          UPDATE_SNAPSHOTS: ${{ inputs.maven-update-snapshots }}
+        run: |
+          case "$LIFECYCLE" in
+            test|package|verify|install)
+              ;;
+            *)
+              echo "Invalid Maven lifecycle: $LIFECYCLE"
+              exit 1
+              ;;
+          esac
+
+          # Build the Maven command dynamically
+          ARGS=("-B")
+
+          if [ "$MAVEN_CLEAN" == "true" ]; then
+            ARGS+=("clean")
+          fi
+
+          ARGS+=("$LIFECYCLE")
+
+          if [ "$UPDATE_SNAPSHOTS" == "true" ]; then
+            ARGS+=("--update-snapshots")
+          fi
+
+          # Execute the Maven command
+          mvn "${ARGS[@]}"
+
+      - name: Run Trivy vulnerability scanner (fs)
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
+        if: inputs.trivy-library-disable-scan == false
+        with:
+          scan-type: "fs"
+          library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+          library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+          library-severity: ${{ inputs.trivy-library-severity }}
+          trivy-version: ${{ inputs.trivy-version }}
+
+      - name: Upload artifact
+        if: |
+          !cancelled() &&
+          inputs.artifact-path != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # pin@v7.0.1
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: ${{ inputs.artifact-path }}
+
+  call-auto-merge:
+    name: Call auto-merge
+    if: |
+      always() &&
+      inputs.enable-auto-merge-dependabot == true &&
+      (needs.build-and-test-java.result == 'success' || needs.build-and-test-java.result == 'skipped')
+    needs:
+      [
+        build-and-test-java,
+
+      ]
+    uses: felleslosninger/github-workflows/.github/workflows/misc-approve-and-merge-dependabot-pr.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+    with:
+      update-types: ${{ inputs.auto-merge-types }}
+    secrets: inherit

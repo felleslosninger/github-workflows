@@ -2,6 +2,12 @@
 #
 # Owner: Digdir Platform team
 #
+# DEPRECATED:
+#   This workflow is deprecated and replaced by the split golden path workflows
+#   ci-pr-checks-lib.yml (Maven libraries) and ci-pr-checks-image.yml
+#   (containerized applications). Migrate to the workflow that matches your
+#   project type.
+#
 # Purpose:
 #   This is the golden path for PRs towards main branch. This workflow handles
 #   both Maven library builds and containerized builds. It works as a proxy

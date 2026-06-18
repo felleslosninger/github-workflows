@@ -4,13 +4,13 @@
 #
 # Purpose:
 #   This is part of the golden path for PRs towards main branch. The workflow
-#   should not normally be used directly, but called from the ci-pr-checks
+#   should not normally be used directly, but called from the ci-pr-checks-image
 #   workflow, which checks certain things before calling this workflow with the
-#   correct parameters. This workflow will build a temporary Sprion Boot image
+#   correct parameters. This workflow will build a temporary Spring Boot image
 #   based on the 'application-path' and 'module-name' input parameters. The
 #   workflow will use Paketo buildpacks for building the image, and the
 #   specific builder image can be configured through inputs. After building the
-#.  image, the workflow will run Trivy vulnerability scans.
+#   image, the workflow will run Trivy vulnerability scans.
 #
 #   Flow:
 #     1. Set image metadata (name and tag)
@@ -18,7 +18,7 @@
 #     3. Set up JDK
 #     4. Build Spring Boot image using Paketo buildpacks. The image will be
 #        built based on the application path or module name (if provided)
-#     6. Run Trivy vulnerability scan on the built image
+#     5. Run Trivy vulnerability scan on the built image
 #
 # Trigger:
 #   Triggered by workflow calls (workflow_call)
@@ -37,6 +37,16 @@ permissions: {}
 on:
   workflow_call:
     inputs:
+      application-path:
+        description: Path to the application directory to scan with Trivy, relative to the repository root
+        default: "./"
+        required: false
+        type: string
+      cache-path:
+        description: Path to cache dependencies, relative to the repository root
+        default: "**/pom.xml"
+        required: false
+        type: string
       image-name:
         description: Name of Docker image
         required: false
@@ -51,29 +61,29 @@ on:
         default: "latest"
         required: false
         type: string
-      java-version:
-        description: Main version of java
-        default: "11"
-        required: false
-        type: string
       java-distribution:
         description: Java distribution to use
         default: "liberica"
         required: false
         type: string
-      application-path:
-        description: Path to the application directory to scan with Trivy, relative to the repository root
-        default: "./"
+      java-version:
+        description: Main version of java
+        default: "11"
         required: false
         type: string
+      maven-lifecycle:
+        description: Maven lifecycle phase (test, package, verify, install)
+        type: string
+        required: false
+        default: "test"
+      maven-skip-tests:
+        description: Skip running tests during the image build (-DskipTests)
+        type: boolean
+        required: false
+        default: false
       module-name:
         description: Name of the module to build, if using a multi-module Maven project. If not provided, the workflow will attempt to build the application based on the application-path input
         default: ""
-        required: false
-        type: string
-      cache-path:
-        description: Path to cache dependencies, relative to the repository root
-        default: "**/pom.xml"
         required: false
         type: string
       trivy-library-disable-scan:
@@ -140,34 +150,56 @@ jobs:
           server-username: GH_PACKAGES_READ_USER
           server-password: GH_PACKAGES_READ_PAT
 
-      - name: Build image with Maven (module-name, skips tests)
+      - name: Build image with Maven (module-name)
         if: inputs.module-name != ''
         env:
           GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
           GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
+          LIFECYCLE: ${{ inputs.maven-lifecycle }}
+          SKIP_TESTS: ${{ inputs.maven-skip-tests }}
           MODULE_NAME: ${{ inputs.module-name }}
           IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
           IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
           IMAGE_PACK: ${{ inputs.image-pack }}
           IMAGE_PACK_TAG: ${{ inputs.image-pack-tag }}
         run: |
-          mvn install -DskipTests -B spring-boot:build-image \
+          case "$LIFECYCLE" in
+            test|package|verify|install)
+              ;;
+            *)
+              echo "Invalid Maven lifecycle: $LIFECYCLE"
+              exit 1
+              ;;
+          esac
+
+          mvn "$LIFECYCLE" -DskipTests="$SKIP_TESTS" -B spring-boot:build-image \
             -pl "$MODULE_NAME" -am \
             -Dspring-boot.build-image.imageName="$IMAGE_NAME:$IMAGE_TAG" \
             -Dspring-boot.build-image.builder="paketobuildpacks/$IMAGE_PACK:$IMAGE_PACK_TAG"
 
-      - name: Build image with Maven (application-path, skips tests)
+      - name: Build image with Maven (application-path)
         if: inputs.module-name == ''
         env:
           GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
           GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
+          LIFECYCLE: ${{ inputs.maven-lifecycle }}
+          SKIP_TESTS: ${{ inputs.maven-skip-tests }}
           APP_PATH: ${{ inputs.application-path }}
           IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
           IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
           IMAGE_PACK: ${{ inputs.image-pack }}
           IMAGE_PACK_TAG: ${{ inputs.image-pack-tag }}
         run: |
-          mvn -DskipTests -B spring-boot:build-image \
+          case "$LIFECYCLE" in
+            test|package|verify|install)
+              ;;
+            *)
+              echo "Invalid Maven lifecycle: $LIFECYCLE"
+              exit 1
+              ;;
+          esac
+
+          mvn "$LIFECYCLE" -DskipTests="$SKIP_TESTS" -B spring-boot:build-image \
             --file "${APP_PATH}pom.xml" \
             -Dspring-boot.build-image.imageName="$IMAGE_NAME:$IMAGE_TAG" \
             -Dspring-boot.build-image.builder="paketobuildpacks/$IMAGE_PACK:$IMAGE_PACK_TAG"

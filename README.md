@@ -41,11 +41,21 @@ For new projects, you should use the following workflows depending on your needs
 
 ### PR Checks
 
-[ci-pr-checks.yml](.github/workflows/ci-pr-checks.yml): Golden path for PRs to
-main. Handles Maven library builds and containerized applications. Verifies PR
-titles, runs builds and security scans, optionally builds container images with
-Paketo buildpacks, and can auto-merge Dependabot PRs. If build container image
-is set to true, it will run one of the following application-specific workflows
+For PRs to main, use the golden path workflow that matches your project type.
+These two workflows replace the deprecated
+[ci-pr-checks.yml](.github/workflows/ci-pr-checks.yml).
+
+- [ci-pr-checks-lib.yml](.github/workflows/ci-pr-checks-lib.yml): Golden path for
+  PRs in Maven library projects (no container image). Verifies the PR title,
+  builds and tests with Maven, runs a Trivy filesystem scan, optionally uploads a
+  build artifact, and can auto-merge Dependabot PRs.
+- [ci-pr-checks-image.yml](.github/workflows/ci-pr-checks-image.yml): Golden path
+  for PRs in containerized applications. Verifies the PR title, then delegates to
+  the application-specific container build-and-scan workflow based on the
+  `application-type` input, and can auto-merge Dependabot PRs.
+
+For containerized applications, ci-pr-checks-image.yml runs one of the following
+application-specific workflows
 
 - [ci-spring-boot-container-scan.yml](.github/workflows/ci-spring-boot-container-scan.yml):
   Builds and scans temporary Spring Boot container images
@@ -60,6 +70,11 @@ and optionally runs the Dependabot auto-merge workflow
 Check out the [internal usage
 docs](https://paotvers.io/docs/default/Domain/application-platform/Application/Repository/workflows/pull-request-image/)
 for more information.
+
+<!-- TODO(Platform team): The internal usage docs above still describe the old
+single ci-pr-checks.yml workflow. Update them for the split into
+ci-pr-checks-lib.yml and ci-pr-checks-image.yml (the link may also need a new
+path), then remove this note. -->
 
 ### Build and publish container images
 
@@ -106,11 +121,20 @@ for more information.
 
 ## Deprecated Workflows
 
+### PR Checks
+
+[ci-pr-checks.yml](.github/workflows/ci-pr-checks.yml) is deprecated and replaced
+by the split golden path workflows
+[ci-pr-checks-lib.yml](.github/workflows/ci-pr-checks-lib.yml) (Maven libraries)
+and [ci-pr-checks-image.yml](.github/workflows/ci-pr-checks-image.yml)
+(containerized applications). Migrate to the workflow that matches your project
+type.
+
 ### Maven workflows
 
 The following Maven PR workflows can be considered deprecated as all
-functionality should be covered by our golde path
-[ci-pr-checks.yml](.github/workflows/ci-pr-checks.yml) workflow
+functionality should be covered by our golden path
+[ci-pr-checks-lib.yml](.github/workflows/ci-pr-checks-lib.yml) workflow
 
 - [ci-maven-build.yml](.github/workflows/ci-maven-build.yml)
 - [ci-maven-build-lib.yml](.github/workflows/ci-maven-build-lib.yml)
