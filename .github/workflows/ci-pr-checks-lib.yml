@@ -202,6 +202,7 @@ jobs:
         if: inputs.trivy-library-disable-scan == false
         with:
           scan-type: "fs"
+          application-path: ${{ inputs.application-path }}
           library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
           library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
           library-severity: ${{ inputs.trivy-library-severity }}
