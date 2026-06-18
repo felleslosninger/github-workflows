@@ -42,7 +42,8 @@ on:
       application-type:
         description: Type of application to determine container build and scan steps. Supported values are 'spring-boot' and 'quarkus'
         type: string
-        required: true
+        default: 'spring-boot'
+        required: false
       auto-merge-types:
         description: "Comma-separated list of update types to auto-merge when 'enable-auto-merge-dependabot' is true. Supported values can be seen in 'update-types' under https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#ignore--"
         type: string
