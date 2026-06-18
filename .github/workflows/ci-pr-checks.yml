@@ -70,7 +70,7 @@ on:
         default: true
       java-version:
         description: Java version to use
-        default: "21"
+        default: "25"
         required: false
         type: string
       java-distribution:

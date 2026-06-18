@@ -69,7 +69,7 @@ on:
         type: boolean
       java-version:
         description: Main version of java
-        default: "21"
+        default: "25"
         required: false
         type: string
       java-distribution:

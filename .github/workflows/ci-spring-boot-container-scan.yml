@@ -68,7 +68,7 @@ on:
         type: string
       java-version:
         description: Main version of java
-        default: "11"
+        default: "25"
         required: false
         type: string
       maven-lifecycle:
