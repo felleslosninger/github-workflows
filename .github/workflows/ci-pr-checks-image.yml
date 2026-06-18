@@ -88,7 +88,7 @@ on:
         description: Maven lifecycle phase (test, package, verify, install). Only applied for Spring Boot builds
         type: string
         required: false
-        default: "test"
+        default: "install"
       maven-skip-tests:
         description: Skip running tests during the image build (-DskipTests). Only applied for Spring Boot builds
         type: boolean

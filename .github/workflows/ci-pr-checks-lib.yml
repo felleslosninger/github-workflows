@@ -77,7 +77,7 @@ on:
         description: Maven lifecycle phase (test, package, verify, install)
         type: string
         required: false
-        default: "test"
+        default: "install"
       maven-update-snapshots:
         description: Force update of SNAPSHOT dependencies (-U)
         type: boolean
