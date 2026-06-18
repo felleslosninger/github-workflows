@@ -1,6 +1,6 @@
 # Workflow Name: Build and publish Maven library to GitHub packages
 #
-# Owner: Digdir Platform team / Digdir development teams
+# Owner: Digdir Platform team 
 #
 # Purpose:
 #   This workflow performs a Maven build of a Java library and publishes the
@@ -10,19 +10,21 @@
 #
 #   It supports projects with internal Maven dependencies (hosted in other
 #   private GitHub Packages repositories) by reading dependencies with the
-#   'GH_PACKAGES_READ_USER' / 'GH_PACKAGES_READ_PAT' secrets. By default
-#   'enable-maven-install' is true, so 'mvn clean install' runs before deploy to
-#   resolve and build internal dependencies locally first. Projects without
-#   internal dependencies can set 'enable-maven-install' to false for the
-#   simpler build-and-deploy flow.
+#   'GH_PACKAGES_READ_USER' / 'GH_PACKAGES_READ_PAT' secrets.
+#
+#   'mvn clean install' always runs BEFORE the Trivy filesystem scan. This is
+#   required so that Maven resolves and builds the full dependency tree
+#   (including internal and transitive dependencies) locally first; the Trivy
+#   'fs' scan can then detect CVEs across the resolved dependencies rather than
+#   from a static pom.xml-only analysis.
 #
 #   Flow:
 #     1. Checkout repository
 #     2. Set up JDK (reads dependencies with the GH_PACKAGES_READ_* secrets)
 #     3. Optionally set version with `mvn versions:set`
-#     4. Optionally run `mvn clean install` to resolve internal dependencies
-#        (when 'enable-maven-install' is true)
-#     5. Run Trivy vulnerability scanner ('fs' scan)
+#     4. Run `mvn clean install` to resolve and build the dependency tree before
+#        scanning
+#     5. Run Trivy vulnerability scanner ('fs' scan) over the resolved project
 #     6. Overwrite m2 settings to be allowed to publish to GitHub packages
 #     7. Deploy to Maven GitHub packages repository
 #     8. Run Trivy SBOM generation (resolves SBOM metadata for multi-module
