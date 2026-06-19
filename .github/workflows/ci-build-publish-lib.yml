@@ -51,10 +51,6 @@ on:
         default: "./"
         required: false
         type: string
-      artifact-name:
-        description: Override the artifact id used for SBOM generation. Defaults to the multi-module path or repository name
-        required: false
-        type: string
       cache-path:
         description: Path to cache dependencies, relative to the repository root
         default: "**/pom.xml"
@@ -80,13 +76,17 @@ on:
         default: "25"
         required: false
         type: string
+      maven-profile:
+        description: Maven profile to use
+        required: false
+        type: string
       package-version:
         description: Version to use for maven package
         default: ""
         required: false
         type: string
-      profile:
-        description: Maven profile to use
+      sbom-artifact-id:
+        description: Override the artifact id used for SBOM generation. Defaults to the multi-module path or repository name
         required: false
         type: string
       sbom-path:
@@ -161,7 +161,7 @@ jobs:
         env:
           GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
           GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
-          PROFILE: ${{ inputs.profile }}
+          PROFILE: ${{ inputs.maven-profile }}
         run: |
           if [ -n "$PROFILE" ]; then
             mvn -B clean install --update-snapshots -P"$PROFILE"
@@ -189,7 +189,7 @@ jobs:
 
       - name: Maven deploy
         env:
-          PROFILE: ${{ inputs.profile }}
+          PROFILE: ${{ inputs.maven-profile }}
           DEPLOYMENT_REPO: ${{ inputs.deployment-repository }}
           APP_PATH: ${{ inputs.application-path }}
         run: |
@@ -217,7 +217,7 @@ jobs:
       - name: Resolve SBOM Metadata
         id: sbom-meta
         env:
-          ARTIFACT_NAME: ${{ inputs.artifact-name }}
+          SBOM_ARTIFACT_ID: ${{ inputs.sbom-artifact-id }}
           SBOM_PATH: ${{ inputs.sbom-path }}
           REPO_NAME: ${{ github.event.repository.name }}
           APP_PATH: ${{ inputs.application-path }}
@@ -227,9 +227,9 @@ jobs:
           CLEAN_PATH=$(echo "$RAW_PATH" | sed 's/\/target$//' | sed 's/^\.\///' | sed 's/\/$//')
 
           # Resolve the Artifact ID
-          if [ -n "$ARTIFACT_NAME" ]; then
-            # Use 'artifact-name' if provided
-            ARTIFACT_ID="$ARTIFACT_NAME"
+          if [ -n "$SBOM_ARTIFACT_ID" ]; then
+            # Use 'sbom-artifact-id' if provided
+            ARTIFACT_ID="$SBOM_ARTIFACT_ID"
           elif [ "$CLEAN_PATH" != "." ] && [ -n "$CLEAN_PATH" ]; then
             # If it's a multi-module path, use the folder name
             ARTIFACT_ID="$CLEAN_PATH"
