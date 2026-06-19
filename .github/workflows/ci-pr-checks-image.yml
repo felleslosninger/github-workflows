@@ -1,0 +1,274 @@
+# Workflow Name: PR Checks for Container Images
+#
+# Owner: Digdir Platform team
+#
+# Purpose:
+#   This is the golden path for PRs towards main branch for containerized
+#   applications. It works as a proxy workflow that delegates the container
+#   build and Trivy scans to the correct workflow based on the
+#   'application-type' input ('spring-boot' or 'quarkus'). For library projects
+#   that do not build a container image, use ci-pr-checks-lib.yml instead.
+#
+#   Flow:
+#     1. Verifies PR title
+#     2. Builds the container image and runs Trivy library + OS scans, by
+#        calling the Spring Boot or Quarkus container-scan workflow selected
+#        by 'application-type'
+#     3. Auto-merges Dependabot PRs (optional)
+#     4. Dispatches a build-publish-image event for merged Dependabot PRs
+#        (currently skipped automatically; see the note on call-build-image)
+#
+# Trigger:
+#   Triggered by workflow calls (workflow_call)
+#
+# Inputs:
+#   See input section
+#
+# Outputs:
+#   None
+
+name: PR Checks for Container Images
+
+permissions: {}
+
+on:
+  workflow_call:
+    inputs:
+      application-path:
+        description: 'Path to the application to scan with Trivy. Default is root of the repository, but can be set to a specific module in multi-module projects.'
+        default: "./"
+        required: false
+        type: string
+      application-type:
+        description: Type of application to determine container build and scan steps. Supported values are 'spring-boot' and 'quarkus'
+        type: string
+        default: 'spring-boot'
+        required: false
+      auto-merge-types:
+        description: "Comma-separated list of update types to auto-merge when 'enable-auto-merge-dependabot' is true. Supported values can be seen in 'update-types' under https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#ignore--"
+        type: string
+      cache-path:
+        description: Path to the file used for caching Maven dependencies. Default is set to root pom.xml, but can be set to a specific module pom.xml in multi-module projects to only cache dependencies for that module
+        default: "**/pom.xml"
+        required: false
+        type: string
+      enable-auto-merge-dependabot:
+        description: Set to true to enable auto-merge for Dependabot PRs
+        type: boolean
+        default: false
+      enable-pr-title-verify:
+        description: Set to true to enable PR title verification
+        type: boolean
+        default: true
+      image-name:
+        description: Name of Docker image
+        required: false
+        type: string
+      image-pack:
+        description: Paketo builder image to use. See https://paketo.io/docs/reference/builders-reference/ for choices
+        default: builder-noble-java-tiny
+        required: false
+        type: string
+      image-pack-tag:
+        description: "Docker image pack version tag"
+        default: "latest"
+        required: false
+        type: string
+      java-distribution:
+        description: Java distribution to use
+        default: "liberica"
+        required: false
+        type: string
+      java-version:
+        description: Java version to use
+        default: "25"
+        required: false
+        type: string
+      maven-lifecycle:
+        description: Maven lifecycle phase (test, package, verify, install). Only applied for Spring Boot builds
+        type: string
+        required: false
+        default: "install"
+      maven-skip-tests:
+        description: Skip running tests during the image build (-DskipTests). Only applied for Spring Boot builds
+        type: boolean
+        required: false
+        default: true
+      module-name:
+        description: 'Only for container builds, the module in multi module projects which is bootable inside the container.'
+        type: string
+        required: false
+        default: ''
+      native:
+        description: Whether to build a native image with Quarkus (only applicable if application-type is 'quarkus')
+        required: false
+        type: boolean
+        default: false
+      pull-request-allowed-prefixes:
+        description: Override allowed prefixes (defaults to standard prefixes)
+        type: string
+        required: false
+        default: ''
+      pull-request-case-sensitive-prefix:
+        description: Override case sensitivity ('true' or 'false'). Leave empty to use the standard default (false)
+        type: string
+        required: false
+        default: ''
+      pull-request-max-length-title:
+        description: Override maximum length (defaults to 100, -1 to disable)
+        type: string
+        required: false
+        default: ''
+      pull-request-min-length-title:
+        description:  Override minimum length (defaults to 10)
+        type: string
+        required: false
+        default: ''
+      pull-request-title:
+        description: Optional override for PR title (defaults to actual PR title)
+        type: string
+        required: false
+        default: ''
+      trivy-library-disable-scan:
+        description: Disable Trivy library scan
+        type: boolean
+        required: false
+        default: false
+      trivy-library-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy library scan
+        type: boolean
+        required: false
+        default: true
+      trivy-library-severity:
+        description: When to fail the scan with Trivy library vulnerabilities
+        type: string
+        required: false
+        default: 'HIGH,CRITICAL'
+      trivy-os-disable-scan:
+        description: Disable Trivy OS scan
+        type: boolean
+        required: false
+        default: false
+      trivy-os-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy OS scan
+        type: boolean
+        required: false
+        default: true
+      trivy-os-severity:
+        description: When to fail the scan with Trivy OS vulnerabilities
+        type: string
+        required: false
+        default: 'CRITICAL'
+      trivy-version:
+        description: Version of Trivy to use for scanning
+        type: string
+        required: false
+        default: ''
+
+jobs:
+  validate-pr-title:
+    if: |
+      inputs.enable-pr-title-verify == true &&
+      github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title
+        uses: felleslosninger/github-workflows/.github/actions/validate-pr-title@main
+        with:
+          pull-request-title: ${{ inputs.pull-request-title }}
+          allowed-prefixes: ${{ inputs.pull-request-allowed-prefixes }}
+          min-length-title: ${{ inputs.pull-request-min-length-title }}
+          max-length-title: ${{ inputs.pull-request-max-length-title }}
+          case-sensitive-prefix: ${{ inputs.pull-request-case-sensitive-prefix }}
+
+  
+  call-spring-boot-container-scan:
+    name: Call Spring Boot container scan
+    if: |
+      inputs.application-type == 'spring-boot'
+    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@main
+    permissions:
+      contents: read
+    with:
+      image-name: ${{ inputs.image-name }}
+      image-pack: ${{ inputs.image-pack }}
+      image-pack-tag: ${{ inputs.image-pack-tag }}
+      java-version: ${{ inputs.java-version }}
+      java-distribution: ${{ inputs.java-distribution }}
+      cache-path: ${{ inputs.cache-path }}
+      maven-lifecycle: ${{ inputs.maven-lifecycle }}
+      maven-skip-tests: ${{ inputs.maven-skip-tests }}
+      application-path: ${{ inputs.application-path }}
+      module-name: ${{ inputs.module-name }}
+      trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+      trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+      trivy-library-severity: ${{ inputs.trivy-library-severity }}
+      trivy-os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
+      trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
+      trivy-os-severity: ${{ inputs.trivy-os-severity }}
+      trivy-version: ${{ inputs.trivy-version }}
+    secrets: inherit
+
+  call-quarkus-container-scan:
+    name: Call Quarkus container scan
+    if: |
+      inputs.application-type == 'quarkus'
+    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@main
+    permissions:
+      contents: read
+    with:
+      image-name: ${{ inputs.image-name }}
+      image-pack: ${{ inputs.image-pack }}
+      image-pack-tag: ${{ inputs.image-pack-tag }}
+      java-version: ${{ inputs.java-version }}
+      java-distribution: ${{ inputs.java-distribution }}
+      cache-path: ${{ inputs.cache-path }}
+      native: ${{ inputs.native }}
+      application-path: ${{ inputs.application-path }}
+      trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+      trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+      trivy-library-severity: ${{ inputs.trivy-library-severity }}
+      trivy-os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
+      trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
+      trivy-os-severity: ${{ inputs.trivy-os-severity }}
+      trivy-version: ${{ inputs.trivy-version }}
+    secrets: inherit
+
+  call-auto-merge:
+    name: Call auto-merge
+    if: |
+      always() &&
+      inputs.enable-auto-merge-dependabot == true &&
+      (needs.call-spring-boot-container-scan.result == 'success' || needs.call-spring-boot-container-scan.result == 'skipped') &&
+      (needs.call-quarkus-container-scan.result == 'success' || needs.call-quarkus-container-scan.result == 'skipped')
+    needs:
+      [
+        call-spring-boot-container-scan,
+        call-quarkus-container-scan,
+      ]
+    uses: felleslosninger/github-workflows/.github/workflows/misc-approve-and-merge-dependabot-pr.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+    with:
+      update-types: ${{ inputs.auto-merge-types }}
+    secrets: inherit
+
+  # PS! At some point, after GitHub made changes to how Dependabot permissions
+  # worked, this step was skipped automatically. The Platform team thinks this
+  # is actually good, as we do not really want to support this behaviour because
+  # of supply-chain security concerns. It means that the Platform team do not
+  # want to encourage automatic image deployment of automatically merged
+  # Dependabot PRs without human oversight. This step will probably be removed
+  # in the future, but for now it is left in the workflow until it has been
+  # discussed further.
+  call-build-image:
+    name: Call build image
+    if: needs.call-auto-merge.outputs.merged == 'true'
+    runs-on: ubuntu-latest
+    needs: call-auto-merge
+    steps:
+      - name: call-build-publish-image
+        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # pin@v4.0.1
+        with:
+          event-type: build-publish-image
