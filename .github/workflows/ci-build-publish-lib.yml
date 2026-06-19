@@ -47,7 +47,7 @@ on:
   workflow_call:
     inputs:
       application-path:
-        description: Path to the application directory to scan with Trivy, relative to the repository root
+        description: Path to the Maven project directory (also used as the Trivy scan root), relative to the repository root
         default: "./"
         required: false
         type: string
