@@ -107,19 +107,26 @@ jobs:
           echo "One or more empty image inputs detected. Exiting" >> "$GITHUB_STEP_SUMMARY"
           exit 1
 
-      - name: Set container registry
-        id: set-container-registry
+      - name: Set image
+        id: set-image
         env:
           LIFECYCLE: ${{ inputs.lifecycle }}
+          IMAGE_NAME: ${{ inputs.image-name }}
+          IMAGE_VERSION: ${{ inputs.image-version }}
+          IMAGE_DIGEST: ${{ inputs.image-digest }}
+          CR_DEPLOYMENT: ${{ vars.CR_DEPLOYMENT_URL }}
+          CR_DEV: ${{ vars.CR_DEV_URL }}
         run: |
           if [[ "$LIFECYCLE" == "deployment" ]]; then
-            echo "container-registry=${{ vars.CR_DEPLOYMENT_URL }}" >> "$GITHUB_OUTPUT"
+            REGISTRY="$CR_DEPLOYMENT"
           elif [[ "$LIFECYCLE" == "development" ]]; then
-            echo "container-registry=${{ vars.CR_DEV_URL }}" >> "$GITHUB_OUTPUT"
+            REGISTRY="$CR_DEV"
           else
             echo "Invalid lifecycle type. Supported types are: \`deployment\`, and \`development\`" >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
+
+          echo "image=${REGISTRY}/${IMAGE_NAME}:${IMAGE_VERSION}@${IMAGE_DIGEST}" >> "$GITHUB_OUTPUT"
 
       - name: Get labels
         uses: octokit/request-action@b91aabaa861c777dcdb14e2387e30eddf04619ae # pin@v3.0.0
@@ -187,7 +194,7 @@ jobs:
           IMAGE_DIGEST: ${{ inputs.image-digest }}
           IMAGE_NAME: ${{ inputs.image-name }}
           IMAGE_VERSION: ${{ inputs.image-version }}
-          IMAGE_FULL: ${{ steps.set-container-registry.outputs.container-registry }}/${{ inputs.image-name }}:${{ inputs.image-version }}@${{ inputs.image-digest }}
+          IMAGE_FULL: ${{ steps.set-image.outputs.image }}
           LIFECYCLE: ${{ inputs.lifecycle }}
           JIRA_ID: ${{ env.jira-id }}
           KUBERNETES_REPO: ${{ inputs.kubernetes-repo }}
@@ -251,7 +258,7 @@ jobs:
                 "image-digest": ${{ toJson(inputs.image-digest) }},
                 "image-name": ${{ toJson(inputs.image-name) }},
                 "image-version": ${{ toJson(inputs.image-version) }},
-                "image": ${{ toJson(steps.set-container-registry.outputs.container-registry) }}/${{ inputs.image-name }}:${{ inputs.image-version }}@${{ inputs.image-digest }},
+                "image": ${{ toJson(steps.set-image.outputs.image) }},
                 "lifecycle": ${{ toJson(inputs.lifecycle) }},
                 "jira-id": ${{ toJson(env.jira-id) }},
                 "kubernetes-repo": ${{ toJson(inputs.kubernetes-repo) }},
