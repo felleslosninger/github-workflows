@@ -206,7 +206,7 @@ jobs:
           KUSTOMIZE_VERSION: ${{ inputs.kustomize-version }}
         run: |
           {
-            echo "# Dispatch payload and variables summary"
+            echo "### Dispatch payload and variables summary"
             echo "| Key               | Value              |"
             echo "| ----------------- | ------------------ |"
             echo "| application-name  | $APPLICATION_NAME  |"
