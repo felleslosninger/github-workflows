@@ -166,7 +166,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ "$ADD_TOKEN" = "true" ]; then
-            docker build --tag "$IMAGE_NAME:$IMAGE_TAG" --file docker/Dockerfile --build-arg GIT_PACKAGE_TOKEN="$GITHUB_TOKEN" .
+            docker build --tag "$IMAGE_NAME:$IMAGE_TAG" --file docker/Dockerfile --build-arg GIT_PACKAGE_TOKEN="$GITHUB_TOKEN" "$BUILD_CONTEXT"
           else
             docker build --tag "$IMAGE_NAME:$IMAGE_TAG" --file "$APP_PATH/Dockerfile" "$BUILD_CONTEXT"
           fi
