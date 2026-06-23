@@ -62,6 +62,11 @@ on:
         default: "./"
         required: false
         type: string
+      docker-build-context:
+        description: Docker build context directory (resolves COPY/ADD paths). Defaults to the repository root.
+        default: "."
+        required: false
+        type: string
       add-git-package-token:
         description: Adds GIT_PACKAGE_TOKEN build argument for Docker
         required: false
@@ -154,6 +159,7 @@ jobs:
       - name: Build image
         env:
           APP_PATH: ${{ inputs.application-path }}
+          BUILD_CONTEXT: ${{ inputs.docker-build-context }}
           IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
           IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
           ADD_TOKEN: ${{ inputs.add-git-package-token }}
@@ -162,7 +168,7 @@ jobs:
           if [ "$ADD_TOKEN" = "true" ]; then
             docker build --tag "$IMAGE_NAME:$IMAGE_TAG" --file docker/Dockerfile --build-arg GIT_PACKAGE_TOKEN="$GITHUB_TOKEN" .
           else
-            docker build --tag "$IMAGE_NAME:$IMAGE_TAG" --file "$APP_PATH/Dockerfile" .
+            docker build --tag "$IMAGE_NAME:$IMAGE_TAG" --file "$APP_PATH/Dockerfile" "$BUILD_CONTEXT"
           fi
 
       - name: Run Trivy vulnerability scanner
