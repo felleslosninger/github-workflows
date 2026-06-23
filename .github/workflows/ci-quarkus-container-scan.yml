@@ -4,14 +4,14 @@
 #
 # Purpose:
 #   This is part of the golden path for PRs towards main branch. The workflow
-#   should not normally be used directly, but called from the ci-pr-checks
+#   should not normally be used directly, but called from the ci-pr-checks-image
 #   workflow, which checks certain things before calling this workflow with the
 #   correct parameters. This workflow will build a temporary Quarkus image
 #   based on the 'native' input parameter, which determines whether to build a
 #   JVM or GraalVM native image. The workflow will use Pack and Paketo
-#.  buildpacks for building the image, and the specific builder image can be
+#   buildpacks for building the image, and the specific builder image can be
 #   configured through inputs. After building the image, the workflow will run
-#.  Trivy vulnerability scans.
+#   Trivy vulnerability scans.
 #
 #   Flow:
 #     1. Set image metadata (name and tag)
@@ -54,7 +54,7 @@ on:
         type: string
       java-version:
         description: Main version of java
-        default: "11"
+        default: "25"
         required: false
         type: string
       java-distribution:
