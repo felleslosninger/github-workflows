@@ -190,7 +190,6 @@ jobs:
           AUTHOR_NAME: ${{ steps.set-author-info.outputs.author-name }}
           AUTHOR_USERNAME: ${{ steps.set-author-info.outputs.author-username }}
           DEPLOYMENT_ENV: ${{ inputs.deployment-environment }}
-          DEPENDABOT: ${{ steps.check-dependabot.outputs.dependabot }}
           IMAGE_DIGEST: ${{ inputs.image-digest }}
           IMAGE_NAME: ${{ inputs.image-name }}
           IMAGE_VERSION: ${{ inputs.image-version }}
@@ -206,7 +205,7 @@ jobs:
           KUSTOMIZE_VERSION: ${{ inputs.kustomize-version }}
         run: |
           {
-            echo "### Dispatch payload and variables summary"
+            echo "### Dispatch payload summary"
             echo "| Key               | Value              |"
             echo "| ----------------- | ------------------ |"
             echo "| application-name  | $APPLICATION_NAME  |"
@@ -214,7 +213,6 @@ jobs:
             echo "| author-name       | $AUTHOR_NAME       |"
             echo "| author-username   | $AUTHOR_USERNAME   |"
             echo "| deployment-env    | $DEPLOYMENT_ENV    |"
-            echo "| dependabot        | $DEPENDABOT        |"
             echo "| image-digest      | $IMAGE_DIGEST      |"
             echo "| image-name        | $IMAGE_NAME        |"
             echo "| image-version     | $IMAGE_VERSION     |"
