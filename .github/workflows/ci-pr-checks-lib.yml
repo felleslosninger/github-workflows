@@ -9,7 +9,7 @@
 #   Flow:
 #     1. Verifies PR title
 #     2. Builds and tests from root pom with mvn lifecycle chosen in
-#        inputs (default: test).
+#        inputs (default: install).
 #     3. Scans with Trivy FS scan to fail fast on library vulnerabilities
 #     4. Uploads build artifact (optional)
 #     5. Auto-merges Dependabot PRs (optional)

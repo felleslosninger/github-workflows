@@ -253,6 +253,7 @@ jobs:
       slack-channel-id: ${{ inputs.slack-channel-id }}
       cache-path: ${{ inputs.cache-path }}
       native: ${{ inputs.native }}
+      application-path: ${{ inputs.application-path }}
       container-registry: ${{ needs.input-checks.outputs.container-registry }}
       sp-container-registry-client-id: ${{ needs.input-checks.outputs.sp-container-registry-client-id }}
       trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
