@@ -1,0 +1,29 @@
+# CODEOWNERS — CI/CD repository owned by the Digdir Platform team.
+#
+# Purpose: this repo holds the Platform team's shared CI/CD building blocks
+# (reusable workflows / composite actions). Contributions from other teams are
+# welcome and encouraged, but every change merged to `main` must carry a final
+# review from the Platform team. Combined with the GitHub ruleset option
+# "Require review from Code Owners", this stops a change from being approved and
+# merged entirely within the contributing team, without Platform-team sign-off.
+#
+# Reasoning & how-to: https://paotvers.io/docs/default/Domain/application-platform/Github/Code-owners/
+# Syntax reference:    https://docs.github.com/articles/about-code-owners
+#
+# How to extend this file:
+#   - The LAST matching pattern wins, so put more specific rules further down.
+#   - Add new path-specific rules in the "Path-specific owners" section below.
+#   - Keep the CODEOWNERS self-protect rule at the very bottom.
+
+# Default owner for everything in this repository.
+* @felleslosninger/plattform
+
+# --- Path-specific owners ---------------------------------------------------
+# Add new rules here to give another team ownership of a path. Each rule
+# overrides the default owner above for matching files. Example:
+#   /path/to/dir/   @felleslosninger/some-team
+# ---------------------------------------------------------------------------
+
+# Guard the governance file itself. Keep this as the last rule so that no rule
+# added above can accidentally remove Platform-team ownership of CODEOWNERS.
+/.github/CODEOWNERS @felleslosninger/plattform
