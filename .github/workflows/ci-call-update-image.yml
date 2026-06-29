@@ -72,7 +72,7 @@ on:
       # Default should follow ArgoCD version
       kustomize-version:
         required: false
-        default: 5.8.1
+        default: ''
         type: string
       lifecycle:
         description: Lifecycle environment to determine container registry to publish to. Supported values are 'deployment' and 'development'. This will determine the container registry and credentials used for publishing the image
