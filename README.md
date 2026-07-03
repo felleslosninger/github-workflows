@@ -27,6 +27,8 @@ duplication, and to reduce maintenance for the Platform team
   to generate and upload a Software Bill of Materials (SBOM) using Trivy
 - [trivy-scan](./.github/actions/trivy-scan): This composite action is designed
   to perform scanning using Trivy on container images or filesystem paths
+- [validate-pr-title](./.github/actions/validate-pr-title): This composite
+  action is designed to validate a PR title according to FEL best practices
 - [zap-scan](./.github/actions/zap-scan): This composite action is designed to
   perform ZAP (OWASP Zed Attack Proxy) Dynamic Application Security Testing
   (DAST) scanning
