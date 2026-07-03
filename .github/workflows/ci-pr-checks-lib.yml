@@ -207,6 +207,8 @@ jobs:
           library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
           library-severity: ${{ inputs.trivy-library-severity }}
           trivy-version: ${{ inputs.trivy-version }}
+          # Cache is warmed by the preceding 'mvn' run (default lifecycle: install)
+          library-offline-scan: true
 
       - name: Upload artifact
         if: |

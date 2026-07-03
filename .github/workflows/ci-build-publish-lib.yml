@@ -178,6 +178,8 @@ jobs:
           library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
           library-severity: ${{ inputs.trivy-library-severity }}
           trivy-version: ${{ inputs.trivy-version }}
+          # Cache is warmed by the preceding 'mvn clean install'
+          library-offline-scan: true
 
       - name: Overwrite m2 settings to publish libs
         env:
@@ -250,3 +252,5 @@ jobs:
           version: ${{ inputs.package-version }}
           # This is already done in Trivy vuln scan step
           skip-setup: true
+          # Cache is warmed by the preceding 'mvn clean install'
+          offline-scan: true

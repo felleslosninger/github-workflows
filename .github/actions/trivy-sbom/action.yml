@@ -28,6 +28,10 @@ inputs:
     description: "Skip Trivy setup if it has already been run in a previous step"
     default: "false"
     required: false
+  offline-scan:
+    description: "Resolve dependencies without calling remote repositories. Use ONLY when a prior step (e.g. 'mvn install') has populated the cache."
+    default: "false"
+    required: false
 
 runs:
   using: composite
@@ -83,6 +87,7 @@ runs:
       env:
         TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
         TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+        TRIVY_OFFLINE_SCAN: ${{ inputs.offline-scan }}
       with:
         scan-type: ${{ inputs.scan-type }}
         format: github
