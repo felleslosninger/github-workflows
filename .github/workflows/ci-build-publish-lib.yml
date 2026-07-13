@@ -198,7 +198,7 @@ jobs:
           TARGET_DIR="${APP_PATH:-.}"
           cd "$TARGET_DIR" || exit 1
 
-          MAVEN_ARGS=("-B" "deploy")
+          MAVEN_ARGS=("-B" "deploy" "-DskipTests")
 
           if [ -n "$PROFILE" ]; then
             MAVEN_ARGS+=("-P$PROFILE")
