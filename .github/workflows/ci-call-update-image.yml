@@ -72,7 +72,7 @@ on:
       # Default should follow ArgoCD version
       kustomize-version:
         required: false
-        default: 5.4.3
+        default: ''
         type: string
       lifecycle:
         description: Lifecycle environment to determine container registry to publish to. Supported values are 'deployment' and 'development'. This will determine the container registry and credentials used for publishing the image
@@ -107,21 +107,28 @@ jobs:
           echo "One or more empty image inputs detected. Exiting" >> "$GITHUB_STEP_SUMMARY"
           exit 1
 
-      - name: Set container registry
-        id: set-container-registry
+      - name: Set image
+        id: set-image
         env:
           LIFECYCLE: ${{ inputs.lifecycle }}
+          IMAGE_NAME: ${{ inputs.image-name }}
+          IMAGE_VERSION: ${{ inputs.image-version }}
+          IMAGE_DIGEST: ${{ inputs.image-digest }}
+          CR_DEPLOYMENT: ${{ vars.CR_DEPLOYMENT_URL }}
+          CR_DEV: ${{ vars.CR_DEV_URL }}
         run: |
           if [[ "$LIFECYCLE" == "deployment" ]]; then
-            echo "container-registry=${{ vars.CR_DEPLOYMENT_URL }}" >> "$GITHUB_OUTPUT"
+            REGISTRY="$CR_DEPLOYMENT"
           elif [[ "$LIFECYCLE" == "development" ]]; then
-            echo "container-registry=${{ vars.CR_DEV_URL }}" >> "$GITHUB_OUTPUT"
+            REGISTRY="$CR_DEV"
           else
             echo "Invalid lifecycle type. Supported types are: \`deployment\`, and \`development\`" >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
 
-      - name: Get Labels
+          echo "image=${REGISTRY}/${IMAGE_NAME}:${IMAGE_VERSION}@${IMAGE_DIGEST}" >> "$GITHUB_OUTPUT"
+
+      - name: Get labels
         uses: octokit/request-action@b91aabaa861c777dcdb14e2387e30eddf04619ae # pin@v3.0.0
         id: get-labels
         with:
@@ -129,7 +136,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set PR Labels and Number
+      - name: Set PR labels and number
         id: set-pr-labels-and-number
         run: |
           echo "pr-labels=${{ join(fromJSON(steps.get-labels.outputs.data)[0].labels.*.name) }}" >> "$GITHUB_OUTPUT"
@@ -148,14 +155,14 @@ jobs:
         run: |
           echo "dependabot=${{ contains(steps.set-pr-labels-and-number.outputs.pr-labels, 'dependencies') }}" >> "$GITHUB_OUTPUT"
 
-      - name: Set Dependabot As Jira ID
+      - name: Set Dependabot as Jira ID
         id: output-dependabot
         if: |
           env.jira-id == '' &&
           steps.check-dependabot.outputs.dependabot == 'true'
         run: echo "jira-id=Dependabot" >> "$GITHUB_ENV"
 
-      - name: Set Author Username, Name, and Email
+      - name: Set author username, name and email
         id: set-author-info
         env:
           PUSHER_NAME: ${{ github.event.pusher.name }}
@@ -175,30 +182,53 @@ jobs:
             echo "author-name=$actor_name"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Set Outputs
-        id: set-outputs
+      - name: Log outputs
+        id: log-outputs
         env:
+          APPLICATION_NAME: ${{ inputs.application-name }}
+          AUTHOR_EMAIL: ${{ steps.set-author-info.outputs.author-email }}
+          AUTHOR_NAME: ${{ steps.set-author-info.outputs.author-name }}
+          AUTHOR_USERNAME: ${{ steps.set-author-info.outputs.author-username }}
+          DEPLOYMENT_ENV: ${{ inputs.deployment-environment }}
+          IMAGE_DIGEST: ${{ inputs.image-digest }}
           IMAGE_NAME: ${{ inputs.image-name }}
           IMAGE_VERSION: ${{ inputs.image-version }}
-          IMAGE_DIGEST: ${{ inputs.image-digest }}
-          CR_REGISTRY: ${{ steps.set-container-registry.outputs.container-registry }}
-          REPO: ${{ github.repository }}
+          IMAGE_FULL: ${{ steps.set-image.outputs.image }}
+          LIFECYCLE: ${{ inputs.lifecycle }}
+          JIRA_ID: ${{ env.jira-id }}
+          KUBERNETES_REPO: ${{ inputs.kubernetes-repo }}
+          PR_LABELS: ${{ steps.set-pr-labels-and-number.outputs.pr-labels }}
+          PR_NUMBER: ${{ steps.set-pr-labels-and-number.outputs.pr-number }}
+          PRODUCT_NAME: ${{ inputs.product-name }}
+          REPOSITORY: ${{ github.repository }}
           SHA: ${{ github.sha }}
+          KUSTOMIZE_VERSION: ${{ inputs.kustomize-version }}
         run: |
           {
-            echo "author-email=${{ steps.set-author-info.outputs.author-email }}"
-            echo "author-name=${{ steps.set-author-info.outputs.author-name }}"
-            echo "author-username=${{ steps.set-author-info.outputs.author-username }}"
-            echo "dependabot=${{ steps.check-dependabot.outputs.dependabot }}"
-            echo "image-name=$IMAGE_NAME"
-            echo "image=$CR_REGISTRY/$IMAGE_NAME:$IMAGE_VERSION@$IMAGE_DIGEST"
-            echo "pr-labels=${{ steps.set-pr-labels-and-number.outputs.pr-labels }}"
-            echo "pr-number=${{ steps.set-pr-labels-and-number.outputs.pr-number }}"
-            echo "repository=$REPO"
-            echo "sha=$SHA"
-          } >> "$GITHUB_OUTPUT"
+            echo "### Dispatch payload summary"
+            echo "| Key               | Value              |"
+            echo "| ----------------- | ------------------ |"
+            echo "| application-name  | $APPLICATION_NAME  |"
+            echo "| author-email      | $AUTHOR_EMAIL      |"
+            echo "| author-name       | $AUTHOR_NAME       |"
+            echo "| author-username   | $AUTHOR_USERNAME   |"
+            echo "| deployment-env    | $DEPLOYMENT_ENV    |"
+            echo "| image-digest      | $IMAGE_DIGEST      |"
+            echo "| image-name        | $IMAGE_NAME        |"
+            echo "| image-version     | $IMAGE_VERSION     |"
+            echo "| image.            | $IMAGE_FULL        |"
+            echo "| lifecycle         | $LIFECYCLE         |"
+            echo "| jira-id           | $JIRA_ID           |"
+            echo "| kubernetes-repo   | $KUBERNETES_REPO   |"
+            echo "| pr-labels         | $PR_LABELS         |"
+            echo "| pr-number         | $PR_NUMBER         |"
+            echo "| product-name      | $PRODUCT_NAME      |"
+            echo "| repository        | $REPOSITORY        |"
+            echo "| sha               | $SHA               |"
+            echo "| kustomize-version | $KUSTOMIZE_VERSION |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Generate Token
+      - name: Generate token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # pin@v3.2.0
         id: token
         with:
@@ -207,63 +237,34 @@ jobs:
           owner: felleslosninger
           repositories: ${{ inputs.kubernetes-repo }}
 
-      - name: Log Outputs
-        id: log-outputs
-        env:
-          AUTHOR_EMAIL: ${{ steps.set-author-info.outputs.author-email }}
-          AUTHOR_NAME: ${{ steps.set-author-info.outputs.author-name }}
-          AUTHOR_USERNAME: ${{ steps.set-author-info.outputs.author-username }}
-          DEPENDABOT: ${{ steps.set-outputs.outputs.dependabot }}
-          IMAGE_NAME: ${{ steps.set-outputs.outputs.image-name }}
-          IMAGE_FULL: ${{ steps.set-outputs.outputs.image }}
-          PR_LABELS: ${{ steps.set-outputs.outputs.pr-labels }}
-          PR_NUMBER: ${{ steps.set-outputs.outputs.pr-number }}
-          REPOSITORY: ${{ steps.set-outputs.outputs.repository }}
-          SHA: ${{ steps.set-outputs.outputs.sha }}
-        run: |
-          {
-            echo "# Outputs"
-            echo "| Key             | Value            |"
-            echo "| --------------- | ---------------- |"
-            echo "| author-email    | $AUTHOR_EMAIL    |"
-            echo "| author-name     | $AUTHOR_NAME     |"
-            echo "| author-username | $AUTHOR_USERNAME |"
-            echo "| dependabot      | $DEPENDABOT      |"
-            echo "| image-name      | $IMAGE_NAME      |"
-            echo "| image           | $IMAGE_FULL      |"
-            echo "| pr-labels       | $PR_LABELS       |"
-            echo "| pr-number       | $PR_NUMBER       |"
-            echo "| repository      | $REPOSITORY      |"
-            echo "| sha             | $SHA             |"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Call Dispatch To Start Promotion
+      - name: Send update-image event to CD repo
         uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # pin@v4.0.1
         with:
           token: ${{ steps.token.outputs.token }}
           event-type: ${{ inputs.kubernetes-repo-event }}
           repository: "felleslosninger/${{ inputs.kubernetes-repo }}"
-          # Wraps everything inside 'data' to get around Github's limit:
-          # The maximum number of top-level properties in client_payload is 10.
+          # Wraps everything inside 'data' to get around Github's limit. The
+          # maximum number of top-level properties in client_payload is 10
           client-payload: >
             {
               "data": {
                 "application-name": ${{ toJson(inputs.application-name) }},
-                "author-email": ${{ toJson(steps.set-outputs.outputs.author-email) }},
-                "author-name": ${{ toJson(steps.set-outputs.outputs.author-name) }},
-                "author-username": ${{ toJson(steps.set-outputs.outputs.author-username) }},
+                "author-email": ${{ toJson(steps.set-author-info.outputs.author-email) }},
+                "author-name": ${{ toJson(steps.set-author-info.outputs.author-name) }},
+                "author-username": ${{ toJson(steps.set-author-info.outputs.author-username) }},
                 "deployment-environment": ${{ toJson(inputs.deployment-environment) }},
                 "image-digest": ${{ toJson(inputs.image-digest) }},
-                "image-name": ${{ toJson(steps.set-outputs.outputs.image-name) }},
+                "image-name": ${{ toJson(inputs.image-name) }},
                 "image-version": ${{ toJson(inputs.image-version) }},
-                "image": ${{ toJson(steps.set-outputs.outputs.image) }},
+                "image": ${{ toJson(steps.set-image.outputs.image) }},
+                "lifecycle": ${{ toJson(inputs.lifecycle) }},
                 "jira-id": ${{ toJson(env.jira-id) }},
                 "kubernetes-repo": ${{ toJson(inputs.kubernetes-repo) }},
-                "pr-labels": ${{ toJson(steps.set-outputs.outputs.pr-labels) }},
-                "pr-number": ${{ toJson(steps.set-outputs.outputs.pr-number) }},
+                "pr-labels": ${{ toJson(steps.set-pr-labels-and-number.outputs.pr-labels) }},
+                "pr-number": ${{ toJson(steps.set-pr-labels-and-number.outputs.pr-number) }},
                 "product-name": ${{ toJson(inputs.product-name) }},
-                "repository": ${{ toJson(steps.set-outputs.outputs.repository) }},
-                "sha": ${{ toJson(steps.set-outputs.outputs.sha) }},
+                "repository": ${{ toJson(github.repository) }},
+                "sha": ${{ toJson(github.sha) }},
                 "kustomize-version": ${{ toJson(inputs.kustomize-version) }}
               }
             }
