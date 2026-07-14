@@ -23,10 +23,14 @@
 #     2. Set up JDK (reads dependencies with the GH_PACKAGES_READ_* secrets)
 #     3. Optionally set version with `mvn versions:set`
 #     4. Run `mvn clean install` to resolve and build the dependency tree before
-#        scanning
+#        scanning. For multi-module projects, set the 'module-name' input to
+#        scope the build to a single module with `-pl <module-name> -am` (the
+#        module plus its upstream reactor dependencies); otherwise the full
+#        reactor is built.
 #     5. Run Trivy vulnerability scanner ('fs' scan) over the resolved project
 #     6. Overwrite m2 settings to be allowed to publish to GitHub packages
-#     7. Deploy to Maven GitHub packages repository
+#     7. Deploy to Maven GitHub packages repository (only the selected module
+#        when 'module-name' is set, otherwise from 'application-path')
 #     8. Run Trivy SBOM generation (resolves SBOM metadata for multi-module
 #        projects)
 #
@@ -78,6 +82,10 @@ on:
         type: string
       maven-profile:
         description: Maven profile to use
+        required: false
+        type: string
+      module-name:
+        description: Name of the Maven module to build and publish, for multi-module reactor projects. When set, the build is scoped with `-pl <module-name> -am` so the module and its upstream reactor dependencies are built (in order) and only this module is deployed. When empty, the full reactor is built and deployed from 'application-path'.
         required: false
         type: string
       package-version:
@@ -162,12 +170,23 @@ jobs:
           GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
           GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
           PROFILE: ${{ inputs.maven-profile }}
+          MODULE_NAME: ${{ inputs.module-name }}
         run: |
-          if [ -n "$PROFILE" ]; then
-            mvn -B clean install --update-snapshots -P"$PROFILE"
-          else
-            mvn -B clean install --update-snapshots
+          MAVEN_ARGS=("-B" "clean" "install" "--update-snapshots")
+
+          if [ -n "$MODULE_NAME" ]; then
+            # Multi-module: build only this module and its upstream reactor
+            # dependencies (in order). Runs from the reactor root so the
+            # reactor context is intact; a plain 'install' inside the module
+            # directory would not build the sibling modules it depends on.
+            MAVEN_ARGS+=("-pl" "$MODULE_NAME" "-am")
           fi
+
+          if [ -n "$PROFILE" ]; then
+            MAVEN_ARGS+=("-P$PROFILE")
+          fi
+
+          mvn "${MAVEN_ARGS[@]}"
 
       - name: Run Trivy vulnerability scanner (fs)
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
@@ -194,11 +213,22 @@ jobs:
           PROFILE: ${{ inputs.maven-profile }}
           DEPLOYMENT_REPO: ${{ inputs.deployment-repository }}
           APP_PATH: ${{ inputs.application-path }}
+          MODULE_NAME: ${{ inputs.module-name }}
         run: |
-          TARGET_DIR="${APP_PATH:-.}"
-          cd "$TARGET_DIR" || exit 1
-
           MAVEN_ARGS=("-B" "deploy" "-DskipTests")
+
+          if [ -n "$MODULE_NAME" ]; then
+            # Multi-module: deploy only the selected module, from the reactor
+            # root. No '-am' here on purpose — upstream reactor dependencies
+            # were already built into ~/.m2 by the 'Maven install' step and are
+            # published by their own workflow call, so we publish this module
+            # only.
+            MAVEN_ARGS+=("-pl" "$MODULE_NAME")
+          else
+            # Single-module / whole-reactor: deploy from the project directory.
+            TARGET_DIR="${APP_PATH:-.}"
+            cd "$TARGET_DIR" || exit 1
+          fi
 
           if [ -n "$PROFILE" ]; then
             MAVEN_ARGS+=("-P$PROFILE")
