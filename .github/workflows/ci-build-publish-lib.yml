@@ -26,7 +26,10 @@
 #        scanning. For multi-module projects, set the 'module-name' input to
 #        scope the build to a single module with `-pl <module-name> -am` (the
 #        module plus its upstream reactor dependencies); otherwise the full
-#        reactor is built.
+#        reactor is built. 'module-name' MUST be the module's directory path
+#        relative to the reactor root (e.g. 'payment/api'), NOT the Maven
+#        coordinate form (`:artifactId` or `groupId:artifactId`); the Trivy scan
+#        and SBOM steps derive filesystem paths from it.
 #     5. Run Trivy vulnerability scanner ('fs' scan) over the resolved project
 #     6. Overwrite m2 settings to be allowed to publish to GitHub packages
 #     7. Deploy to Maven GitHub packages repository (only the selected module
@@ -81,7 +84,7 @@ on:
         required: false
         type: string
       module-name:
-        description: Name of the Maven module to build and publish, for multi-module reactor projects. When set, the build is scoped with `-pl <module-name> -am` so the module and its upstream reactor dependencies are built (in order) and only this module is deployed. When empty, the full reactor is built and deployed from the repository root.
+        description: Directory path of the Maven module to build and publish, relative to the reactor root (e.g. 'payment/api'), for multi-module reactor projects. Must be the module directory path, NOT the Maven coordinate form (`:artifactId` or `groupId:artifactId`), because the Trivy scan and SBOM steps derive filesystem paths from it. When set, the build is scoped with `-pl <module-name> -am` so the module and its upstream reactor dependencies are built (in order) and only this module is deployed. When empty, the full reactor is built and deployed from the repository root.
         required: false
         type: string
       package-version:
@@ -242,9 +245,12 @@ jobs:
           SBOM_ARTIFACT_ID: ${{ inputs.sbom-artifact-id }}
           SBOM_PATH: ${{ inputs.sbom-path }}
           REPO_NAME: ${{ github.event.repository.name }}
+          MODULE_NAME: ${{ inputs.module-name }}
         run: |
-          # Default to the repository root if 'sbom-path' is empty
-          RAW_PATH="${SBOM_PATH:-.}"
+          # Default to the selected module directory (so multi-module SBOMs keep
+          # a per-module artifact id), then the repository root, if 'sbom-path'
+          # is empty
+          RAW_PATH="${SBOM_PATH:-${MODULE_NAME:-.}}"
           CLEAN_PATH=$(echo "$RAW_PATH" | sed 's/\/target$//' | sed 's/^\.\///' | sed 's/\/$//')
 
           # Resolve the Artifact ID
