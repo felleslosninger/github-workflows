@@ -191,6 +191,10 @@ jobs:
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
           scan-type: "fs"
+          # Scope the scan to the built module (its upstream reactor deps are
+          # resolved from the warm ~/.m2 via the module pom); repo root when
+          # 'module-name' is unset.
+          application-path: ${{ inputs.module-name || './' }}
           library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
           library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
           library-severity: ${{ inputs.trivy-library-severity }}
