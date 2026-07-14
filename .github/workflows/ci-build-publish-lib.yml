@@ -5,7 +5,7 @@
 # Purpose:
 #   This workflow performs a Maven build of a Java library and publishes the
 #   built artifact to GitHub packages. It is the golden path for releasing
-#   Maven libraries and replaces both ci-maven-deploy.yml and
+#   Maven libraries and is intended to replace both ci-maven-deploy.yml and
 #   ci-maven-install-deploy-lib.yml.
 #
 #   It supports projects with internal Maven dependencies (hosted in other
