@@ -30,7 +30,8 @@
 #     5. Run Trivy vulnerability scanner ('fs' scan) over the resolved project
 #     6. Overwrite m2 settings to be allowed to publish to GitHub packages
 #     7. Deploy to Maven GitHub packages repository (only the selected module
-#        when 'module-name' is set, otherwise from 'application-path')
+#        when 'module-name' is set, otherwise the full reactor from the
+#        repository root)
 #     8. Run Trivy SBOM generation (resolves SBOM metadata for multi-module
 #        projects)
 #
@@ -50,11 +51,6 @@ permissions: {}
 on:
   workflow_call:
     inputs:
-      application-path:
-        description: Path to the Maven project directory (also used as the Trivy scan root), relative to the repository root
-        default: "./"
-        required: false
-        type: string
       cache-path:
         description: Path to cache dependencies, relative to the repository root
         default: "**/pom.xml"
@@ -85,7 +81,7 @@ on:
         required: false
         type: string
       module-name:
-        description: Name of the Maven module to build and publish, for multi-module reactor projects. When set, the build is scoped with `-pl <module-name> -am` so the module and its upstream reactor dependencies are built (in order) and only this module is deployed. When empty, the full reactor is built and deployed from 'application-path'.
+        description: Name of the Maven module to build and publish, for multi-module reactor projects. When set, the build is scoped with `-pl <module-name> -am` so the module and its upstream reactor dependencies are built (in order) and only this module is deployed. When empty, the full reactor is built and deployed from the repository root.
         required: false
         type: string
       package-version:
@@ -192,7 +188,6 @@ jobs:
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
           scan-type: "fs"
-          application-path: ${{ inputs.application-path }}
           library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
           library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
           library-severity: ${{ inputs.trivy-library-severity }}
@@ -212,7 +207,6 @@ jobs:
         env:
           PROFILE: ${{ inputs.maven-profile }}
           DEPLOYMENT_REPO: ${{ inputs.deployment-repository }}
-          APP_PATH: ${{ inputs.application-path }}
           MODULE_NAME: ${{ inputs.module-name }}
         run: |
           MAVEN_ARGS=("-B" "deploy" "-DskipTests")
@@ -224,10 +218,6 @@ jobs:
             # published by their own workflow call, so we publish this module
             # only.
             MAVEN_ARGS+=("-pl" "$MODULE_NAME")
-          else
-            # Single-module / whole-reactor: deploy from the project directory.
-            TARGET_DIR="${APP_PATH:-.}"
-            cd "$TARGET_DIR" || exit 1
           fi
 
           if [ -n "$PROFILE" ]; then
@@ -252,10 +242,9 @@ jobs:
           SBOM_ARTIFACT_ID: ${{ inputs.sbom-artifact-id }}
           SBOM_PATH: ${{ inputs.sbom-path }}
           REPO_NAME: ${{ github.event.repository.name }}
-          APP_PATH: ${{ inputs.application-path }}
         run: |
-          # Default to 'application-path' or root if 'sbom-path' is empty
-          RAW_PATH="${SBOM_PATH:-${APP_PATH:-.}}"
+          # Default to the repository root if 'sbom-path' is empty
+          RAW_PATH="${SBOM_PATH:-.}"
           CLEAN_PATH=$(echo "$RAW_PATH" | sed 's/\/target$//' | sed 's/^\.\///' | sed 's/\/$//')
 
           # Resolve the Artifact ID
