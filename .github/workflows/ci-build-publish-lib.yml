@@ -1,0 +1,285 @@
+# Workflow Name: Build and publish Maven library to GitHub packages
+#
+# Owner: Digdir Platform team 
+#
+# Purpose:
+#   This workflow performs a Maven build of a Java library and publishes the
+#   built artifact to GitHub packages. It is the golden path for releasing
+#   Maven libraries and is intended to replace both ci-maven-deploy.yml and
+#   ci-maven-install-deploy-lib.yml.
+#
+#   It supports projects with internal Maven dependencies (hosted in other
+#   private GitHub Packages repositories) by reading dependencies with the
+#   'GH_PACKAGES_READ_USER' / 'GH_PACKAGES_READ_PAT' secrets.
+#
+#   'mvn clean install' always runs BEFORE the Trivy filesystem scan. This is
+#   required so that Maven resolves and builds the full dependency tree
+#   (including internal and transitive dependencies) locally first; the Trivy
+#   'fs' scan can then detect CVEs across the resolved dependencies rather than
+#   from a static pom.xml-only analysis.
+#
+#   Flow:
+#     1. Checkout repository
+#     2. Set up JDK (reads dependencies with the GH_PACKAGES_READ_* secrets)
+#     3. Optionally set version with `mvn versions:set`
+#     4. Run `mvn clean install` to resolve and build the dependency tree before
+#        scanning. For multi-module projects, set the 'module-name' input to
+#        scope the build to a single module with `-pl <module-name> -am` (the
+#        module plus its upstream reactor dependencies); otherwise the full
+#        reactor is built. 'module-name' MUST be the module's directory path
+#        relative to the reactor root (e.g. 'payment/api'), NOT the Maven
+#        coordinate form (`:artifactId` or `groupId:artifactId`); the Trivy scan
+#        and SBOM steps derive filesystem paths from it.
+#     5. Run Trivy vulnerability scanner ('fs' scan) over the resolved project
+#     6. Overwrite m2 settings to be allowed to publish to GitHub packages
+#     7. Deploy to Maven GitHub packages repository (only the selected module
+#        when 'module-name' is set, otherwise the full reactor from the
+#        repository root)
+#     8. Run Trivy SBOM generation (resolves SBOM metadata for multi-module
+#        projects)
+#
+# Trigger:
+#   Triggered by workflow calls (workflow_call)
+#
+# Inputs:
+#   See input section
+#
+# Outputs:
+#   None
+
+name: Build and publish Maven library to GitHub packages
+
+permissions: {}
+
+on:
+  workflow_call:
+    inputs:
+      cache-path:
+        description: Path to cache dependencies, relative to the repository root
+        default: "**/pom.xml"
+        required: false
+        type: string
+      deployment-repository:
+        description: Set deployment repo
+        default: ""
+        required: false
+        type: string
+      fetch-depth:
+        description: Fetch depth for checkout
+        default: 1
+        required: false
+        type: number
+      java-distribution:
+        description: Java distribution to use
+        default: "liberica"
+        required: false
+        type: string
+      java-version:
+        description: Main version of java
+        default: "25"
+        required: false
+        type: string
+      maven-profile:
+        description: Maven profile to use
+        required: false
+        type: string
+      module-name:
+        description: Directory path of the Maven module to build and publish, relative to the reactor root (e.g. 'payment/api'), for multi-module reactor projects. Must be the module directory path, NOT the Maven coordinate form (`:artifactId` or `groupId:artifactId`), because the Trivy scan and SBOM steps derive filesystem paths from it. When set, the build is scoped with `-pl <module-name> -am` so the module and its upstream reactor dependencies are built (in order) and only this module is deployed. When empty, the full reactor is built and deployed from the repository root.
+        required: false
+        type: string
+      package-version:
+        description: Version to use for maven package
+        default: ""
+        required: false
+        type: string
+      sbom-artifact-id:
+        description: Override the artifact id used for SBOM generation. Defaults to the multi-module path or repository name
+        required: false
+        type: string
+      sbom-path:
+        description: Target directory for SBOM generation
+        required: false
+        type: string
+      trivy-library-disable-scan:
+        description: Disable Trivy library scan
+        type: boolean
+        required: false
+        default: false
+      trivy-library-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy library scan
+        type: boolean
+        required: false
+        default: true
+      trivy-library-severity:
+        description: When to fail the scan with Trivy library vulnerabilities
+        type: string
+        required: false
+        default: 'HIGH,CRITICAL'
+      trivy-version:
+        description: Version of Trivy to use for scanning
+        type: string
+        required: false
+        default: ''
+
+jobs:
+  inputs-to-summary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write inputs to summary
+        uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
+        with:
+          json-payload: ${{ toJson(inputs) }}
+
+  build-publish-package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6.0.2
+        with:
+          fetch-depth: ${{ inputs.fetch-depth }}
+
+      - name: Set up JDK ${{ inputs.java-version }}
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # pin@v5.2.0
+        with:
+          distribution: "${{ inputs.java-distribution }}"
+          java-version: ${{ inputs.java-version }}
+          cache: maven
+          cache-dependency-path: ${{ inputs.cache-path }}
+          server-id: github
+          server-username: GH_PACKAGES_READ_USER
+          server-password: GH_PACKAGES_READ_PAT
+
+      - name: Set version
+        env:
+          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
+          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
+          PACKAGE_VERSION: ${{ inputs.package-version }}
+        run: |
+          if [ -n "$PACKAGE_VERSION" ]; then
+            mvn versions:set -B -DnewVersion="$PACKAGE_VERSION"
+            echo "- \`mvn versions:set\` was executed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- \`mvn versions:set\` was not executed" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Maven install
+        env:
+          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
+          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
+          PROFILE: ${{ inputs.maven-profile }}
+          MODULE_NAME: ${{ inputs.module-name }}
+        run: |
+          MAVEN_ARGS=("-B" "clean" "install" "--update-snapshots")
+
+          if [ -n "$MODULE_NAME" ]; then
+            # Multi-module: build only this module and its upstream reactor
+            # dependencies (in order). Runs from the reactor root so the
+            # reactor context is intact; a plain 'install' inside the module
+            # directory would not build the sibling modules it depends on.
+            MAVEN_ARGS+=("-pl" "$MODULE_NAME" "-am")
+          fi
+
+          if [ -n "$PROFILE" ]; then
+            MAVEN_ARGS+=("-P$PROFILE")
+          fi
+
+          mvn "${MAVEN_ARGS[@]}"
+
+      - name: Run Trivy vulnerability scanner (fs)
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
+        with:
+          scan-type: "fs"
+          # Scope the scan to the built module (its upstream reactor deps are
+          # resolved from the warm ~/.m2 via the module pom); repo root when
+          # 'module-name' is unset.
+          application-path: ${{ inputs.module-name || './' }}
+          library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+          library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+          library-severity: ${{ inputs.trivy-library-severity }}
+          trivy-version: ${{ inputs.trivy-version }}
+          # Cache is warmed by the preceding 'mvn clean install'
+          library-offline-scan: true
+
+      - name: Overwrite m2 settings to publish libs
+        env:
+          PUBLISH_ACTOR: ${{ github.actor }}
+          PUBLISH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p ~/.m2
+          echo "<settings><servers><server><id>github</id><username>${PUBLISH_ACTOR}</username><password>${PUBLISH_TOKEN}</password></server></servers></settings>" > ~/.m2/settings.xml
+
+      - name: Maven deploy
+        env:
+          PROFILE: ${{ inputs.maven-profile }}
+          DEPLOYMENT_REPO: ${{ inputs.deployment-repository }}
+          MODULE_NAME: ${{ inputs.module-name }}
+        run: |
+          MAVEN_ARGS=("-B" "deploy" "-DskipTests")
+
+          if [ -n "$MODULE_NAME" ]; then
+            # Multi-module: deploy only the selected module, from the reactor
+            # root. No '-am' here on purpose — upstream reactor dependencies
+            # were already built into ~/.m2 by the 'Maven install' step and are
+            # published by their own workflow call, so we publish this module
+            # only.
+            MAVEN_ARGS+=("-pl" "$MODULE_NAME")
+          fi
+
+          if [ -n "$PROFILE" ]; then
+            MAVEN_ARGS+=("-P$PROFILE")
+          fi
+
+          if [ -n "$DEPLOYMENT_REPO" ]; then
+            MAVEN_ARGS+=("-DaltDeploymentRepository=github::https://maven.pkg.github.com/$DEPLOYMENT_REPO")
+          fi
+
+          mvn "${MAVEN_ARGS[@]}"
+
+      # This is a temporary step specifically for handling multi-module
+      # repositories with Trivy SBOM generation for Maven artifacts. We strip
+      # 'target' and slashes to sanitize the path for the new SBOM generation
+      # (Anchore previously used the 'sbom-path' directly, but this caused
+      # issues with Trivy scan and multi-module projects where the path included
+      # 'target' directories).
+      - name: Resolve SBOM Metadata
+        id: sbom-meta
+        env:
+          SBOM_ARTIFACT_ID: ${{ inputs.sbom-artifact-id }}
+          SBOM_PATH: ${{ inputs.sbom-path }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          MODULE_NAME: ${{ inputs.module-name }}
+        run: |
+          # Default to the selected module directory (so multi-module SBOMs keep
+          # a per-module artifact id), then the repository root, if 'sbom-path'
+          # is empty
+          RAW_PATH="${SBOM_PATH:-${MODULE_NAME:-.}}"
+          CLEAN_PATH=$(echo "$RAW_PATH" | sed 's/\/target$//' | sed 's/^\.\///' | sed 's/\/$//')
+
+          # Resolve the Artifact ID
+          if [ -n "$SBOM_ARTIFACT_ID" ]; then
+            # Use 'sbom-artifact-id' if provided
+            ARTIFACT_ID="$SBOM_ARTIFACT_ID"
+          elif [ "$CLEAN_PATH" != "." ] && [ -n "$CLEAN_PATH" ]; then
+            # If it's a multi-module path, use the folder name
+            ARTIFACT_ID="$CLEAN_PATH"
+          else
+            # Fallback to repository name
+            ARTIFACT_ID="$REPO_NAME"
+          fi
+
+          echo "path=${CLEAN_PATH:-.}" >> "$GITHUB_OUTPUT"
+          echo "id=$ARTIFACT_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Run Trivy SBOM generation
+        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@main
+        with:
+          scan-type: fs
+          artifact-id: ${{ steps.sbom-meta.outputs.id }}
+          application-path: ${{ steps.sbom-meta.outputs.path }}
+          version: ${{ inputs.package-version }}
+          # This is already done in Trivy vuln scan step
+          skip-setup: true
+          # Cache is warmed by the preceding 'mvn clean install'
+          offline-scan: true

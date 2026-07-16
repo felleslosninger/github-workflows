@@ -92,6 +92,11 @@ on:
         required: false
         type: boolean
         default: false
+      application-path:
+        description: Path to the application directory to scan with Trivy, relative to the repository root
+        default: "./"
+        required: false
+        type: string
       container-registry:
         description: Azure Container Registry name
         default: "creiddev.azurecr.io"
@@ -264,6 +269,7 @@ jobs:
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
         with:
           image-ref: ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}
+          application-path: ${{ inputs.application-path }}
           library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
           library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
           library-severity: ${{ inputs.trivy-library-severity }}

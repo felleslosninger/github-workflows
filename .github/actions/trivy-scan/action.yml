@@ -27,6 +27,10 @@ inputs:
     description: When to fail the scan with library vulnerabilities
     default: "HIGH,CRITICAL"
     required: false
+  library-offline-scan:
+    description: "Resolve dependencies without calling remote repositories like Maven Central. Use ONLY when a prior step (e.g. 'mvn install') has populated the cache — otherwise the scan is silently incomplete."
+    default: "false"
+    required: false
   os-disable-scan:
     description: Disable OS scan
     default: "false"
@@ -149,6 +153,8 @@ runs:
         TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
         # Disable noisy VEX notice from the scan result
         TRIVY_DISABLE_VEX_NOTICE: "true"
+        # Resolve from local cache only to avoid Maven Central 429s; safe because a prior step warmed the cache.
+        TRIVY_OFFLINE_SCAN: ${{ inputs.library-offline-scan }}
       with:
         version: ${{ inputs.trivy-version }}
         scan-type: ${{ inputs.scan-type }}
