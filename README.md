@@ -100,10 +100,10 @@ for more information.
 
 Workflows for building and publishing Maven libraries after commits to main
 
-- [ci-maven-deploy.yml](.github/workflows/ci-maven-deploy.yml): For projects
-  without internal Maven dependencies
-- [ci-maven-install-deploy-lib.yml](.github/workflows/ci-maven-install-deploy-lib.yml):
-  For projects with internal dependencies
+- [ci-build-publish-lib.yml](.github/workflows/ci-build-publish-lib.yml): The
+  golden path for building and publishing Maven libraries. Use this for all
+  projects, with or without internal Maven dependencies. It replaces the
+  deprecated `ci-maven-deploy.yml` and `ci-maven-install-deploy-lib.yml`.
 
 Check out the [internal usage
 docs](https://paotvers.io/docs/default/Domain/application-platform/Application/Repository/workflows/release-artifact/)
@@ -138,6 +138,14 @@ functionality should be covered by our golden path
 
 - [ci-maven-build.yml](.github/workflows/ci-maven-build.yml)
 - [ci-maven-build-lib.yml](.github/workflows/ci-maven-build-lib.yml)
+
+The following build-and-publish workflows are deprecated and replaced by the
+golden path [ci-build-publish-lib.yml](.github/workflows/ci-build-publish-lib.yml)
+workflow, which covers both projects with and without internal Maven
+dependencies. Migrate to it.
+
+- [ci-maven-deploy.yml](.github/workflows/ci-maven-deploy.yml)
+- [ci-maven-install-deploy-lib.yml](.github/workflows/ci-maven-install-deploy-lib.yml)
 
 ### Custom workflows
 

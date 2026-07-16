@@ -2,6 +2,11 @@
 #
 # Owner: Digdir Platform team / Digdir development teams
 #
+# DEPRECATED:
+#   This workflow is deprecated. Use the golden path
+#   ci-build-publish-lib.yml instead, which covers both projects with and
+#   without internal Maven dependencies. Please migrate.
+#
 # Purpose:
 #   This workflow is designed to perform a Maven build of a Java application,
 #   and publish the built artifact to GitHub packages. It should be used when
