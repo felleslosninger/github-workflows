@@ -6,14 +6,15 @@
 #   This is the golden path for PRs towards main branch for containerized
 #   applications. It works as a proxy workflow that delegates the container
 #   build and Trivy scans to the correct workflow based on the
-#   'application-type' input ('spring-boot' or 'quarkus'). For library projects
-#   that do not build a container image, use ci-pr-checks-lib.yml instead.
+#   'application-type' input ('spring-boot', 'quarkus', or 'docker'). For
+#   library projects that do not build a container image, use
+#   ci-pr-checks-lib.yml instead.
 #
 #   Flow:
 #     1. Verifies PR title
 #     2. Builds the container image and runs Trivy library + OS scans, by
-#        calling the Spring Boot or Quarkus container-scan workflow selected
-#        by 'application-type'
+#        calling the Spring Boot, Quarkus, or Docker container-scan workflow
+#        selected by 'application-type'
 #     3. Auto-merges Dependabot PRs (optional)
 #     4. Dispatches a build-publish-image event for merged Dependabot PRs
 #        (currently skipped automatically; see the note on call-build-image)
@@ -34,13 +35,18 @@ permissions: {}
 on:
   workflow_call:
     inputs:
+      add-git-package-token:
+        description: Adds GIT_PACKAGE_TOKEN build argument for Docker. Only applies to 'docker' application type
+        default: false
+        required: false
+        type: boolean
       application-path:
         description: 'Path to the application to scan with Trivy. Default is root of the repository, but can be set to a specific module in multi-module projects.'
         default: "./"
         required: false
         type: string
       application-type:
-        description: Type of application to determine container build and scan steps. Supported values are 'spring-boot' and 'quarkus'
+        description: Type of application to determine container build and scan steps. Supported values are 'spring-boot', 'quarkus', and 'docker'
         type: string
         default: 'spring-boot'
         required: false
@@ -50,6 +56,11 @@ on:
       cache-path:
         description: Path to the file used for caching Maven dependencies. Default is set to root pom.xml, but can be set to a specific module pom.xml in multi-module projects to only cache dependencies for that module
         default: "**/pom.xml"
+        required: false
+        type: string
+      docker-build-context:
+        description: Docker build context directory (resolves COPY/ADD paths). Only applies to 'docker' application type. Defaults to the repository root.
+        default: "."
         required: false
         type: string
       enable-auto-merge-dependabot:
@@ -181,7 +192,7 @@ jobs:
           max-length-title: ${{ inputs.pull-request-max-length-title }}
           case-sensitive-prefix: ${{ inputs.pull-request-case-sensitive-prefix }}
 
-  
+
   call-spring-boot-container-scan:
     name: Call Spring Boot container scan
     if: |
@@ -234,17 +245,40 @@ jobs:
       trivy-version: ${{ inputs.trivy-version }}
     secrets: inherit
 
+  call-docker-container-scan:
+    name: Call Docker container scan
+    if: |
+      inputs.application-type == 'docker'
+    uses: felleslosninger/github-workflows/.github/workflows/ci-docker-container-scan.yml@main
+    permissions:
+      contents: read
+    with:
+      image-name: ${{ inputs.image-name }}
+      application-path: ${{ inputs.application-path }}
+      docker-build-context: ${{ inputs.docker-build-context }}
+      add-git-package-token: ${{ inputs.add-git-package-token }}
+      trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+      trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+      trivy-library-severity: ${{ inputs.trivy-library-severity }}
+      trivy-os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
+      trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
+      trivy-os-severity: ${{ inputs.trivy-os-severity }}
+      trivy-version: ${{ inputs.trivy-version }}
+    secrets: inherit
+
   call-auto-merge:
     name: Call auto-merge
     if: |
       always() &&
       inputs.enable-auto-merge-dependabot == true &&
       (needs.call-spring-boot-container-scan.result == 'success' || needs.call-spring-boot-container-scan.result == 'skipped') &&
-      (needs.call-quarkus-container-scan.result == 'success' || needs.call-quarkus-container-scan.result == 'skipped')
+      (needs.call-quarkus-container-scan.result == 'success' || needs.call-quarkus-container-scan.result == 'skipped') &&
+      (needs.call-docker-container-scan.result == 'success' || needs.call-docker-container-scan.result == 'skipped')
     needs:
       [
         call-spring-boot-container-scan,
         call-quarkus-container-scan,
+        call-docker-container-scan,
       ]
     uses: felleslosninger/github-workflows/.github/workflows/misc-approve-and-merge-dependabot-pr.yml@main
     permissions:

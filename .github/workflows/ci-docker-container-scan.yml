@@ -1,0 +1,138 @@
+# Workflow Name: Docker container scan
+#
+# Owner: Digdir Platform team
+#
+# Purpose:
+#   This is part of the golden path for PRs towards main branch. The workflow
+#   should not normally be used directly, but called from the ci-pr-checks-image
+#   workflow, which checks certain things before calling this workflow with the
+#   correct parameters. This workflow will build a temporary Docker image
+#   based on the Dockerfile found in the 'application-path' directory, or at
+#   'docker/Dockerfile' relative to the repository root when
+#   'add-git-package-token' is true (mirroring
+#   ci-docker-build-publish-image.yml, so PR-time scanning builds the same
+#   artifact the merge-time publish workflow will build). After building the
+#   image, the workflow will run Trivy vulnerability scans.
+#
+#   Flow:
+#     1. Set image metadata (name and tag)
+#     2. Checkout repository
+#     3. Build Docker image
+#     4. Run Trivy vulnerability scan on the built image
+#
+# Trigger:
+#   Triggered by workflow calls (workflow_call)
+#
+# Inputs:
+#   See input section
+#
+# Outputs:
+#   None
+#
+
+name: Docker container scan
+
+permissions: {}
+
+on:
+  workflow_call:
+    inputs:
+      add-git-package-token:
+        description: Adds GIT_PACKAGE_TOKEN build argument for Docker
+        default: false
+        required: false
+        type: boolean
+      application-path:
+        description: Path to the application directory containing the Dockerfile, and to scan with Trivy
+        default: "./"
+        required: false
+        type: string
+      docker-build-context:
+        description: Docker build context directory (resolves COPY/ADD paths). Defaults to the repository root.
+        default: "."
+        required: false
+        type: string
+      image-name:
+        description: Name of Docker image
+        required: false
+        type: string
+      trivy-library-disable-scan:
+        description: Disable Trivy library scan
+        type: boolean
+        required: false
+        default: false
+      trivy-library-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy library scan
+        type: boolean
+        required: false
+        default: true
+      trivy-library-severity:
+        description: When to fail the scan with Trivy library vulnerabilities
+        type: string
+        required: false
+        default: 'HIGH,CRITICAL'
+      trivy-os-disable-scan:
+        description: Disable Trivy OS scan
+        type: boolean
+        required: false
+        default: false
+      trivy-os-ignore-unfixed:
+        description: Ignore unfixed vulnerabilities in Trivy OS scan
+        type: boolean
+        required: false
+        default: true
+      trivy-os-severity:
+        description: When to fail the scan with Trivy OS vulnerabilities
+        type: string
+        required: false
+        default: 'CRITICAL'
+      trivy-version:
+        description: Version of Trivy to use for scanning
+        type: string
+        required: false
+        default: ''
+
+jobs:
+  build-and-scan-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Set image metadata
+        id: image-metadata
+        uses: felleslosninger/github-workflows/.github/actions/image-metadata@main
+        with:
+          image-name: ${{ inputs.image-name }}
+          container-registry: "my-local-registry"
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6.0.2
+
+      - name: Build image
+        env:
+          APP_PATH: ${{ inputs.application-path }}
+          BUILD_CONTEXT: ${{ inputs.docker-build-context }}
+          IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
+          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
+          ADD_TOKEN: ${{ inputs.add-git-package-token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "$ADD_TOKEN" = "true" ]; then
+            docker build --tag "$IMAGE_NAME:$IMAGE_TAG" --file docker/Dockerfile --build-arg GIT_PACKAGE_TOKEN="$GITHUB_TOKEN" "$BUILD_CONTEXT"
+          else
+            docker build --tag "$IMAGE_NAME:$IMAGE_TAG" --file "$APP_PATH/Dockerfile" "$BUILD_CONTEXT"
+          fi
+
+      - name: Run Trivy vulnerability scanner (image)
+        uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
+        with:
+          image-ref: ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}
+          application-path: ${{ inputs.application-path }}
+          library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
+          library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
+          library-severity: ${{ inputs.trivy-library-severity }}
+          os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
+          os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
+          os-severity: ${{ inputs.trivy-os-severity }}
+          trivy-version: ${{ inputs.trivy-version }}
