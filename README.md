@@ -61,6 +61,8 @@ application-specific workflows
   Builds and scans temporary Spring Boot container images
 - [ci-quarkus-container-scan.yml](.github/workflows/ci-quarkus-container-scan.yml):
   Builds and scans temporary Quarkus JVM or GraalVM native container images
+- [ci-docker-container-scan.yml](.github/workflows/ci-docker-container-scan.yml):
+  Builds and scans temporary custom Docker images
 
 and optionally runs the Dependabot auto-merge workflow
 
