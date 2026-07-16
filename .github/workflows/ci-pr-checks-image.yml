@@ -249,7 +249,7 @@ jobs:
     name: Call Docker container scan
     if: |
       inputs.application-type == 'docker'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-docker-container-scan.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-docker-container-scan.yml@PF-2200-legg-til-stotte-for-trivy-scan-pa-pr-workflow-for-dockerfile-apps
     permissions:
       contents: read
     with:
