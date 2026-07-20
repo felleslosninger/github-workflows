@@ -135,4 +135,5 @@ jobs:
           os-disable-scan: ${{ inputs.trivy-os-disable-scan }}
           os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
           os-severity: ${{ inputs.trivy-os-severity }}
+          os-exit-code: "1"
           trivy-version: ${{ inputs.trivy-version }}
