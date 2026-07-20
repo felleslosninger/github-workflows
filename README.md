@@ -5,7 +5,6 @@
 This repository contains reusable GitHub Workflows and composite Actions for
 common CI/CD tasks. Workflows are organized by purpose and application type.
 
-
 ## Composite actions
 
 We have a set of composite actions that contain reusable steps to avoid
