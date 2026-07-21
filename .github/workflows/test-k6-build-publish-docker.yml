@@ -101,7 +101,7 @@ jobs:
           image-name: ${{ inputs.image-name }}
           container-registry: ${{ secrets.REGISTRY_URL }}
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin@v7.0.1
 
       - name: Find and replace image version for ${{ steps.image-metadata.outputs.image-tag }} in version endpoint
         uses: jacobtomlinson/gha-find-replace@f1069b438f125e5395d84d1c6fd3b559a7880cb5 # pin@v3.0.5
