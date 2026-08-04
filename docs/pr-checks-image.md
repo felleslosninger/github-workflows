@@ -8,7 +8,7 @@ produces container images
 This workflow support
 
 - PR title validation
-- Trivy image scanning
+- Container image scanning
 - Automatic merge of Dependabot PRs
 
 ## Usage
@@ -52,14 +52,7 @@ You do not need to override anything else to start using this workflow.
 
 ### PR title validation
 
-| Override | Default |
-| -------- | ------- |
-| `enable-pr-title-verify` | `true` |
-| `pull-request-title` | `` |
-| `pull-request-allowed-prefixes` | `` |
-| `pull-request-min-length-title` | `` |
-| `pull-request-max-length-title` | `` |
-| `pull-request-case-sensitive-prefix` | `` |
+This is handled via a separate workflow job called `validate-pr-title`.
 
 To disable the PR title validation
 
@@ -70,15 +63,76 @@ jobs:
       enable-pr-title-verify: false
 ```
 
+#### PR title validation overrides
+
+| Override | Workflow default |
+| -------- | ---------------- |
+| `pull-request-title` | `` |
+| `pull-request-allowed-prefixes` | `` |
+| `pull-request-min-length-title` | `` |
+| `pull-request-max-length-title` | `` |
+| `pull-request-case-sensitive-prefix` | `` |
+
 > [!TIP]
 > See the [validate-pr-title composite action
-> docs](../.github/actions/validate-pr-title/README.md) for the other overrides.
+> docs](../.github/actions/validate-pr-title/README.md) on override usage.
 
-### Trivy image scanning
+### Container image scanning
 
-| Override | Default |
-| -------- | ------- |
-| `enable-trivy-scan` | `true` |
+This is handled via 3 separate workflow jobs depending on application type
+
+- `call-spring-boot-container-scan`
+- `call-quarkus-container-scan`
+- `call-docker-container-scan`
+
+To disable container scanning
+
+```yaml
+jobs:
+  pull-request-checks:
+    with:
+      enable-container-image-scan: false
+```
+
+The 3 jobs support some common overrides, as well as overrides based on the
+application type.
+
+#### Container image scanning common overrides
+
+##### Image name and application path
+
+| Override | Workflow default |
+| -------- | ---------------- |
+| `image-name` | `` |
+| `application-path` | `./` |
+
+##### Base image overrides
+
+These are applicable to Spring Boot and Quarkus application types.
+
+| Override | Workflow default |
+| -------- | ---------------- |
+| `image-pack` | `builder-noble-java-tiny` |
+| `image-pack-tag` | `latest` |
+
+> [!TIP]
+> See the [Paketo builder image
+> docs](https://paketo.io/docs/reference/builders-reference/) for choices.
+
+##### Java setup overrides
+
+These are applicable to Spring Boot and Quarkus application types.
+
+| Override | Workflow default |
+| -------- | ---------------- |
+| `java-version` | `25` |
+| `java-distribution` | `liberica` |
+| `cache-path` | `**/pom.xml` |
+
+##### Trivy overrides
+
+| Override | Workflow default |
+| -------- | ---------------- |
 | `trivy-library-disable-scan` | `false` |
 | `trivy-library-ignore-unfixed` | `true` |
 | `trivy-library-severity` | `HIGH,CRITICAL` |
@@ -87,20 +141,34 @@ jobs:
 | `trivy-os-severity` | `CRITICAL` |
 | `trivy-version` | `` |
 
-To disable Trivy image scan
-
-```yaml
-jobs:
-  pull-request-checks:
-    with:
-      enable-trivy-scan: false
-```
-
 > [!TIP]
 > See the [trivy-scan composite action
 > docs](../.github/actions/trivy-scan/README.md) for the other overrides.
 
+#### Container image scanning Spring Boot overrides
+
+| Override | Workflow default |
+| -------- | ---------------- |
+| `maven-lifecycle` | `install` |
+| `maven-skip-tests` | `true` |
+| `module-name` | `` |
+
+#### Container image scanning Quarkus overrides
+
+| Override | Workflow default |
+| -------- | ---------------- |
+| `native` | `false` |
+
+#### Container image scanning Docker overrides
+
+| Override | Workflow default |
+| -------- | ---------------- |
+| `docker-build-context` | `.` |
+| `add-git-package-token` | `false` |
+
 ### Automatic merge of Dependabot PRs
+
+This is handled via a separate workflow job called `call-auto-merge`.
 
 | Override | Default |
 | -------- | ------- |
