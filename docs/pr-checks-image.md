@@ -72,8 +72,33 @@ jobs:
 
 > [!TIP]
 > See the [validate-pr-title composite action
-> docs](../.github/actions/validate-pr-title/README.md) for more info on the
-> other overrides.
+> docs](../.github/actions/validate-pr-title/README.md) for the other overrides.
+
+### Trivy image scanning
+
+| Override | Default |
+| -------- | ------- |
+| `enable-trivy-scan` | `true` |
+| `trivy-library-disable-scan` | `false` |
+| `trivy-library-ignore-unfixed` | `true` |
+| `trivy-library-severity` | `HIGH,CRITICAL` |
+| `trivy-os-disable-scan` | `false` |
+| `trivy-os-ignore-unfixed` | `true` |
+| `trivy-os-severity` | `CRITICAL` |
+| `trivy-version` | `` |
+
+To disable Trivy image scan
+
+```yaml
+jobs:
+  pull-request-checks:
+    with:
+      enable-trivy-scan: false
+```
+
+> [!TIP]
+> See the [trivy-scan composite action
+> docs](../.github/actions/trivy-scan/README.md) for the other overrides.
 
 ### Automatic merge of Dependabot PRs
 
