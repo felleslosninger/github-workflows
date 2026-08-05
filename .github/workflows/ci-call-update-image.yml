@@ -75,7 +75,7 @@ on:
         default: ''
         type: string
       lifecycle:
-        description: Lifecycle environment to determine container registry to publish to. Supported values are 'deployment' and 'development'. This will determine the container registry and credentials used for publishing the image
+        description: This must be set to the same value that was used when building and publishing the image. Supported values are 'deployment' and 'development'.
         required: false
         default: "deployment"
         type: string
