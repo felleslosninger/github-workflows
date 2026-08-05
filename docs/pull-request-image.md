@@ -129,7 +129,9 @@ These are applicable to Spring Boot and Quarkus application types.
 
 > [!TIP]
 > See the [Paketo builder image
-> docs](https://paketo.io/docs/reference/builders-reference/) for choices.
+> docs](https://paketo.io/docs/reference/builders-reference/) for choices. Valid
+> tag overrides can be found from the GitHub releases of the image pack in use
+> ([example](https://github.com/paketo-buildpacks/builder-noble-java-tiny/releases)).
 
 ##### Java setup
 
