@@ -9,7 +9,7 @@ This workflow is split into the following jobs
 
 - PR title validation
 - Package build and scan
-- Automatic merge of Dependabot PRs
+- Automatic merge of Dependabot PR
 
 ## Usage
 
@@ -71,14 +71,17 @@ jobs:
 | `pull-request-case-sensitive-prefix` | `` |
 
 > [!TIP]
-> See the [validate-pr-title composite action
-> docs](../.github/actions/validate-pr-title/README.md) on override usage.
+> See the [validate-pr-title composite
+> action](../.github/actions/validate-pr-title/README.md) for more docs on the
+> overrides.
 
 ### Package build and scan
 
 This is handled via a separate workflow job called `build-and-test-java`.
 
-#### Java setup overrides
+#### Package build and scan overrides
+
+##### Java setup
 
 | Override | Workflow default |
 | -------- | ---------------- |
@@ -86,7 +89,7 @@ This is handled via a separate workflow job called `build-and-test-java`.
 | `java-distribution` | `liberica` |
 | `cache-path` | `**/pom.xml` |
 
-#### Maven overrides
+##### Maven
 
 | Override | Workflow default |
 | -------- | ---------------- |
@@ -94,7 +97,7 @@ This is handled via a separate workflow job called `build-and-test-java`.
 | `maven-clean` | `false` |
 | `maven-update-snapshots` | `false` |
 
-#### Trivy overrides
+##### Trivy
 
 | Override | Workflow default |
 | -------- | ---------------- |
@@ -107,26 +110,23 @@ This is handled via a separate workflow job called `build-and-test-java`.
 | `trivy-version` | `` |
 
 > [!TIP]
-> See the [trivy-scan composite action
-> docs](../.github/actions/trivy-scan/README.md) for the other overrides.
+> See the [trivy-scan composite action](../.github/actions/trivy-scan/README.md)
+> for more docs on the overrides.
 
-#### Artifact upload overrides
+##### Artifact upload
 
 | Override | Workflow default |
 | -------- | ---------------- |
 | `artifact-name` | `` |
 | `artifact-path` | `` |
 
-You need to override both to enable artifact upload.
+> [!NOTE]
+> You need to override both `artifact-name` and `artifact-path` to enable
+> artifact upload.
 
-### Automatic merge of Dependabot PRs
+### Automatic merge of Dependabot PR
 
 This is handled via a separate workflow job called `call-auto-merge`.
-
-| Override | Default |
-| -------- | ------- |
-| `enable-auto-merge-dependabot` | `false` |
-| `auto-merge-types` | `version-update:semver-patch;version-update:semver-minor` |
 
 To enable automatic merge of Dependabot PRs
 
@@ -136,6 +136,12 @@ jobs:
     with:
       enable-auto-merge-dependabot: true
 ```
+
+#### Automatic merge of Dependabot PR overrides
+
+| Override | Default |
+| -------- | ------- |
+| `auto-merge-types` | `version-update:semver-patch;version-update:semver-minor` |
 
 > [!TIP]
 > Supported values for `auto-merge-types` can be found under `update-types` in

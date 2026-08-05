@@ -72,8 +72,9 @@ jobs:
 | `pull-request-case-sensitive-prefix` | `` |
 
 > [!TIP]
-> See the [validate-pr-title composite action
-> docs](../.github/actions/validate-pr-title/README.md) on override usage.
+> See the [validate-pr-title composite
+> action](../.github/actions/validate-pr-title/README.md) for more docs on the
+> overrides.
 
 ### Container image scanning
 
@@ -95,7 +96,7 @@ jobs:
 The 3 jobs support some common overrides, as well as overrides based on the
 application type.
 
-#### Container image scanning common overrides
+#### Container image scanning (common overrides)
 
 ##### Application type
 
@@ -143,6 +144,11 @@ These are applicable to Spring Boot and Quarkus application types.
 | `java-distribution` | `liberica` |
 | `cache-path` | `**/pom.xml` |
 
+> [!NOTE]
+> Java version must be overridden if the application differs from the default.
+> The Java distribution should only be overridden if there are issues with our
+> current default.
+
 ##### Trivy
 
 | Override | Workflow default |
@@ -156,10 +162,10 @@ These are applicable to Spring Boot and Quarkus application types.
 | `trivy-version` | `` |
 
 > [!TIP]
-> See the [trivy-scan composite action
-> docs](../.github/actions/trivy-scan/README.md) for the other overrides.
+> See the [trivy-scan composite action](../.github/actions/trivy-scan/README.md)
+> for more docs on the overrides.
 
-#### Container image scanning Spring Boot overrides
+#### Container image scanning (Spring Boot overrides)
 
 | Override | Workflow default |
 | -------- | ---------------- |
@@ -167,27 +173,22 @@ These are applicable to Spring Boot and Quarkus application types.
 | `maven-skip-tests` | `true` |
 | `module-name` | `` |
 
-#### Container image scanning Quarkus overrides
+#### Container image scanning (Quarkus overrides)
 
 | Override | Workflow default |
 | -------- | ---------------- |
 | `native` | `false` |
 
-#### Container image scanning Docker overrides
+#### Container image scanning (Docker overrides)
 
 | Override | Workflow default |
 | -------- | ---------------- |
 | `docker-build-context` | `.` |
 | `add-git-package-token` | `false` |
 
-### Automatic merge of Dependabot PRs
+### Automatic merge of Dependabot PR
 
 This is handled via a separate workflow job called `call-auto-merge`.
-
-| Override | Default |
-| -------- | ------- |
-| `enable-auto-merge-dependabot` | `false` |
-| `auto-merge-types` | `version-update:semver-patch;version-update:semver-minor` |
 
 To enable automatic merge of Dependabot PRs
 
@@ -197,6 +198,12 @@ jobs:
     with:
       enable-auto-merge-dependabot: true
 ```
+
+#### Automatic merge of Dependabot PR overrides
+
+| Override | Default |
+| -------- | ------- |
+| `auto-merge-types` | `version-update:semver-patch;version-update:semver-minor` |
 
 > [!TIP]
 > Supported values for `auto-merge-types` can be found under `update-types` in
