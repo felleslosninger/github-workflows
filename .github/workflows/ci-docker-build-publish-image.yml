@@ -47,6 +47,11 @@ on:
         description: Name of Docker image
         required: false
         type: string
+      image-tag:
+        description: Custom image tag, if not provided a tag will be auto-generated
+        default: ""
+        required: false
+        type: string
       image-signing:
         description: Flag to toggle image signing on/off - default off
         default: true
@@ -152,6 +157,7 @@ jobs:
         with:
           image-name: ${{ inputs.image-name }}
           container-registry: ${{ inputs.container-registry }}
+          image-tag: ${{ inputs.image-tag }}
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6.0.2

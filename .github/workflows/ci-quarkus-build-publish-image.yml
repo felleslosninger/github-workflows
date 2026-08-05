@@ -52,6 +52,11 @@ on:
         description: Name of Docker image
         required: false
         type: string
+      image-tag:
+        description: Custom image tag, if not provided a tag will be auto-generated
+        default: ""
+        required: false
+        type: string
       image-pack:
         description: Paketo builder image to use. See https://paketo.io/docs/reference/builders-reference/ for choices
         default: builder-noble-java-tiny
@@ -178,6 +183,7 @@ jobs:
         with:
           image-name: ${{ inputs.image-name }}
           container-registry: ${{ inputs.container-registry }}
+          image-tag: ${{ inputs.image-tag }}
 
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6.0.2
