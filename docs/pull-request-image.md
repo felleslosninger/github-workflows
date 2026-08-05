@@ -14,8 +14,7 @@ This workflow is split into the following jobs
 ## Usage
 
 In your application repository, create a new file called
-`.github/workflows/pull-request.yml` (best practice naming) and override the
-application type
+`.github/workflows/pull-request.yml` (best practice naming)
 
 ```yaml
 name: Pull request
