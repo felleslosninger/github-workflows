@@ -44,8 +44,6 @@ jobs:
       contents: write
       packages: write
       id-token: write
-    with:
-      application-type: spring-boot | quarkus | docker
     secrets: inherit
 
   update-image:
@@ -85,8 +83,6 @@ jobs:
       contents: write
       packages: write
       id-token: write
-    with:
-      application-type: spring-boot | quarkus | docker
     secrets: inherit
 
   update-image:
