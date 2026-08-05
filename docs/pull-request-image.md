@@ -206,4 +206,5 @@ jobs:
 
 > [!TIP]
 > Supported values for `auto-merge-types` can be found under `update-types` in
-> [Dependabot GitHub docs](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#ignore--)
+> the [Dependabot GitHub
+> docs](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#ignore--).
