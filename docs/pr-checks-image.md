@@ -5,10 +5,10 @@ produces container images
 
 - [PR checks for container images](../.github/workflows/ci-pr-checks-image.yml)
 
-This workflow support
+This workflow is split into the following jobs
 
 - PR title validation
-- Container image scanning
+- Container image scanning (based on application type)
 - Automatic merge of Dependabot PRs
 
 ## Usage

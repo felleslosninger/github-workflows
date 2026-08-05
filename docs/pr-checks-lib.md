@@ -5,7 +5,7 @@ produce Maven library packages
 
 - [PR checks for libraries](../.github/workflows/ci-pr-checks-lib.yml)
 
-This workflow support
+This workflow is split into the following jobs
 
 - PR title validation
 - Package build and scan
