@@ -36,8 +36,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    with:
-      application-type: spring-boot | quarkus | docker
     secrets: inherit
 ```
 
@@ -46,7 +44,7 @@ jobs:
 > ensures that the workflow runs when the PR title is updated (in the case of PR
 > title validation failures).
 
-You do not need to override anything else to start using this workflow.
+You do not need to override anything to start using this workflow.
 
 ## Overrides
 
@@ -99,19 +97,28 @@ application type.
 
 #### Container image scanning common overrides
 
-##### Image metadata overrides
+##### Application type
+
+| Override | Workflow default |
+| -------- | ---------------- |
+| `application-type` | `spring-boot` |
+
+> [!NOTE]
+> Valid values are `spring-boot`, `quarkus` or `docker`.
+
+##### Image metadata
 
 | Override | Workflow default |
 | -------- | ---------------- |
 | `image-name` | `` |
 
-##### Application path overrides
+##### Application path
 
 | Override | Workflow default |
 | -------- | ---------------- |
 | `application-path` | `./` |
 
-##### Base image overrides
+##### Base image
 
 These are applicable to Spring Boot and Quarkus application types.
 
@@ -124,7 +131,7 @@ These are applicable to Spring Boot and Quarkus application types.
 > See the [Paketo builder image
 > docs](https://paketo.io/docs/reference/builders-reference/) for choices.
 
-##### Java setup overrides
+##### Java setup
 
 These are applicable to Spring Boot and Quarkus application types.
 
@@ -134,7 +141,7 @@ These are applicable to Spring Boot and Quarkus application types.
 | `java-distribution` | `liberica` |
 | `cache-path` | `**/pom.xml` |
 
-##### Trivy overrides
+##### Trivy
 
 | Override | Workflow default |
 | -------- | ---------------- |
