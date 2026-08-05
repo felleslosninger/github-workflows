@@ -1,7 +1,7 @@
-# PR checks usage docs (image)
+# Pull request usage docs (image)
 
 These docs explain how to use our reusable workflow for PRs in app repos that
-produces container images
+produce container images
 
 - [PR checks for container images](../.github/workflows/ci-pr-checks-image.yml)
 

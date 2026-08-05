@@ -1,4 +1,4 @@
-# PR checks usage docs (library)
+# Pull request usage docs (library)
 
 These docs explain how to use our reusable workflow for PRs in app repos that
 produce Maven library packages
