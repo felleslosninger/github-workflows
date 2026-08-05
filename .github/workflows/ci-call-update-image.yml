@@ -58,7 +58,7 @@ on:
         type: string
       kubernetes-repo:
         description: Repository for kubernetes manifests (idporten-cd | minid-cd)
-        required: false
+        required: true
         type: string
       kubernetes-repo-event:
         description: Name of event to trigger in kubernetes repository
