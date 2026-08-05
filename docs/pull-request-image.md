@@ -99,11 +99,16 @@ application type.
 
 #### Container image scanning common overrides
 
-##### Image name and application path
+##### Image metadata overrides
 
 | Override | Workflow default |
 | -------- | ---------------- |
 | `image-name` | `` |
+
+##### Application path overrides
+
+| Override | Workflow default |
+| -------- | ---------------- |
 | `application-path` | `./` |
 
 ##### Base image overrides
