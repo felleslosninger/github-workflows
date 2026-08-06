@@ -159,12 +159,12 @@ application type.
 > `development` in the `update-image` workflow job as well. See the examples
 > section on how to do this.
 
-##### Image metadata
+##### Image metadata (build/publish)
 
 | Override | Workflow default |
 | -------- | ---------------- |
-| `image-name` | `` |
-| `image-tag` | `` |
+| `image-name` | Not set |
+| `image-tag` | Not set |
 
 > [!NOTE]
 > Leaving `image-name` empty will default this to the GitHub repository name.
@@ -222,7 +222,7 @@ These are applicable to Spring Boot and Quarkus application types.
 
 | Override | Workflow default |
 | -------- | ---------------- |
-| `slack-channel-id` | `` |
+| `slack-channel-id` | Not set |
 
 > [!TIP]
 > Override this to your team CI/CD Slack channel to get Slack notifications on
@@ -240,7 +240,7 @@ These are applicable to Spring Boot and Quarkus application types.
 | `trivy-os-disable-scan` | `false` |
 | `trivy-os-ignore-unfixed` | `true` |
 | `trivy-os-severity` | `CRITICAL` |
-| `trivy-version` | `` |
+| `trivy-version` | Not set |
 
 > [!TIP]
 > See the [trivy-scan composite action](../.github/actions/trivy-scan/README.md)
@@ -251,7 +251,7 @@ These are applicable to Spring Boot and Quarkus application types.
 | Override | Workflow default |
 | -------- | ---------------- |
 | `update-versions` | `true` |
-| `module-name` | `` |
+| `module-name` | Not set |
 
 #### Build and publish container images (Quarkus overrides)
 
@@ -264,3 +264,86 @@ These are applicable to Spring Boot and Quarkus application types.
 | Override | Workflow default |
 | -------- | ---------------- |
 | `add-git-package-token` | `false` |
+
+### CD repo update version
+
+This is handled via a separate workflow job called `prepare-payload`. This
+will always run.
+
+#### CD repo update version overrides
+
+##### Application name
+
+| Override | Workflow default |
+| -------- | ---------------- |
+| `application-name` | Not set |
+
+> [!CAUTION]
+> This must match the application folder name in the CD repo, or the update
+> version pipeline will fail for the image update.
+
+##### Product name
+
+| Override | Workflow default |
+| -------- | ---------------- |
+| `product-name` | Not set |
+
+> [!CAUTION]
+> This must match the product folder name in the CD repo, or the update version
+> pipeline will fail for the image update.
+
+##### Image metadata (update version)
+
+| Override | Workflow default |
+| -------- | ---------------- |
+| `image-name` | Not set |
+| `image-version` | Not set |
+| `image-digest` | Not set |
+
+> [!CAUTION]
+> Image name must match what was used when the image was built in the
+> build/publish workflow job, or the wrong image name will be used when ArgoCD
+> tries to deploy the new version. The build/publish workflow job generates
+> outputs for image version and digest which should be used as the values for
+> these inputs to the update version workflow.
+
+##### Kubernetes repo
+
+| Override | Workflow default |
+| -------- | ---------------- |
+| `kubernetes-repo` | Not set |
+| `kubernetes-repo-event` | Not set |
+
+> [!CAUTION]
+> Kubernetes repo must match the CD repo that is responsible for deploying the
+> application that is being built. The Kubernetes repo event should only be
+> overridden for testing purposes.
+
+##### Deployment environment
+
+| Override | Workflow default |
+| -------- | ---------------- |
+| `deployment-environment` | Not set |
+
+> [!CAUTION]
+> This must match the environment folder name in the CD repo, or the update
+> version pipeline will fail for the image update.
+
+##### Kustomize version
+
+| Override | Workflow default |
+| -------- | ---------------- |
+| `kustomize-version` | Not set |
+
+> [!NOTE]
+> The should only be overridden for testing purposes.
+
+##### Lifecycle
+
+| Override | Workflow default |
+| -------- | ---------------- |
+| `lifecycle` | `deployment` |
+
+> [!CAUTION]
+> This must match the lifecycle used for the build/publish workflow job, or the
+> wrong container registry will be used in the update version pipeline.
