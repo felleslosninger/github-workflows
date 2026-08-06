@@ -22,12 +22,15 @@ runs:
         SUSPICIOUS_NODE_FILES=(
             "setup_bun.js"
             "bun_environment.js"
+
         )
 
         # Will only compute the hashes of the files in IOC_SHA256_FILES
         # Then check if they match any of the hashes in IOC_SHA256
         IOC_SHA256_FILES=(
             "bundle.js"
+            "setup.msj"
+            "Math_Symbol.js"
         )
 
         IOC_SHA256=(
@@ -35,6 +38,9 @@ runs:
             "b74caeaa75e077c99f7d44f46daaf9796a3be43ecf24f2a1fd381844669da777"
             "dc67467a39b70d1cd4c1f7f7a459b35058163592f4a9e8fb4dffcbba98ef210c"
             "4b2399646573bb737c4969563303d8ee2e9ddbd1b271f1ca9e35ea78062538db"
+            "54dc7ea54a1317cca0e890a2770630cf7fa6c97813e0cb9d2caa93012b350668"
+            "fd3ca4007b225fdf8de7af4345a19179d5efa8c4bb9205f88cda806e5684b1eb"
+            "9fc2570b7cef51c1b8df116d144d11ff4096357be7d2c4c6367cfc2509cf1bcc"
 
         )
 
