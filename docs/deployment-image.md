@@ -22,12 +22,7 @@ CD repo update version:
 ## Usage
 
 In your application repository, create a new file called
-`.github/workflows/deploy.yml` (best practice naming).
-
-### Single CD repo update
-
-You normally build and push an image to a container registry and update
-Kubernetes manifests for a single app in a single CD repo
+`.github/workflows/deploy.yml` (best practice naming)
 
 ```yaml
 name: Deploy image
@@ -62,60 +57,11 @@ jobs:
     secrets: inherit
 ```
 
-### Multiple CD repo updates
-
-In some special cases you build and push an image that is deployed as separate
-apps from several CD repos. In these cases, the CD repo update is handled with
-the matrix strategy
-
-```yaml
-name: Deploy image
-
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  build-image:
-    uses: felleslosninger/github-workflows/.github/workflows/ci-build-publish-image.yml@main
-    permissions:
-      contents: write
-      packages: write
-      id-token: write
-    secrets: inherit
-
-  update-image:
-    uses: felleslosninger/github-workflows/.github/workflows/ci-call-update-image.yml@main
-    permissions:
-      pull-requests: read
-    needs: build-image
-    strategy:
-      matrix:
-        application-name: [app-a, app-b, app-c]
-        include:
-          - application-name: app-a
-            kubernetes-repo: product-a-cd
-            product-name: product-a
-            deployment-environment: systest
-          - application-name: app-b
-            kubernetes-repo: product-b-cd
-            product-name: product-b
-            deployment-environment: systest
-          - application-name: app-c
-            kubernetes-repo: product-c-cd
-            product-name: product-c
-            deployment-environment: dev
-    with:
-      application-name: ${{ matrix.application-name }}
-      product-name: ${{ matrix.product-name }}
-      image-name: ${{ matrix.application-name }}
-      image-version: ${{ needs.build-image.outputs.image-version }}
-      image-digest: ${{ needs.build-image.outputs.image-digest }}
-      kubernetes-repo: ${{ matrix.kubernetes-repo }}
-      deployment-environment: ${{ matrix.deployment-environment }}
-    secrets: inherit
-```
+> [!NOTE]
+> You normally build and push an image to a container registry and update
+> Kubernetes manifests for a single app in a single CD repo. See the examples
+> section if you need to update applications in several CD repos from a single
+> application repo.
 
 ## Overrides
 
@@ -347,3 +293,112 @@ will always run.
 > [!CAUTION]
 > This must match the lifecycle used for the build/publish workflow job, or the
 > wrong container registry will be used in the update version pipeline.
+
+## Examples
+
+### Multiple CD repo updates
+
+In some special cases you build and push an image that is deployed as separate
+apps from several CD repos. In these cases, the CD repo update is handled with
+the matrix strategy
+
+```yaml
+name: Deploy image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-image:
+    uses: felleslosninger/github-workflows/.github/workflows/ci-build-publish-image.yml@main
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    secrets: inherit
+
+  update-image:
+    uses: felleslosninger/github-workflows/.github/workflows/ci-call-update-image.yml@main
+    permissions:
+      pull-requests: read
+    needs: build-image
+    strategy:
+      matrix:
+        application-name: [app-a, app-b, app-c]
+        include:
+          - application-name: app-a
+            kubernetes-repo: product-a-cd
+            product-name: product-a
+            deployment-environment: systest
+          - application-name: app-b
+            kubernetes-repo: product-b-cd
+            product-name: product-b
+            deployment-environment: systest
+          - application-name: app-c
+            kubernetes-repo: product-c-cd
+            product-name: product-c
+            deployment-environment: dev
+    with:
+      application-name: ${{ matrix.application-name }}
+      product-name: ${{ matrix.product-name }}
+      image-name: ${{ matrix.application-name }}
+      image-version: ${{ needs.build-image.outputs.image-version }}
+      image-digest: ${{ needs.build-image.outputs.image-digest }}
+      kubernetes-repo: ${{ matrix.kubernetes-repo }}
+      deployment-environment: ${{ matrix.deployment-environment }}
+    secrets: inherit
+```
+
+### Deploying images from a branch
+
+By using the `lifecycle` override on both workflow jobs, you can push container
+images to our development container registry. This registry is allowed as a
+source of deployments in our `systest` cluster. If you want to utilize this
+functionality, you can create a separate workflow for this, in addition to the
+one you use for production images.
+
+Create a new file called `.github/workflows/deploy-dev.yml` (best practice naming)
+
+```yaml
+name: Deploy image (dev)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-image-dev:
+    uses: felleslosninger/github-workflows/.github/workflows/ci-build-publish-image.yml@main
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    with:
+      lifecycle: development
+    secrets: inherit
+
+  update-image-dev:
+    uses: felleslosninger/github-workflows/.github/workflows/ci-call-update-image.yml@main
+    permissions:
+      pull-requests: read
+    needs: build-image-dev
+    with:
+      application-name: app-a # Application name (e.g. plattform-test-app)
+      product-name: product-a # Product name (e.g. plattform)
+      image-name: app-a # Image name is normally the same as the application name (e.g. plattform-test-app)
+      image-version: ${{ needs.build-image-dev.outputs.image-version }}
+      image-digest: ${{ needs.build-image-dev.outputs.image-digest }}
+      kubernetes-repo: product-a-cd # CD repo name (e.g. plattform-cd)
+      deployment-environment: systest # First deployment env (e.g. systest/dev or test)
+      lifecycle: development
+    secrets: inherit
+```
+
+> [!NOTE]
+> By using a workflow dispatch trigger, you can manually run this when needed,
+> and choose the branch that you want to produce a container image from. The
+> image will be pushed to our development container registry, and the CD repo
+> will be updated in the same way as with a production container image. When
+> lifecycle is overridden to `development`, no promotion PRs will be created in
+> your CD repo.
