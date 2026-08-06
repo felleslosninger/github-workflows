@@ -65,11 +65,11 @@ jobs:
 
 | Override | Workflow default |
 | -------- | ---------------- |
-| `pull-request-title` | `` |
-| `pull-request-allowed-prefixes` | `` |
-| `pull-request-min-length-title` | `` |
-| `pull-request-max-length-title` | `` |
-| `pull-request-case-sensitive-prefix` | `` |
+| `pull-request-title` | Not set |
+| `pull-request-allowed-prefixes` | Not set |
+| `pull-request-min-length-title` | Not set |
+| `pull-request-max-length-title` | Not set |
+| `pull-request-case-sensitive-prefix` | Not set |
 
 > [!TIP]
 > See the [validate-pr-title composite
@@ -109,7 +109,7 @@ will always run.
 | `trivy-os-disable-scan` | `false` |
 | `trivy-os-ignore-unfixed` | `true` |
 | `trivy-os-severity` | `CRITICAL` |
-| `trivy-version` | `` |
+| `trivy-version` | Not set |
 
 > [!TIP]
 > See the [trivy-scan composite action](../.github/actions/trivy-scan/README.md)
@@ -119,8 +119,8 @@ will always run.
 
 | Override | Workflow default |
 | -------- | ---------------- |
-| `artifact-name` | `` |
-| `artifact-path` | `` |
+| `artifact-name` | Not set |
+| `artifact-path` | Not set |
 
 > [!NOTE]
 > You need to override both `artifact-name` and `artifact-path` to enable

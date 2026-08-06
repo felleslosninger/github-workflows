@@ -65,11 +65,11 @@ jobs:
 
 | Override | Workflow default |
 | -------- | ---------------- |
-| `pull-request-title` | `` |
-| `pull-request-allowed-prefixes` | `` |
-| `pull-request-min-length-title` | `` |
-| `pull-request-max-length-title` | `` |
-| `pull-request-case-sensitive-prefix` | `` |
+| `pull-request-title` | Not set |
+| `pull-request-allowed-prefixes` | Not set |
+| `pull-request-min-length-title` | Not set |
+| `pull-request-max-length-title` | Not set |
+| `pull-request-case-sensitive-prefix` | Not set |
 
 > [!TIP]
 > See the [validate-pr-title composite
@@ -113,7 +113,7 @@ application type.
 
 | Override | Workflow default |
 | -------- | ---------------- |
-| `image-name` | `` |
+| `image-name` | Not set |
 
 ##### Application path
 
@@ -161,7 +161,7 @@ These are applicable to Spring Boot and Quarkus application types.
 | `trivy-os-disable-scan` | `false` |
 | `trivy-os-ignore-unfixed` | `true` |
 | `trivy-os-severity` | `CRITICAL` |
-| `trivy-version` | `` |
+| `trivy-version` | Not set |
 
 > [!TIP]
 > See the [trivy-scan composite action](../.github/actions/trivy-scan/README.md)
@@ -173,7 +173,7 @@ These are applicable to Spring Boot and Quarkus application types.
 | -------- | ---------------- |
 | `maven-lifecycle` | `install` |
 | `maven-skip-tests` | `true` |
-| `module-name` | `` |
+| `module-name` | Not set |
 
 #### Container image scanning (Quarkus overrides)
 
