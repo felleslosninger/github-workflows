@@ -116,6 +116,16 @@ on:
         type: string
         required: false
         default: ''
+      sh-scan:
+        description: Run Shai-Hulud malicious files scan on node_modules
+        type: boolean
+        required: false
+        default: false
+      sh-scan-install-method:
+        description: Install method for sh-scan (npm | yarn | ci | pnpm)
+        type: string
+        required: false
+        default: 'npm'
 
     outputs:
       image-version:
@@ -155,6 +165,13 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6.0.2
+
+      - name: Run Shai-Hulud scan
+        if: inputs.sh-scan == true
+        uses: felleslosninger/github-workflows/.github/actions/sh-scan@main
+        with:
+          install_method: ${{ inputs.sh-scan-install-method }}
+          application-path: ${{ inputs.application-path }}
 
       - name: Build image
         env:

@@ -6,6 +6,10 @@ inputs:
   install_method:
     description: "npm | yarn | ci | pnpm"
     required: true
+  application-path:
+    description: "Path to the application directory containing package.json"
+    required: false
+    default: "./"
 
 runs:
   using: composite
@@ -14,9 +18,17 @@ runs:
       shell: bash
       env:
         INSTALL_METHOD: ${{ inputs.install_method }}
+        APP_PATH: ${{ inputs.application-path }}
       run: |
         #!/bin/bash
         set -euo pipefail
+
+        cd "$APP_PATH"
+
+        if [[ ! -f "package.json" ]]; then
+            echo "No package.json found in $APP_PATH — not a JavaScript project, skipping sh-scan."
+            exit 0
+        fi
 
         # Fill these arrays with known IOC from NPM attacks
         SUSPICIOUS_NODE_FILES=(
