@@ -282,7 +282,7 @@ will always run.
 | `kustomize-version` | Not set |
 
 > [!NOTE]
-> The should only be overridden for testing purposes.
+> The Kustomize version should only be overridden for testing purposes.
 
 ##### Lifecycle
 
