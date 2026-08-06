@@ -49,7 +49,8 @@ You do not need to override anything to start using this workflow.
 
 ### PR title validation
 
-This is handled via a separate workflow job called `validate-pr-title`.
+This is handled via a separate workflow job called `validate-pr-title`. This is
+enabled by default.
 
 To disable the PR title validation
 
@@ -77,7 +78,8 @@ jobs:
 
 ### Package build and scan
 
-This is handled via a separate workflow job called `build-and-test-java`.
+This is handled via a separate workflow job called `build-and-test-java`. This
+will always run.
 
 #### Package build and scan overrides
 
@@ -126,7 +128,8 @@ This is handled via a separate workflow job called `build-and-test-java`.
 
 ### Automatic merge of Dependabot PR
 
-This is handled via a separate workflow job called `call-auto-merge`.
+This is handled via a separate workflow job called `call-auto-merge`. This is
+disabled by default.
 
 To enable automatic merge of Dependabot PRs
 

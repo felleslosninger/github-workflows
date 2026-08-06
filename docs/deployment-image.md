@@ -10,13 +10,13 @@ These workflows are split into several jobs.
 
 Build and publish container images:
 
-- Write inputs to step summary (no overrides necessary)
-- Input validation (no overrides necessary)
+- Write inputs to step summary (no overrides supported)
+- Input validation (no overrides supported)
 - Build and publish container image (based on application type)
 
 CD repo update version:
 
-- Write inputs to step summary (no overrides necessary)
+- Write inputs to step summary (no overrides supported)
 - Send update image event to CD repo
 
 ## Usage
@@ -119,7 +119,8 @@ jobs:
 
 ## Overrides
 
-Overrides are only supported for the build/publish workflow jobs.
+Overrides are only supported for the build/publish and update version workflow
+jobs.
 
 ### Build and publish container images
 
@@ -128,6 +129,8 @@ This is handled via 3 separate workflow jobs depending on application type
 - `run-spring-boot-build`
 - `run-quarkus-build`
 - `run-docker-build`
+
+One of these will always run.
 
 The 3 jobs support some common overrides, as well as overrides based on the
 application type.

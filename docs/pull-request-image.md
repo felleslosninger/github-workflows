@@ -49,7 +49,8 @@ You do not need to override anything to start using this workflow.
 
 ### PR title validation
 
-This is handled via a separate workflow job called `validate-pr-title`.
+This is handled via a separate workflow job called `validate-pr-title`. This is
+enabled by default.
 
 To disable the PR title validation
 
@@ -82,6 +83,8 @@ This is handled via 3 separate workflow jobs depending on application type
 - `call-spring-boot-container-scan`
 - `call-quarkus-container-scan`
 - `call-docker-container-scan`
+
+This is enabled by default.
 
 To disable container scanning
 
@@ -187,7 +190,8 @@ These are applicable to Spring Boot and Quarkus application types.
 
 ### Automatic merge of Dependabot PR
 
-This is handled via a separate workflow job called `call-auto-merge`.
+This is handled via a separate workflow job called `call-auto-merge`. This is
+disabled by default.
 
 To enable automatic merge of Dependabot PRs
 
