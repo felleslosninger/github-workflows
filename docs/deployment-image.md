@@ -16,7 +16,7 @@ Build and publish container images:
 
 CD repo update version:
 
-- Write inputs to step summary
+- Write inputs to step summary (no overrides necessary)
 - Send update image event to CD repo
 
 ## Usage
@@ -128,6 +128,9 @@ This is handled via 3 separate workflow jobs depending on application type
 - `run-spring-boot-build`
 - `run-quarkus-build`
 - `run-docker-build`
+
+The 3 jobs support some common overrides, as well as overrides based on the
+application type.
 
 #### Build and publish container images (common overrides)
 
