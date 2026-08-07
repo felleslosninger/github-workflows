@@ -43,21 +43,21 @@ For new projects, you should use the following workflows depending on your needs
 
 ### PR Checks
 
-For PRs to main, use the golden path workflow that matches your project type.
-These two workflows replace the deprecated
-[ci-pr-checks.yml](.github/workflows/ci-pr-checks.yml).
+#### PR Checks overview
 
-- [ci-pr-checks-lib.yml](.github/workflows/ci-pr-checks-lib.yml): Golden path for
-  PRs in Maven library projects (no container image). Verifies the PR title,
-  builds and tests with Maven, runs a Trivy filesystem scan, optionally uploads a
-  build artifact, and can auto-merge Dependabot PRs.
-- [ci-pr-checks-image.yml](.github/workflows/ci-pr-checks-image.yml): Golden path
-  for PRs in containerized applications. Verifies the PR title, then delegates to
-  the application-specific container build-and-scan workflow based on the
-  `application-type` input, and can auto-merge Dependabot PRs.
+For PRs to main, use the golden path workflow that matches your project type
 
-For containerized applications, ci-pr-checks-image.yml runs one of the following
-application-specific workflows
+- [ci-pr-checks-lib.yml](.github/workflows/ci-pr-checks-lib.yml): Golden path
+  for PRs in Maven library projects (no container image). Verifies the PR title,
+  builds and tests with Maven, runs a Trivy filesystem scan, optionally uploads
+  a build artifact, and can auto-merge Dependabot PRs.
+- [ci-pr-checks-image.yml](.github/workflows/ci-pr-checks-image.yml): Golden
+  path for PRs in containerized applications. Verifies the PR title, then
+  delegates to the application-specific container build-and-scan workflow based
+  on the `application-type` input, and can auto-merge Dependabot PRs.
+
+For containerized applications, `ci-pr-checks-image.yml` runs one of the
+following application-specific workflows
 
 - [ci-spring-boot-container-scan.yml](.github/workflows/ci-spring-boot-container-scan.yml):
   Builds and scans temporary Spring Boot container images
@@ -66,21 +66,20 @@ application-specific workflows
 - [ci-docker-container-scan.yml](.github/workflows/ci-docker-container-scan.yml):
   Builds and scans temporary custom Docker images
 
-and optionally runs the Dependabot auto-merge workflow
+Both `ci-pr-checks-image.yml` and `ci-pr-checks-lib.yml` optionally run the
+Dependabot auto-merge workflow
 
 - [misc-approve-and-merge-dependabot-pr.yml](.github/workflows/misc-approve-and-merge-dependabot-pr.yml):
   Auto-approves and merges supported Dependabot updates
 
-Check out the [internal usage
-docs](https://paotvers.io/docs/default/Domain/application-platform/Application/Repository/workflows/pull-request-image/)
-for more information.
+#### PR Checks usage docs
 
-<!-- TODO(Platform team): The internal usage docs above still describe the old
-single ci-pr-checks.yml workflow. Update them for the split into
-ci-pr-checks-lib.yml and ci-pr-checks-image.yml (the link may also need a new
-path), then remove this note. -->
+- [PR checks (image)](./docs/pull-request-image.md)
+- [PR checks (library)](./docs/pull-request-lib.md)
 
 ### Build and publish container images
+
+#### Build and publish container images overview
 
 [ci-build-publish-image.yml](.github/workflows/ci-build-publish-image.yml):
 Proxy workflow for building and publishing images after commits to main.
@@ -96,24 +95,27 @@ following application-specific workflows
 - [ci-docker-build-publish-image.yml](.github/workflows/ci-docker-build-publish-image.yml):
   Generic Docker image builds from Dockerfile
 
-Check out the [internal usage
-docs](https://paotvers.io/docs/default/Domain/application-platform/Application/Repository/workflows/deployment-image/)
-for more information.
+#### Build and publish container usage docs
+
+- [Deployment (image)](./docs/deployment-image.md)
 
 ### Build and publish Maven libraries
+
+#### Build and publish Maven libraries overview
 
 Workflows for building and publishing Maven libraries after commits to main
 
 - [ci-build-publish-lib.yml](.github/workflows/ci-build-publish-lib.yml): The
   golden path for building and publishing Maven libraries. Use this for all
-  projects, with or without internal Maven dependencies. It replaces the
-  deprecated `ci-maven-deploy.yml` and `ci-maven-install-deploy-lib.yml`.
+  projects, with or without internal Maven dependencies
 
-Check out the [internal usage
-docs](https://paotvers.io/docs/default/Domain/application-platform/Application/Repository/workflows/release-artifact/)
-for more information.
+#### Build and publish Maven libraries usage docs
+
+- [Release (library)](./docs/release-lib.md)
 
 ## Other utility workflows
+
+### Other utility workflows overview
 
 - [check-syntax.yml](.github/workflows/check-syntax.yml): Validates workflow
   files with actionlint in this repository (local workflow)
@@ -121,50 +123,63 @@ for more information.
   on specific labels in app repos ([internal usage
   docs](https://paotvers.io/docs/default/Domain/application-platform/Application/Repository/workflows/on-pr-label/))
 - [misc-publish-dev-docker.yml](.github/workflows/misc-publish-dev-docker.yml):
-  Publishes development Docker images to ACR ([internal usage docs](https://paotvers.io/docs/default/Domain/application-platform/Application/Repository/workflows/deployment-image-dev/))
+  Publishes development Docker images to ACR ([internal usage
+  docs](https://paotvers.io/docs/default/Domain/application-platform/Application/Repository/workflows/deployment-image-dev/))
+
+### Other utility workflows usage docs
+
+- [Deployment (dev image)](./docs/deployment-dev-image.md)
+- [On PR label](./docs/on-pr-label.md)
 
 ## Deprecated Workflows
 
-### PR Checks
+### PR Checks (deprecated)
 
-[ci-pr-checks.yml](.github/workflows/ci-pr-checks.yml) is deprecated and replaced
-by the split golden path workflows
-[ci-pr-checks-lib.yml](.github/workflows/ci-pr-checks-lib.yml) (Maven libraries)
-and [ci-pr-checks-image.yml](.github/workflows/ci-pr-checks-image.yml)
-(containerized applications). Migrate to the workflow that matches your project
-type.
+The following PR checks workflow is deprecated
 
-### Maven workflows
+- [ci-pr-checks.yml](.github/workflows/ci-pr-checks.yml)
 
-The following Maven PR workflows can be considered deprecated as all
-functionality should be covered by our golden path
-[ci-pr-checks-lib.yml](.github/workflows/ci-pr-checks-lib.yml) workflow
+Migrate all PR checks workflows to the new application type-specific workflows
+
+- [ci-pr-checks-lib.yml](.github/workflows/ci-pr-checks-lib.yml) (Maven
+  libraries)
+- [ci-pr-checks-image.yml](.github/workflows/ci-pr-checks-image.yml)
+  (containerized applications)
+
+### Maven workflows (deprecated)
+
+The following Maven PR workflows are deprecated
 
 - [ci-maven-build.yml](.github/workflows/ci-maven-build.yml)
 - [ci-maven-build-lib.yml](.github/workflows/ci-maven-build-lib.yml)
 
-The following build-and-publish workflows are deprecated and replaced by the
-golden path [ci-build-publish-lib.yml](.github/workflows/ci-build-publish-lib.yml)
-workflow, which covers both projects with and without internal Maven
-dependencies. Migrate to it.
+Migrate all library PR checks workflows to the new
+[ci-pr-checks-lib.yml](.github/workflows/ci-pr-checks-lib.yml) workflow.
+
+The following Maven library release workflows are deprecated
 
 - [ci-maven-deploy.yml](.github/workflows/ci-maven-deploy.yml)
 - [ci-maven-install-deploy-lib.yml](.github/workflows/ci-maven-install-deploy-lib.yml)
 
-### Custom workflows
+Migrate all Maven library release workflows to the new
+[ci-build-publish-lib.yml](.github/workflows/ci-build-publish-lib.yml) workflow.
 
-The following workflows are not really maintained by the Platform team, and app
-repos using them should most likely migrate to the `docker` type
-[ci-build-publish-image.yml](.github/workflows/ci-build-publish-image.yml)
-workflow
+### Custom workflows (deprecated)
+
+The following custom workflows are deprecated
 
 - [ci-docker-build-publish-integrasjonspunkt.yml](.github/workflows/ci-docker-build-publish-integrasjonspunkt.yml)
 - [ci-docker-build-scan-integrasjonspunkt](.github/workflows/ci-docker-build-scan-integrasjonspunkt)
 - [test-k6-build-docker.yml](.github/workflows/test-k6-build-docker.yml)
 - [test-k6-build-publish-docker.yml](.github/workflows/test-k6-build-publish-docker.yml)
 
-Note that the Platform team might still update these to use new composite
-actions when applicable.
+These are not maintained by the Platform team, but might still be updated as we
+deprecate things or clean up. Application repositories using these workflows
+should migrate to the `docker` type
+[ci-build-publish-image.yml](.github/workflows/ci-build-publish-image.yml)
+workflow. If these are not migrated to the golden path workflows they must be
+moved out of this repo and into a repo that is supported by the relevant product
+team.
 
 ## Development guidelines
 
