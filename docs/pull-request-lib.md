@@ -63,13 +63,13 @@ jobs:
 
 #### PR title validation overrides
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `pull-request-title` | Not set |
-| `pull-request-allowed-prefixes` | Not set |
-| `pull-request-min-length-title` | Not set |
-| `pull-request-max-length-title` | Not set |
-| `pull-request-case-sensitive-prefix` | Not set |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `pull-request-title` | `string` | Not set |
+| `pull-request-allowed-prefixes` | `string` | Not set |
+| `pull-request-min-length-title` | `string` | Not set |
+| `pull-request-max-length-title` | `string` | Not set |
+| `pull-request-case-sensitive-prefix` | `string` | Not set |
 
 > [!TIP]
 > See the [validate-pr-title composite
@@ -85,31 +85,42 @@ will always run.
 
 ##### Java setup
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `java-version` | `25` |
-| `java-distribution` | `liberica` |
-| `cache-path` | `**/pom.xml` |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `java-version` | `string` | `25` |
+| `java-distribution` | `string` | `liberica` |
+| `cache-path` | `string` | `**/pom.xml` |
+
+> [!NOTE]
+> Java version must be overridden if the application differs from the default.
+> The Java distribution should only be overridden if there are issues with our
+> current default.
 
 ##### Maven
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `maven-lifecycle` | `install` |
-| `maven-clean` | `false` |
-| `maven-update-snapshots` | `false` |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `maven-lifecycle` | `string` | `install` |
+| `maven-clean` | `boolean` | `false` |
+| `maven-update-snapshots` | `boolean` | `false` |
+
+> [!NOTE]
+> **Lifecycle validation:** The `maven-lifecycle` input only accepts `test`,
+> `package`, `verify`, or `install` (default). `install` is required by default
+> to populate the local `.m2` repository for the Trivy offline scan.
+> **Build optimization:** Because runners are ephemeral, `maven-clean` defaults
+> to `false` to save time. Only enable `maven-update-snapshots` if your PR
+> depends on newly published internal snapshots.
 
 ##### Trivy
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `trivy-library-disable-scan` | `false` |
-| `trivy-library-ignore-unfixed` | `true` |
-| `trivy-library-severity` | `HIGH,CRITICAL` |
-| `trivy-os-disable-scan` | `false` |
-| `trivy-os-ignore-unfixed` | `true` |
-| `trivy-os-severity` | `CRITICAL` |
-| `trivy-version` | Not set |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `application-path` | `string` | `./` |
+| `trivy-library-disable-scan` | `boolean` | `false` |
+| `trivy-library-ignore-unfixed` | `boolean` | `true` |
+| `trivy-library-severity` | `string` | `HIGH,CRITICAL` |
+| `trivy-version` | `string` | Not set |
 
 > [!TIP]
 > See the [trivy-scan composite action](../.github/actions/trivy-scan/README.md)
@@ -117,10 +128,10 @@ will always run.
 
 ##### Artifact upload
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `artifact-name` | Not set |
-| `artifact-path` | Not set |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `artifact-name` | `string` | Not set |
+| `artifact-path` | `string` | Not set |
 
 > [!NOTE]
 > You need to override both `artifact-name` and `artifact-path` to enable
@@ -142,11 +153,15 @@ jobs:
 
 #### Automatic merge of Dependabot PR overrides
 
-| Override | Default |
-| -------- | ------- |
-| `auto-merge-types` | `version-update:semver-patch;version-update:semver-minor` |
+| Override | Type | Default |
+| -------- | ---- | ------- |
+| `auto-merge-types` | `string` | Not set |
 
 > [!TIP]
-> Supported values for `auto-merge-types` can be found under `update-types` in
-> the [Dependabot GitHub
+> **Configuration details:** Supported values for `auto-merge-types` can be
+> found under `update-types` in the [Dependabot GitHub
 > docs](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#ignore--).
+> **Security note:** For supply-chain security reasons, automatically merged
+> Dependabot PRs do *not* automatically trigger a new container image
+> build/deployment. This ensures infrastructure updates require human oversight
+> before rolling out.
