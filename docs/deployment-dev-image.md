@@ -1,19 +1,20 @@
 # Deployment usage docs (dev image)
 
 These docs explain how to use our reusable workflow for development container
-image deployment in app repos
+image deployment in app repos.
 
 - [Build and publish development container image](../.github/workflows/misc-publish-dev-docker.yml)
 
 This workflow runs on main commits in an application repository, and will
-publish images to our `crutvikling.azurecr.io` development Azure Container
-Registry (ACR). The purpose of this workflow is to push a latest image to a
-place where developers have access, so they can run it locally.
+publish multi-architecture images to our `crutvikling.azurecr.io` development
+Azure Container Registry (ACR). The purpose of this workflow is to push a
+`latest` image to a registry where developers have access, allowing them to
+easily run and test it locally.
 
 ## Usage
 
 In your application repository, create a new file called
-`.github/workflows/deploy-dev.yml` (best practice naming)
+`.github/workflows/deploy-dev.yml` (best practice naming).
 
 ```yaml
 name: Publish development Docker image
@@ -35,6 +36,15 @@ jobs:
     secrets: inherit
 ```
 
+> [!NOTE]
+>
+> - **Multi-platform support:** The underlying workflow automatically sets up
+>   QEMU and Docker Buildx to build and push images for both `linux/amd64` and
+>   `linux/arm64` architectures.
+>
+> - **Tagging:** Images built with this workflow are always tagged as `latest`
+>   in the development ACR.
+
 ## Overrides
 
 ### Build and publish development container images
@@ -46,6 +56,10 @@ will always run.
 
 ##### Dockerfile path
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `docker-file` | `docker/dev.Dockerfile` |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `docker-file` | `string` | `docker/dev.Dockerfile` |
+
+> [!CAUTION]
+> If you override `docker-file`, ensure the path points correctly to your custom
+> Dockerfile relative to the repository root.
