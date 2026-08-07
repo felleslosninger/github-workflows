@@ -39,11 +39,19 @@ jobs:
 ```
 
 > [!NOTE]
-> The workflow trigger types are needed to also trigger on `edited`, which
-> ensures that the workflow runs when the PR title is updated (in the case of PR
-> title validation failures).
-
-You do not need to override anything to start using this workflow.
+>
+> - **Trigger types:** The workflow trigger types are needed to also trigger on
+>   `edited`, which ensures that the workflow runs when the PR title is updated
+>   (in the case of PR title validation failures).
+>
+> - **Supported repository type:** Because this configuration uses all the
+>   workflow defaults, it assumes the repository is a **single-module Spring
+>   Boot application** located at the repository root. It expects a standard
+>   Maven setup with a `pom.xml` in the root directory, built using **Java 25**.
+>   If your repository is a multi-module project, a monorepo, a Quarkus/Docker
+>   application, or uses a different Java version, you must provide the
+>   necessary overrides. See the [**Examples**](#examples) section below for how
+>   to configure these specific setups.
 
 ## Overrides
 
@@ -240,10 +248,132 @@ jobs:
 | `auto-merge-types` | `string` | `version-update:semver-patch;version-update:semver-minor` |
 
 > [!TIP]
-> **Configuration details:** Supported values for `auto-merge-types` can be
-> found under `update-types` in the [Dependabot GitHub
-> docs](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#ignore--).
-> **Security note:** For supply-chain security reasons, automatically merged
-> Dependabot PRs do *not* automatically trigger a new container image
-> build/deployment. This ensures infrastructure updates require human oversight
-> before rolling out.
+>
+> - **Configuration details:** Supported values for `auto-merge-types` can be
+>   found under `update-types` in the [Dependabot GitHub
+>   docs](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#ignore--).
+>
+> - **Security note:** For supply-chain security reasons, automatically merged
+>   Dependabot PRs do *not* automatically trigger a new container image
+>   build/deployment. This ensures infrastructure updates require human
+>   oversight before rolling out.
+
+## Examples
+
+### Multi-module Maven project
+
+Use this setup when your repository has a root `pom.xml` and multiple
+interconnected modules (e.g., `domain`, `common`, `api`), where only one module
+is the actual bootable application.
+
+By using `module-name`, the workflow knows to build the entire project reactor
+so internal dependencies are resolved correctly. We leave `cache-path` at its
+default (`**/pom.xml`) so the cache correctly invalidates if you update a
+dependency in a shared library module.
+
+**`.github/workflows/pull-request.yml`**
+
+```yaml
+name: Pull request
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - edited
+    branches:
+      - main
+
+jobs:
+  pull-request-checks:
+    uses: felleslosninger/github-workflows/.github/workflows/ci-pr-checks-image.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+    with:
+      # Triggers 'mvn ... -pl "api" -am' to build internal dependencies first
+      module-name: 'api'
+    secrets: inherit
+```
+
+### Monorepo with independent applications
+
+Use this setup when your repository contains completely separate applications
+that do *not* share a root `pom.xml` or internal dependencies.
+
+For monorepos, you should create a separate workflow file for each application
+and use the `paths` trigger. This ensures that changes to `Application A` do not
+unnecessarily trigger the build, Trivy scans, and consume GitHub Actions minutes
+for `Application B`.
+
+**`.github/workflows/pr-backend-service.yml`**
+
+```yaml
+name: PR - Backend Service
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - edited
+    branches:
+      - main
+    paths:
+      - 'apps/backend-service/**'
+      - '.github/workflows/pr-backend-service.yml'
+
+jobs:
+  pull-request-checks:
+    uses: felleslosninger/github-workflows/.github/workflows/ci-pr-checks-image.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+    with:
+      # Target the specific directory for the build
+      application-path: "apps/backend-service/"
+      # Isolate the cache to this specific app
+      cache-path: "apps/backend-service/pom.xml"
+    secrets: inherit
+```
+
+**`.github/workflows/pr-auth-service.yml`**
+
+```yaml
+name: PR - Auth Service
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - edited
+    branches:
+      - main
+    paths:
+      - 'apps/auth-service/**'
+      - '.github/workflows/pr-auth-service.yml'
+
+jobs:
+  pull-request-checks:
+    uses: felleslosninger/github-workflows/.github/workflows/ci-pr-checks-image.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+    with:
+      # Target the specific directory for the build
+      application-path: "apps/auth-service/"
+      # Isolate the cache to this specific app
+      cache-path: "apps/auth-service/pom.xml"
+    secrets: inherit
+```
+
+> [!CAUTION]
+> **Path formatting:** When overriding `application-path`, you **must** include
+> the trailing slash (e.g., `apps/backend-service/`). The underlying scripts
+> concatenate this directly (evaluating to `${APP_PATH}pom.xml`), and the build
+> will fail if the slash is omitted.
