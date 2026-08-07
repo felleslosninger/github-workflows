@@ -158,10 +158,12 @@ jobs:
 | `auto-merge-types` | `string` | Not set |
 
 > [!TIP]
-> **Configuration details:** Supported values for `auto-merge-types` can be
-> found under `update-types` in the [Dependabot GitHub
-> docs](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#ignore--).
-> **Security note:** For supply-chain security reasons, automatically merged
-> Dependabot PRs do *not* automatically trigger a new container image
-> build/deployment. This ensures infrastructure updates require human oversight
-> before rolling out.
+>
+> - **Configuration details:** Supported values for `auto-merge-types` can be
+>   found under `update-types` in the [Dependabot GitHub
+>   docs](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#ignore--).
+>
+> - **Security note:** For supply-chain security reasons, automatically merged
+>   Dependabot PRs do *not* automatically trigger a new container image
+>   build/deployment. This ensures infrastructure updates require human
+>   oversight before rolling out.
