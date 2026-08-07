@@ -1,7 +1,7 @@
 # Deployment usage docs (image)
 
 These docs explain how to use our reusable workflow for container image
-deployment in app repos
+deployment in app repos.
 
 - [Build and publish container images](../.github/workflows/ci-build-publish-image.yml)
 - [CD repo update version](../.github/workflows/ci-call-update-image.yml)
@@ -22,7 +22,7 @@ CD repo update version:
 ## Usage
 
 In your application repository, create a new file called
-`.github/workflows/deploy.yml` (best practice naming)
+`.github/workflows/deploy.yml` (best practice naming).
 
 ```yaml
 name: Deploy image
@@ -58,10 +58,21 @@ jobs:
 ```
 
 > [!NOTE]
-> You normally build and push an image to a container registry and update
-> Kubernetes manifests for a single app in a single CD repo. See the examples
-> section if you need to update applications in several CD repos from a single
-> application repo.
+>
+> - **Permissions:** The `build-image` job requires `contents: write` (if
+>   updating versions in POM), `packages: write`, and `id-token: write` for
+>   registry authentication. The `update-image` job requires `pull-requests:
+>   read` to fetch PR labels and attach metadata to the deployment payload.
+>
+> - **Supported repository type:** Because this configuration uses all the
+>   workflow defaults, it assumes the repository is a **single-module Spring
+>   Boot application** located at the repository root. It expects a standard
+>   Maven setup with a `pom.xml` in the root directory, built using **Java 25**.
+>   If your repository is a multi-module project, a monorepo, a Quarkus/Docker
+>   application, need to update multiple CD repos, or uses a different Java
+>   version, you must provide the necessary overrides. See the
+>   [**Examples**](#examples) section below for how to configure these specific
+>   setups.
 
 ## Overrides
 
@@ -70,34 +81,32 @@ jobs.
 
 ### Build and publish container images
 
-This is handled via 3 separate workflow jobs depending on application type
+This is handled via 3 separate workflow jobs depending on application type:
 
 - `run-spring-boot-build`
 - `run-quarkus-build`
 - `run-docker-build`
 
-One of these will always run.
-
-The 3 jobs support some common overrides, as well as overrides based on the
-application type.
+One of these will always run. The 3 jobs support some common overrides, as well
+as overrides based on the application type.
 
 #### Build and publish container images (common overrides)
 
 ##### Application type
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `application-type` | `spring-boot` |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `application-type` | `string` | `spring-boot` |
 
 > [!NOTE]
 > Valid values are `spring-boot`, `quarkus` or `docker`.
 
 ##### Container registry
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `cr-type` | `acr` |
-| `lifecycle` | `deployment` |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `cr-type` | `string` | `acr` |
+| `lifecycle` | `string` | `deployment` |
 
 > [!TIP]
 > By overriding `lifecycle` to `development` you can deploy branch images to the
@@ -107,31 +116,38 @@ application type.
 
 ##### Image metadata (build/publish)
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `image-name` | Not set |
-| `image-tag` | Not set |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `image-name` | `string` | Not set |
+| `image-tag` | `string` | Not set |
 
 > [!NOTE]
-> Leaving `image-name` empty will default this to the GitHub repository name.
-> It is only necessary to override this if you want a different name for your
+> Leaving `image-name` empty will default this to the GitHub repository name. It
+> is only necessary to override this if you want a different name for your
 > image. Leaving `image-tag` empty will default this to a generated best
 > practice tag.
 
 ##### Application path
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `application-path` | `./` |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `application-path` | `string` | `./` |
+
+> [!CAUTION]
+> **Path formatting:** The path is relative to the repository root. If
+> overridden for Spring Boot/Quarkus, you **must include a trailing slash**
+> (e.g., `backend/`). The underlying scripts concatenate this directly
+> (evaluating to `${APP_PATH}pom.xml`), and the build will fail if the slash is
+> missing.
 
 ##### Base image
 
 These are applicable to Spring Boot and Quarkus application types.
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `image-pack` | `builder-noble-java-tiny` |
-| `image-pack-tag` | `latest` |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `image-pack` | `string` | `builder-noble-java-tiny` |
+| `image-pack-tag` | `string` | `latest` |
 
 > [!TIP]
 > See the [Paketo builder image
@@ -141,9 +157,9 @@ These are applicable to Spring Boot and Quarkus application types.
 
 ##### Image signing
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `image-signing` | `true` |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `image-signing` | `boolean` | `true` |
 
 > [!NOTE]
 > Image signing should normally never be disabled as this is a requirement for
@@ -153,11 +169,11 @@ These are applicable to Spring Boot and Quarkus application types.
 
 These are applicable to Spring Boot and Quarkus application types.
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `java-version` | `25` |
-| `java-distribution` | `liberica` |
-| `cache-path` | `**/pom.xml` |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `java-version` | `string` | `25` |
+| `java-distribution` | `string` | `liberica` |
+| `cache-path` | `string` | `**/pom.xml` |
 
 > [!NOTE]
 > Java version must be overridden if the application differs from the default.
@@ -166,9 +182,9 @@ These are applicable to Spring Boot and Quarkus application types.
 
 ##### Slack channel ID
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `slack-channel-id` | Not set |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `slack-channel-id` | `string` | Not set |
 
 > [!TIP]
 > Override this to your team CI/CD Slack channel to get Slack notifications on
@@ -178,15 +194,15 @@ These are applicable to Spring Boot and Quarkus application types.
 
 ##### Trivy
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `trivy-library-disable-scan` | `false` |
-| `trivy-library-ignore-unfixed` | `true` |
-| `trivy-library-severity` | `HIGH,CRITICAL` |
-| `trivy-os-disable-scan` | `false` |
-| `trivy-os-ignore-unfixed` | `true` |
-| `trivy-os-severity` | `CRITICAL` |
-| `trivy-version` | Not set |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `trivy-library-disable-scan` | `boolean` | `false` |
+| `trivy-library-ignore-unfixed` | `boolean` | `true` |
+| `trivy-library-severity` | `string` | `HIGH,CRITICAL` |
+| `trivy-os-disable-scan` | `boolean` | `false` |
+| `trivy-os-ignore-unfixed` | `boolean` | `true` |
+| `trivy-os-severity` | `string` | `CRITICAL` |
+| `trivy-version` | `string` | Not set |
 
 > [!TIP]
 > See the [trivy-scan composite action](../.github/actions/trivy-scan/README.md)
@@ -194,35 +210,57 @@ These are applicable to Spring Boot and Quarkus application types.
 
 #### Build and publish container images (Spring Boot overrides)
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `update-versions` | `true` |
-| `module-name` | Not set |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `update-versions` | `string` | `true` |
+| `module-name` | `string` | Not set |
+
+> [!CAUTION]
+>
+> - **Update versions:** If `update-versions` is `true`, the workflow runs `mvn
+>   versions:set -DnewVersion="$IMAGE_TAG"`. This modifies your `pom.xml`
+>   dynamically during the build to inject the generated container tag. Ensure
+>   your POM structure supports this plugin safely.
+>
+> - **Multi-module projects:** Use `module-name` instead of `application-path`
+>   if your app is part of a Maven multi-module project. This instructs the
+>   workflow to use the `-pl <module> -am` flags, ensuring internal dependencies
+>   are built correctly before the image is packaged.
 
 #### Build and publish container images (Quarkus overrides)
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `native` | `false` |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `native` | `boolean` | `false` |
+
+> [!NOTE]
+> Setting `native` to `true` compiles a GraalVM native image using Paketo
+> buildpacks. Be aware that native compilation is highly resource-intensive and
+> will significantly increase build times.
 
 #### Build and publish container images (Docker overrides)
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `add-git-package-token` | `false` |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `add-git-package-token` | `boolean` | `false` |
+
+> [!CAUTION]
+> **Dockerfile path resolution:** If you set `add-git-package-token` to `true`,
+> the workflow *strictly* looks for the Dockerfile at `docker/Dockerfile`
+> relative to the build context. Ensure your repository matches this structure.
 
 ### CD repo update version
 
-This is handled via a separate workflow job called `prepare-payload`. This
-will always run.
+This is handled via a separate workflow job called `prepare-payload`. This will
+always run.
 
 #### CD repo update version overrides
 
 ##### Application name
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `application-name` | Not set |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `application-name` | `string` | Not set |
 
 > [!CAUTION]
 > This must match the application folder name in the CD repo, or the update
@@ -230,9 +268,9 @@ will always run.
 
 ##### Product name
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `product-name` | Not set |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `product-name` | `string` | Not set |
 
 > [!CAUTION]
 > This must match the product folder name in the CD repo, or the update version
@@ -240,25 +278,25 @@ will always run.
 
 ##### Image metadata (update version)
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `image-name` | Not set |
-| `image-version` | Not set |
-| `image-digest` | Not set |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `image-name` | `string` | Not set |
+| `image-version` | `string` | Not set |
+| `image-digest` | `string` | Not set |
 
 > [!CAUTION]
 > Image name must match what was used when the image was built in the
 > build/publish workflow job, or the wrong image name will be used when ArgoCD
 > tries to deploy the new version. The build/publish workflow job generates
-> outputs for image version and digest which should be used as the values for
-> these inputs to the update version workflow.
+> outputs for image version and digest which MUST be mapped into these inputs
+> (e.g., `image-version: ${{ needs.build-image.outputs.image-version }}`).
 
 ##### Kubernetes repo
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `kubernetes-repo` | Not set |
-| `kubernetes-repo-event` | Not set |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `kubernetes-repo` | `string` | Not set |
+| `kubernetes-repo-event` | `string` | `update-version` |
 
 > [!CAUTION]
 > Kubernetes repo must match the CD repo that is responsible for deploying the
@@ -267,9 +305,9 @@ will always run.
 
 ##### Deployment environment
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `deployment-environment` | Not set |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `deployment-environment` | `string` | Not set |
 
 > [!CAUTION]
 > This must match the environment folder name in the CD repo, or the update
@@ -277,22 +315,23 @@ will always run.
 
 ##### Kustomize version
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `kustomize-version` | Not set |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `kustomize-version` | `string` | Not set |
 
 > [!NOTE]
-> The Kustomize version should only be overridden for testing purposes.
+> The Kustomize version should only be overridden for testing purposes (it
+> defaults to following the ArgoCD version).
 
 ##### Lifecycle
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `lifecycle` | `deployment` |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `lifecycle` | `string` | `deployment` |
 
 > [!CAUTION]
 > This must match the lifecycle used for the build/publish workflow job, or the
-> wrong container registry will be used in the update version pipeline.
+> wrong container registry will be passed into the CD payload.
 
 ## Examples
 
@@ -300,7 +339,7 @@ will always run.
 
 In some special cases you build and push an image that is deployed as separate
 apps from several CD repos. In these cases, the CD repo update is handled with
-the matrix strategy
+the matrix strategy:
 
 ```yaml
 name: Deploy image
@@ -359,7 +398,8 @@ source of deployments in our `systest` cluster. If you want to utilize this
 functionality, you can create a separate workflow for this, in addition to the
 one you use for production images.
 
-Create a new file called `.github/workflows/deploy-dev.yml` (best practice naming)
+Create a new file called `.github/workflows/deploy-dev.yml` (best practice
+naming):
 
 ```yaml
 name: Deploy image (dev)
@@ -402,3 +442,145 @@ jobs:
 > will be updated in the same way as with a production container image. When
 > lifecycle is overridden to `development`, no promotion PRs will be created in
 > your CD repo.
+
+### Multi-module Maven project
+
+Use this setup when your repository has a root `pom.xml` and multiple
+interconnected modules, but you are only building a container image for one
+specific module (e.g., `api`).
+
+This uses `module-name` to build internal dependencies first.
+
+```yaml
+name: Deploy API image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-image:
+    uses: felleslosninger/github-workflows/.github/workflows/ci-build-publish-image.yml@main
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    with:
+      # Triggers 'mvn ... -pl "api" -am' to build internal dependencies first
+      module-name: api
+    secrets: inherit
+
+  update-image:
+    uses: felleslosninger/github-workflows/.github/workflows/ci-call-update-image.yml@main
+    permissions:
+      pull-requests: read
+    needs: build-image
+    with:
+      application-name: api
+      product-name: my-product
+      image-name: api
+      image-version: ${{ needs.build-image.outputs.image-version }}
+      image-digest: ${{ needs.build-image.outputs.image-digest }}
+      kubernetes-repo: my-product-cd
+      deployment-environment: systest
+    secrets: inherit
+```
+
+### Monorepo with independent applications
+
+Use this setup when your repository contains completely separate applications
+that do *not* share a root `pom.xml` or internal dependencies.
+
+For monorepos, you should create a separate workflow file for each application
+and use the `paths` trigger. This ensures that changes to `Application A` do not
+unnecessarily trigger the build, Trivy scans, and consume GitHub Actions minutes
+for `Application B`.
+
+**`.github/workflows/deploy-backend-service.yml`**
+
+```yaml
+name: Deploy Backend Service
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/backend-service/**"
+      - ".github/workflows/deploy-backend-service.yml"
+
+jobs:
+  build-image:
+    uses: felleslosninger/github-workflows/.github/workflows/ci-build-publish-image.yml@main
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    with:
+      application-path: "apps/backend-service/"
+      cache-path: "apps/backend-service/pom.xml"
+    secrets: inherit
+
+  update-image:
+    uses: felleslosninger/github-workflows/.github/workflows/ci-call-update-image.yml@main
+    permissions:
+      pull-requests: read
+    needs: build-image
+    with:
+      application-name: backend-service
+      product-name: my-product
+      image-name: backend-service
+      image-version: ${{ needs.build-image.outputs.image-version }}
+      image-digest: ${{ needs.build-image.outputs.image-digest }}
+      kubernetes-repo: my-product-cd
+      deployment-environment: systest
+    secrets: inherit
+```
+
+**`.github/workflows/deploy-auth-service.yml`**
+
+```yaml
+name: Deploy Auth Service
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/auth-service/**"
+      - ".github/workflows/deploy-auth-service.yml"
+
+jobs:
+  build-image:
+    uses: felleslosninger/github-workflows/.github/workflows/ci-build-publish-image.yml@main
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    with:
+      application-path: "apps/auth-service/"
+      cache-path: "apps/auth-service/pom.xml"
+    secrets: inherit
+
+  update-image:
+    uses: felleslosninger/github-workflows/.github/workflows/ci-call-update-image.yml@main
+    permissions:
+      pull-requests: read
+    needs: build-image
+    with:
+      application-name: auth-service
+      product-name: my-product
+      image-name: auth-service
+      image-version: ${{ needs.build-image.outputs.image-version }}
+      image-digest: ${{ needs.build-image.outputs.image-digest }}
+      kubernetes-repo: my-product-cd
+      deployment-environment: systest
+    secrets: inherit
+```
+
+> [!CAUTION]
+> **Path formatting:** When overriding `application-path`, you **must** include
+> the trailing slash (e.g., `apps/backend-service/`). The underlying scripts
+> concatenate this directly (evaluating to `${APP_PATH}pom.xml`), and the build
+> will fail if the slash is omitted.
