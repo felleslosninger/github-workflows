@@ -63,13 +63,13 @@ jobs:
 
 #### PR title validation overrides
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `pull-request-title` | Not set |
-| `pull-request-allowed-prefixes` | Not set |
-| `pull-request-min-length-title` | Not set |
-| `pull-request-max-length-title` | Not set |
-| `pull-request-case-sensitive-prefix` | Not set |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `pull-request-title` | `string` | Not set |
+| `pull-request-allowed-prefixes` | `string` | Not set |
+| `pull-request-min-length-title` | `string` | Not set |
+| `pull-request-max-length-title` | `string` | Not set |
+| `pull-request-case-sensitive-prefix` | `string` | Not set |
 
 > [!TIP]
 > See the [validate-pr-title composite
@@ -102,33 +102,46 @@ application type.
 
 ##### Application type
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `application-type` | `spring-boot` |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `application-type` | `string` | `spring-boot` |
 
 > [!NOTE]
 > Valid values are `spring-boot`, `quarkus` or `docker`.
 
 ##### Image metadata
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `image-name` | Not set |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `image-name` | `string` | Not set |
+
+> [!TIP]
+> If `image-name` is not set, the workflow will automatically derive a name
+> (typically based on your repository name). You only need to override this if
+> you have a specific naming convention or are building multiple distinct images
+> from a single monorepo.
 
 ##### Application path
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `application-path` | `./` |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `application-path` | `string` | `./` |
+
+> [!NOTE]
+> **Path formatting:** The path is relative to the repository root. If you
+> override this value, you **must include a trailing slash** (e.g., `backend/`).
+> The underlying build scripts concatenate this directly with filenames
+> (evaluating to `${APP_PATH}pom.xml`), and the build will fail if the slash is
+> missing.
 
 ##### Base image
 
 These are applicable to Spring Boot and Quarkus application types.
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `image-pack` | `builder-noble-java-tiny` |
-| `image-pack-tag` | `latest` |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `image-pack` | `string` | `builder-noble-java-tiny` |
+| `image-pack-tag` | `string` | `latest` |
 
 > [!TIP]
 > See the [Paketo builder image
@@ -140,11 +153,11 @@ These are applicable to Spring Boot and Quarkus application types.
 
 These are applicable to Spring Boot and Quarkus application types.
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `java-version` | `25` |
-| `java-distribution` | `liberica` |
-| `cache-path` | `**/pom.xml` |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `java-version` | `string` | `25` |
+| `java-distribution` | `string` | `liberica` |
+| `cache-path` | `string` | `**/pom.xml` |
 
 > [!NOTE]
 > Java version must be overridden if the application differs from the default.
@@ -153,15 +166,15 @@ These are applicable to Spring Boot and Quarkus application types.
 
 ##### Trivy
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `trivy-library-disable-scan` | `false` |
-| `trivy-library-ignore-unfixed` | `true` |
-| `trivy-library-severity` | `HIGH,CRITICAL` |
-| `trivy-os-disable-scan` | `false` |
-| `trivy-os-ignore-unfixed` | `true` |
-| `trivy-os-severity` | `CRITICAL` |
-| `trivy-version` | Not set |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `trivy-library-disable-scan` | `boolean` | `false` |
+| `trivy-library-ignore-unfixed` | `boolean` | `true` |
+| `trivy-library-severity` | `string` | `HIGH,CRITICAL` |
+| `trivy-os-disable-scan` | `boolean` | `false` |
+| `trivy-os-ignore-unfixed` | `boolean` | `true` |
+| `trivy-os-severity` | `string` | `CRITICAL` |
+| `trivy-version` | `string` | Not set |
 
 > [!TIP]
 > See the [trivy-scan composite action](../.github/actions/trivy-scan/README.md)
@@ -169,24 +182,42 @@ These are applicable to Spring Boot and Quarkus application types.
 
 #### Container image scanning (Spring Boot overrides)
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `maven-lifecycle` | `install` |
-| `maven-skip-tests` | `true` |
-| `module-name` | Not set |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `maven-lifecycle` | `string` | `install` |
+| `maven-skip-tests` | `boolean` | `true` |
+| `module-name` | `string` | Not set |
+
+> [!NOTE]
+> **Multi-module projects:** If your application is part of a multi-module Maven
+> project, you should override `module-name` instead of `application-path`. The
+> workflow will automatically append the `-pl <module-name> -am` flags to ensure
+> required internal dependencies are built before generating the image.
 
 #### Container image scanning (Quarkus overrides)
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `native` | `false` |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `native` | `boolean` | `false` |
+
+> [!NOTE]
+> Setting `native` to `true` compiles a GraalVM native image using Paketo
+> buildpacks. Be aware that native compilation is highly resource-intensive and
+> will significantly increase the duration of your PR validation checks.
 
 #### Container image scanning (Docker overrides)
 
-| Override | Workflow default |
-| -------- | ---------------- |
-| `docker-build-context` | `.` |
-| `add-git-package-token` | `false` |
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `docker-build-context` | `string` | `.` |
+| `add-git-package-token` | `boolean` | `false` |
+
+> [!NOTE]
+> **Dockerfile path resolution:** By default, the workflow looks for a
+> `Dockerfile` inside the specified `application-path`. However, if you set
+> `add-git-package-token` to `true`, the workflow mirrors the behavior of our
+> publish pipelines and will *strictly* look for the Dockerfile at
+> `docker/Dockerfile` relative to the repository root.
 
 ### Automatic merge of Dependabot PR
 
@@ -204,11 +235,15 @@ jobs:
 
 #### Automatic merge of Dependabot PR overrides
 
-| Override | Default |
-| -------- | ------- |
-| `auto-merge-types` | `version-update:semver-patch;version-update:semver-minor` |
+| Override | Type | Default |
+| -------- | ---- | ------- |
+| `auto-merge-types` | `string` | `version-update:semver-patch;version-update:semver-minor` |
 
 > [!TIP]
-> Supported values for `auto-merge-types` can be found under `update-types` in
-> the [Dependabot GitHub
+> **Configuration details:** Supported values for `auto-merge-types` can be
+> found under `update-types` in the [Dependabot GitHub
 > docs](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#ignore--).
+> **Security note:** For supply-chain security reasons, automatically merged
+> Dependabot PRs do *not* automatically trigger a new container image
+> build/deployment. This ensures infrastructure updates require human oversight
+> before rolling out.
