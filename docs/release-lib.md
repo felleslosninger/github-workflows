@@ -113,7 +113,7 @@ will always run.
 
 > [!NOTE]
 > Leaving `sbom-artifact-id` empty will default this to the GitHub repository
-> name. Leaving `sbom-artifact-id` empty will default this to the repo root.
+> name. Leaving `sbom-path` empty will default this to the repo root.
 
 ## Examples
 
