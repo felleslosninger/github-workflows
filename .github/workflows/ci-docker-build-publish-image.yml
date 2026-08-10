@@ -168,7 +168,7 @@ jobs:
 
       - name: Run Shai-Hulud scan
         if: inputs.sh-scan == true
-        uses: felleslosninger/github-workflows/.github/actions/sh-scan@main
+        uses: felleslosninger/github-workflows/.github/actions/sh-scan@PF-2538-sh-scan-update
         with:
           install_method: ${{ inputs.sh-scan-install-method }}
           application-path: ${{ inputs.application-path }}
