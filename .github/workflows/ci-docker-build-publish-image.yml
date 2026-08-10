@@ -120,7 +120,7 @@ on:
         description: Run Shai-Hulud malicious files scan on node_modules
         type: boolean
         required: false
-        default: false
+        default: true
       sh-scan-install-method:
         description: Install method for sh-scan (npm | yarn | ci | pnpm)
         type: string
