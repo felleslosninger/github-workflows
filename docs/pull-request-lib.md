@@ -11,6 +11,18 @@ This workflow is split into the following jobs
 - Package build and scan
 - Automatic merge of Dependabot PR
 
+## GitHub secrets
+
+This is the list of the current GitHub secrets used as part of this workflow.
+
+| Secret | Type | Visibility | Admin action required |
+| ------ | ---- | ---------- | --------------------- |
+| `GH_PACKAGES_READ_USER` | Org. secret | All repositories | No |
+| `GH_PACKAGES_READ_PAT` | Org. secret | All repositories | No |
+
+> [!NOTE]
+> No GitHub admin action is required to use this workflow.
+
 ## Usage
 
 In your application repository, create a new file called

@@ -11,6 +11,13 @@ label is applied. The purpose of adding `(INTERNAL-COMMIT)` is to exclude
 the change from public release notes. When generating release notes, the
 system looks for this string to filter out internal commits.
 
+## GitHub secrets
+
+None.
+
+> [!NOTE]
+> No GitHub admin action is required to use this workflow.
+
 ## Usage
 
 In your application repository, create a new file called

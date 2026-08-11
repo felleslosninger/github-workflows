@@ -19,6 +19,26 @@ CD repo update version:
 - Write inputs to step summary (no overrides supported)
 - Send update image event to CD repo
 
+## GitHub secrets
+
+This is the list of the current GitHub secrets used as part of these workflows.
+
+| Secret | Type | Visibility | Admin action required |
+| ------ | ---- | ---------- | --------------------- |
+| `DIGDIR_PLATFORM_CI_APP_ID` | Org. secret | All repositories | No |
+| `DIGDIR_PLATFORM_CI_APP_PRIVATE_KEY` | Org. secret | Per repository | Yes |
+| `GH_PACKAGES_READ_USER` | Org. secret | All repositories | No |
+| `GH_PACKAGES_READ_PAT` | Org. secret | All repositories | No |
+| `AZURE_TENANT_ID` | Org. secret | All repositories | No |
+| `AZURE_SUBSCRIPTION_ID` | Org. secret | All repositories | No |
+| `AZURE_CLIENT_ID` | Org. secret | All repositories | No |
+| `SLACK_CICD_NOTIFICATION_TOKEN` | Org. secret | All repositories | No |
+
+> [!WARNING]
+> A GitHub admin must add the `DIGDIR_PLATFORM_CI_APP_PRIVATE_KEY`
+> repository-scoped organization secret to new application repositories that
+> want to use these workflows.
+
 ## Usage
 
 In your application repository, create a new file called

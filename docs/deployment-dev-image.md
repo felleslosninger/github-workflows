@@ -11,6 +11,20 @@ Azure Container Registry (ACR). The purpose of this workflow is to push a
 `latest` image to a registry where developers have access, allowing them to
 easily run and test it locally.
 
+## GitHub secrets
+
+This is the list of the current GitHub secrets used as part of this workflow.
+
+| Secret | Type | Visibility | Admin action required |
+| ------ | ---- | ---------- | --------------------- |
+| `CR_DEV_USERNAME` | Org. secret | All repositories | No |
+| `CR_DEV_SECRET` | Org. secret | All repositories | No |
+| `GH_PACKAGES_READ_USER` | Org. secret | All repositories | No |
+| `GH_PACKAGES_READ_PAT` | Org. secret | All repositories | No |
+
+> [!NOTE]
+> No GitHub admin action is required to use this workflow.
+
 ## Usage
 
 In your application repository, create a new file called
