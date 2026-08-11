@@ -11,6 +11,16 @@ This workflow is split into the following jobs
 - Container image scanning (based on application type)
 - Automatic merge of Dependabot PRs
 
+## GitHub workflow permissions
+
+This is the list of the current workflow permissions used as part of these
+workflows.
+
+| Permission | Purpose |
+| ---------- | ------- |
+| `contents: write` | Needed for merging PRs via Dependabot auto-merge functionality |
+| `pull-requests: write` | Needed for modifying PRs via Dependabot auto-merge functionality |
+
 ## GitHub secrets
 
 This is the list of the current GitHub secrets used as part of this workflow.
@@ -59,11 +69,11 @@ jobs:
 > - **Supported repository type:** Because this configuration uses all the
 >   workflow defaults, it assumes the repository is a **single-module Spring
 >   Boot application** located at the repository root. It expects a standard
->   Maven setup with a `pom.xml` in the root directory, built using **Java 25**.
->   If your repository is a multi-module project, a monorepo, a Quarkus/Docker
->   application, or uses a different Java version, you must provide the
->   necessary overrides. See the [**Examples**](#examples) section below for how
->   to configure these specific setups.
+>   Maven setup with a `pom.xml` in the root directory, built using the default
+>   Java version. If your repository is a multi-module project, a monorepo, a
+>   Quarkus/Docker application, or uses a different Java version, you must
+>   provide the necessary overrides. See the [**Examples**](#examples) section
+>   below for how to configure these specific setups.
 
 ## Overrides
 
@@ -182,7 +192,9 @@ These are applicable to Spring Boot and Quarkus application types.
 > [!NOTE]
 > Java version must be overridden if the application differs from the default.
 > The Java distribution should only be overridden if there are issues with our
-> current default.
+> current default. The cache path should be overridden for monorepo workflows
+> where an app is self-contained within a repo directory with a separate
+> `pom.xml`.
 
 ##### Trivy
 

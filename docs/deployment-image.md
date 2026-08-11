@@ -19,6 +19,18 @@ CD repo update version:
 - Write inputs to step summary (no overrides supported)
 - Send update image event to CD repo
 
+## GitHub workflow permissions
+
+This is the list of the current workflow permissions used as part of these
+workflows.
+
+| Permission | Purpose |
+| ---------- | ------- |
+| `contents: write` | Needed for uploading SBOM to GitHub's Dependency Graph |
+| `packages: write` | Needed to allow container image pushes to GitHub container registry  (currently supported for `spring-boot` apps) |
+| `id-token: write` | Needed when using OIDC (federated credentials) to log in to ACR and for image signing with Sigstore/Cosign |
+| `pull-requests: read` | Needed to fetch PR metadata used in the deployment payload |
+
 ## GitHub secrets
 
 This is the list of the current GitHub secrets used as part of these workflows.
@@ -79,20 +91,15 @@ jobs:
 
 > [!NOTE]
 >
-> - **Permissions:** The `build-image` job requires `contents: write` (if
->   updating versions in POM), `packages: write`, and `id-token: write` for
->   registry authentication. The `update-image` job requires `pull-requests:
->   read` to fetch PR labels and attach metadata to the deployment payload.
->
-> - **Supported repository type:** Because this configuration uses all the
->   workflow defaults, it assumes the repository is a **single-module Spring
->   Boot application** located at the repository root. It expects a standard
->   Maven setup with a `pom.xml` in the root directory, built using **Java 25**.
->   If your repository is a multi-module project, a monorepo, a Quarkus/Docker
->   application, need to update multiple CD repos, or uses a different Java
->   version, you must provide the necessary overrides. See the
->   [**Examples**](#examples) section below for how to configure these specific
->   setups.
+> **Supported repository type:** Because this configuration uses all the
+> workflow defaults, it assumes the repository is a **single-module Spring Boot
+> application** located at the repository root. It expects a standard Maven
+> setup with a `pom.xml` in the root directory, built using the default Java
+> version. If your repository is a multi-module project, a monorepo, a
+> Quarkus/Docker application, need to update multiple CD repos, or uses a
+> different Java version, you must provide the necessary overrides. See the
+> [**Examples**](#examples) section below on how to configure these specific
+> setups.
 
 ## Overrides
 
@@ -198,7 +205,9 @@ These are applicable to Spring Boot and Quarkus application types.
 > [!NOTE]
 > Java version must be overridden if the application differs from the default.
 > The Java distribution should only be overridden if there are issues with our
-> current default.
+> current default. The cache path should be overridden for monorepo workflows
+> where an app is self-contained within a repo directory with a separate
+> `pom.xml`.
 
 ##### Slack channel ID
 

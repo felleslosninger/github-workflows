@@ -171,7 +171,7 @@ on:
       - created
 
 jobs:
-  publish-modules:
+  create-release:
     strategy:
       matrix:
         # These MUST be the directory paths, not Maven coordinates

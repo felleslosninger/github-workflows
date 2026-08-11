@@ -11,6 +11,16 @@ This workflow is split into the following jobs
 - Package build and scan
 - Automatic merge of Dependabot PR
 
+## GitHub workflow permissions
+
+This is the list of the current workflow permissions used as part of these
+workflows.
+
+| Permission | Purpose |
+| ---------- | ------- |
+| `contents: write` | Needed for merging PRs via Dependabot auto-merge functionality |
+| `pull-requests: write` | Needed for modifying PRs via Dependabot auto-merge functionality |
+
 ## GitHub secrets
 
 This is the list of the current GitHub secrets used as part of this workflow.

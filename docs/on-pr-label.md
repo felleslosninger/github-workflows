@@ -11,6 +11,15 @@ label is applied. The purpose of adding `(INTERNAL-COMMIT)` is to exclude
 the change from public release notes. When generating release notes, the
 system looks for this string to filter out internal commits.
 
+## GitHub workflow permissions
+
+This is the list of the current workflow permissions used as part of this
+workflow.
+
+| Permission | Purpose |
+| ---------- | ------- |
+| `pull-requests: write` | Needed for modifying the PR based on label triggers |
+
 ## GitHub secrets
 
 None.
@@ -39,11 +48,8 @@ jobs:
 
 > [!NOTE]
 >
-> - **Permissions:** The `pull-requests: write` permission is required for the
->   calling workflow so the action can successfully update the PR title.
->
-> - **Label name:** The workflow specifically checks for the `internal` label
->   name to trigger the title modification.
+> **Label name:** The workflow specifically checks for the `internal` label name
+> to trigger the title modification.
 
 ## Overrides
 
