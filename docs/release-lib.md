@@ -1,7 +1,7 @@
 # Library release usage docs
 
-These docs explain how to use our reusable workflow for GitHub artifact releases
-in library repos.
+These docs explain how to use our reusable workflow for releasing Maven
+libraries to GitHub Packages in application repos.
 
 - [Build and publish library](../.github/workflows/ci-build-publish-lib.yml)
 

@@ -269,7 +269,7 @@ jobs:
 
 | Override | Type | Default |
 | -------- | ---- | ------- |
-| `auto-merge-types` | `string` | `version-update:semver-patch;version-update:semver-minor` |
+| `auto-merge-types` | `string` | Not set |
 
 > [!TIP]
 >
