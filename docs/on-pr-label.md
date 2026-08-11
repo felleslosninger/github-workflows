@@ -24,9 +24,6 @@ workflow.
 
 None.
 
-> [!NOTE]
-> No GitHub admin action is required to use this workflow.
-
 ## Usage
 
 In your application repository, create a new file called

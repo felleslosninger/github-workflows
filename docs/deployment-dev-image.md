@@ -6,10 +6,9 @@ image deployment in app repos.
 - [Build and publish development container image](../.github/workflows/misc-publish-dev-docker.yml)
 
 This workflow runs on main commits in an application repository, and will
-publish multi-architecture images to our `crutvikling.azurecr.io` development
-Azure Container Registry (ACR). The purpose of this workflow is to push a
-`latest` image to a registry where developers have access, allowing them to
-easily run and test it locally.
+publish multi-architecture images to our development Azure Container Registry
+(ACR). The purpose of this workflow is to push a `latest` image to a registry
+where developers have access, allowing them to easily run and test it locally.
 
 ## GitHub workflow permissions
 
