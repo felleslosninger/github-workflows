@@ -213,6 +213,7 @@ jobs:
           GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
           UPDATE_VERSIONS: ${{ inputs.update-versions }}
           IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
+          APP_PATH: ${{ inputs.application-path }}
         run: |
           if [ "$UPDATE_VERSIONS" == "true" ]; then
             mvn versions:set -B --file "${APP_PATH}pom.xml" -DnewVersion="$IMAGE_TAG"
