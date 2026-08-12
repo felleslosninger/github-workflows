@@ -215,7 +215,7 @@ jobs:
           IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
         run: |
           if [ "$UPDATE_VERSIONS" == "true" ]; then
-            mvn versions:set -B -DnewVersion="$IMAGE_TAG"
+            mvn versions:set -B --file "${APP_PATH}pom.xml" -DnewVersion="$IMAGE_TAG"
             echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
