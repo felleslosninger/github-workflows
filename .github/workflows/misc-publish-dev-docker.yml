@@ -54,20 +54,20 @@ jobs:
       REPOSITORY-NAME: ${{ github.event.repository.name }}
     steps:
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # pin@v4.0.0
+        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # pin@v4.1.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # pin@v4.0.0
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # pin@v4.2.0
 
       - name: Login to crutvikling (Azure container registry)
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # pin@v4.1.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # pin@v4.6.0
         with:
           registry: ${{ vars.CR_DEV_URL }}
           username: ${{ secrets.CR_DEV_USERNAME }}
           password: ${{ secrets.CR_DEV_SECRET }}
 
       - name: Build and push
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # pin@v7.1.0
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # pin@v7.2.0
         with:
           push: true
           platforms: linux/amd64,linux/arm64

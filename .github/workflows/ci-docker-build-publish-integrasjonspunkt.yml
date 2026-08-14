@@ -123,12 +123,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin@v7.0.1
         with:
           fetch-depth: ${{ inputs.fetch-depth }}
 
       - name: Set up JDK ${{ inputs.java-version }}
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # pin@v5.2.0
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # pin@v5.7.0
         with:
           distribution: "${{ inputs.java-distribution }}"
           java-version: ${{ inputs.java-version }}
@@ -168,7 +168,7 @@ jobs:
           trivy-version: ${{ inputs.trivy-version }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # pin@v4.1.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # pin@v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
