@@ -60,7 +60,7 @@ jobs:
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # pin@v4.2.0
 
       - name: Login to crutvikling (Azure container registry)
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # pin@v4.1.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # pin@v4.6.0
         with:
           registry: ${{ vars.CR_DEV_URL }}
           username: ${{ secrets.CR_DEV_USERNAME }}
