@@ -36,11 +36,6 @@ on:
         description: Name of container image
         required: false
         type: string
-      image-tag:
-        description: Custom image tag, if not provided a tag will be auto-generated
-        default: ""
-        required: false
-        type: string
       image-pack:
         description: Paketo builder image to use. See https://paketo.io/docs/reference/builders-reference/ for choices
         default: builder-noble-java-tiny
@@ -56,6 +51,11 @@ on:
         default: true
         required: false
         type: boolean
+      image-tag:
+        description: Custom image tag, if not provided a tag will be auto-generated
+        default: ""
+        required: false
+        type: string
       java-version:
         description: Main version of java
         default: "25"
@@ -150,6 +150,11 @@ on:
         type: string
         required: false
         default: ''
+      docker-build-context:
+        description: Docker build context directory (resolves COPY/ADD paths). Defaults to the repository root.
+        default: "."
+        required: false
+        type: string
 
     outputs:
       image-version:
@@ -207,17 +212,17 @@ jobs:
   run-spring-boot-build:
     needs: input-checks
     if: inputs.application-type == 'spring-boot'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-build-publish-image.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-build-publish-image.yml@PF-2541-test-workflow-dependabot-version-bumps
     permissions:
       contents: write
       packages: write
       id-token: write
     with:
       image-name: ${{ inputs.image-name }}
-      image-tag: ${{ inputs.image-tag }}
       image-pack: ${{ inputs.image-pack }}
       image-pack-tag: ${{ inputs.image-pack-tag }}
       image-signing: ${{ inputs.image-signing }}
+      image-tag: ${{ inputs.image-tag }}
       java-version: ${{ inputs.java-version }}
       java-distribution: ${{ inputs.java-distribution }}
       slack-channel-id: ${{ inputs.slack-channel-id }}
@@ -245,7 +250,6 @@ jobs:
       id-token: write
     with:
       image-name: ${{ inputs.image-name }}
-      image-tag: ${{ inputs.image-tag }}
       image-pack: ${{ inputs.image-pack }}
       image-pack-tag: ${{ inputs.image-pack-tag }}
       image-signing: ${{ inputs.image-signing }}
@@ -275,7 +279,6 @@ jobs:
       id-token: write
     with:
       image-name: ${{ inputs.image-name }}
-      image-tag: ${{ inputs.image-tag }}
       image-signing: ${{ inputs.image-signing }}
       slack-channel-id: ${{ inputs.slack-channel-id }}
       application-path: ${{ inputs.application-path }}
@@ -289,4 +292,5 @@ jobs:
       trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
       trivy-os-severity: ${{ inputs.trivy-os-severity }}
       trivy-version: ${{ inputs.trivy-version }}
+      docker-build-context: ${{ inputs.docker-build-context }}
     secrets: inherit
