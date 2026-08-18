@@ -1,7 +1,7 @@
 # Deployment usage docs (dev image)
 
-These docs explain how to use our reusable workflow for development container
-image deployment in app repos.
+These docs explain how to use our reusable workflow for building development
+container images mainly used for local development purposes.
 
 - [Build and publish development container image](../.github/workflows/misc-publish-dev-docker.yml)
 
