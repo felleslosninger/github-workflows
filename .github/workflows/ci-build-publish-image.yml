@@ -150,6 +150,11 @@ on:
         type: string
         required: false
         default: ''
+      docker-build-context:
+        description: Docker build context directory (resolves COPY/ADD paths). Defaults to the repository root.
+        default: "."
+        required: false
+        type: string
 
     outputs:
       image-version:
@@ -289,4 +294,5 @@ jobs:
       trivy-os-ignore-unfixed: ${{ inputs.trivy-os-ignore-unfixed }}
       trivy-os-severity: ${{ inputs.trivy-os-severity }}
       trivy-version: ${{ inputs.trivy-version }}
+      docker-build-context: ${{ inputs.docker-build-context }}
     secrets: inherit
