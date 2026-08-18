@@ -4,10 +4,10 @@
 #
 # Purpose:
 #   This workflow is responsible for calling the appropriate workflow to update
-#   the image version in the kubernetes manifests and trigger a deployment.
+#   the image version in the Kubernetes manifests and trigger a deployment.
 #   This workflow is triggered by the build and publish workflows after a
 #   successful build and publish of a Docker image, and will dispatch an event
-#   to the kubernetes repository with the necessary information to update the
+#   to the Kubernetes repository with the necessary information to update the
 #   image version in the manifests and trigger a deployment.
 #
 #   Flow:
@@ -57,8 +57,8 @@ on:
         required: true
         type: string
       kubernetes-repo:
-        description: Repository for kubernetes manifests (idporten-cd | minid-cd)
-        required: false
+        description: CD repository to target for Kubernetes manifest updates
+        required: true
         type: string
       kubernetes-repo-event:
         description: Name of event to trigger in kubernetes repository
@@ -75,7 +75,7 @@ on:
         default: ''
         type: string
       lifecycle:
-        description: Lifecycle environment to determine container registry to publish to. Supported values are 'deployment' and 'development'. This will determine the container registry and credentials used for publishing the image
+        description: This must be set to the same value that was used when building and publishing the image. Supported values are 'deployment' and 'development'.
         required: false
         default: "deployment"
         type: string

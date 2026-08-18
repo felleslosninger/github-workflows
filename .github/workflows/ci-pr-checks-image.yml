@@ -64,11 +64,15 @@ on:
         required: false
         type: string
       enable-auto-merge-dependabot:
-        description: Set to true to enable auto-merge for Dependabot PRs
+        description: Enable/disable auto-merge for Dependabot PRs
         type: boolean
         default: false
+      enable-container-image-scan:
+        description: Enable/disable Trivy image scanning
+        type: boolean
+        default: true
       enable-pr-title-verify:
-        description: Set to true to enable PR title verification
+        description: Enable/disable PR title verification
         type: boolean
         default: true
       image-name:
@@ -192,10 +196,10 @@ jobs:
           max-length-title: ${{ inputs.pull-request-max-length-title }}
           case-sensitive-prefix: ${{ inputs.pull-request-case-sensitive-prefix }}
 
-
   call-spring-boot-container-scan:
     name: Call Spring Boot container scan
     if: |
+      inputs.enable-container-image-scan == true &&
       inputs.application-type == 'spring-boot'
     uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@main
     permissions:
@@ -223,6 +227,7 @@ jobs:
   call-quarkus-container-scan:
     name: Call Quarkus container scan
     if: |
+      inputs.enable-container-image-scan == true &&
       inputs.application-type == 'quarkus'
     uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@main
     permissions:
@@ -248,6 +253,7 @@ jobs:
   call-docker-container-scan:
     name: Call Docker container scan
     if: |
+      inputs.enable-container-image-scan == true &&
       inputs.application-type == 'docker'
     uses: felleslosninger/github-workflows/.github/workflows/ci-docker-container-scan.yml@main
     permissions:
