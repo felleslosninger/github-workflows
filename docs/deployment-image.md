@@ -272,11 +272,17 @@ These are applicable to Spring Boot and Quarkus application types.
 | Override | Type | Workflow default |
 | -------- | ---- | ---------------- |
 | `add-git-package-token` | `boolean` | `false` |
+| `sh-scan-install-method` | `string` | `npm` |
+| `sh-scan` | `boolean` | `true` |
 
 > [!CAUTION]
 > **Dockerfile path resolution:** If you set `add-git-package-token` to `true`,
 > the workflow *strictly* looks for the Dockerfile at `docker/Dockerfile`
 > relative to the build context. Ensure your repository matches this structure.
+> [!NOTE]
+> If you are building a node project with a different package manager then npm, ex. `yarn`,
+> you have to override `sh-scan-install-method` to `yarn`. It is also possible to skip the
+> sh-scan-step by setting `sh-scan` to `false`.
 
 ### CD repo update version
 
