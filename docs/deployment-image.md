@@ -281,7 +281,7 @@ These are applicable to Spring Boot and Quarkus application types.
 > relative to the build context. Ensure your repository matches this structure.
 > [!NOTE]
 > If you are building a node project with a different package manager then npm, ex. `yarn`,
-> you have to override `sh-scan-install-method` to `yarn`. It is also possible to skip the
+> you have to set `sh-scan-install-method` to `yarn`. It is also possible to skip the
 > sh-scan-step by setting `sh-scan` to `false`.
 
 ### CD repo update version
