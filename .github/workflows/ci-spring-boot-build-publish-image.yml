@@ -54,6 +54,11 @@ on:
         description: Name of Docker image
         required: false
         type: string
+      image-tag:
+        description: Custom image tag, if not provided a tag will be auto-generated
+        default: ""
+        required: false
+        type: string
       image-pack:
         description: Paketo builder image to use. See https://paketo.io/docs/reference/builders-reference/ for choices
         default: builder-noble-java-tiny
@@ -91,11 +96,6 @@ on:
         type: string
       module-name:
         description: Name of the module to build, if using a multi-module Maven project. If not provided, the workflow will attempt to build the application based on the application-path input
-        default: ""
-        required: false
-        type: string
-      image-tag:
-        description: Custom image tag, if not provided a tag will be auto-generated
         default: ""
         required: false
         type: string
