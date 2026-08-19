@@ -272,11 +272,20 @@ These are applicable to Spring Boot and Quarkus application types.
 | Override | Type | Workflow default |
 | -------- | ---- | ---------------- |
 | `add-git-package-token` | `boolean` | `false` |
+| `docker-build-context` | `string` | `.` |
 
 > [!CAUTION]
 > **Dockerfile path resolution:** If you set `add-git-package-token` to `true`,
 > the workflow *strictly* looks for the Dockerfile at `docker/Dockerfile`
 > relative to the build context. Ensure your repository matches this structure.
+
+<!-- -->
+
+> [!NOTE]
+> `docker-build-context` sets the directory `docker build` uses to resolve
+> `COPY`/`ADD` paths — separate from `application-path`, which only sets where
+> the Dockerfile itself is. Override it if your Dockerfile copies files from
+> outside the repository root.
 
 ### CD repo update version
 
