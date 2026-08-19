@@ -134,11 +134,30 @@ will always run.
 > to `false` to save time. Only enable `maven-update-snapshots` if your PR
 > depends on newly published internal snapshots.
 
-##### Trivy
+##### Application path
 
 | Override | Type | Workflow default |
 | -------- | ---- | ---------------- |
 | `application-path` | `string` | `./` |
+
+> [!NOTE]
+> **Path formatting:** The path is relative to the repository root. If you
+> override this value, you **must include a trailing slash** (e.g.,
+> `log-event-lib/`). The underlying build scripts concatenate this directly with
+> filenames (evaluating to `${APP_PATH}pom.xml`), and the build will fail if the
+> slash is missing.
+
+> [!TIP]
+> Override this to build a library that lives in a subfolder of a monorepo.
+> Maven is pointed at `<application-path>pom.xml`, so the library builds its own
+> reactor rather than the repository root. It is also the Trivy scan target and
+> where a module-local `.trivyignore` is looked up. Set `cache-path` to the same
+> pom to keep the dependency cache scoped to that library.
+
+##### Trivy
+
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
 | `trivy-library-disable-scan` | `boolean` | `false` |
 | `trivy-library-ignore-unfixed` | `boolean` | `true` |
 | `trivy-library-severity` | `string` | `HIGH,CRITICAL` |

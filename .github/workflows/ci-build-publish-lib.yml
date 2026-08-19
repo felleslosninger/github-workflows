@@ -12,6 +12,11 @@
 #   private GitHub Packages repositories) by reading dependencies with the
 #   'GH_PACKAGES_READ_USER' / 'GH_PACKAGES_READ_PAT' secrets.
 #
+#   The library is assumed to live at the repository root. Set 'application-path'
+#   to release a library that lives in a subfolder of a monorepo; every Maven
+#   invocation is then pointed at '<application-path>pom.xml', which becomes the
+#   reactor root that 'module-name' is resolved against.
+#
 #   'mvn clean install' always runs BEFORE the Trivy filesystem scan. This is
 #   required so that Maven resolves and builds the full dependency tree
 #   (including internal and transitive dependencies) locally first; the Trivy
@@ -54,6 +59,11 @@ permissions: {}
 on:
   workflow_call:
     inputs:
+      application-path:
+        description: "Path to the library to build and publish, relative to the repository root. Maven is pointed at '<application-path>pom.xml', which becomes the reactor root, so this is what makes a library in a monorepo subfolder releasable. Must end with a trailing slash (e.g. 'log-event-lib/')"
+        default: "./"
+        required: false
+        type: string
       cache-path:
         description: Path to cache dependencies, relative to the repository root
         default: "**/pom.xml"
@@ -84,7 +94,7 @@ on:
         required: false
         type: string
       module-name:
-        description: Directory path of the Maven module to build and publish, relative to the reactor root (e.g. 'payment/api'), for multi-module reactor projects. Must be the module directory path, NOT the Maven coordinate form (`:artifactId` or `groupId:artifactId`), because the Trivy scan and SBOM steps derive filesystem paths from it. When set, the build is scoped with `-pl <module-name> -am` so the module and its upstream reactor dependencies are built (in order) and only this module is deployed. When empty, the full reactor is built and deployed from the repository root.
+        description: Directory path of the Maven module to build and publish, relative to the reactor root (e.g. 'payment/api'), for multi-module reactor projects. The reactor root is the repository root, or 'application-path' when that is set. Must be the module directory path, NOT the Maven coordinate form (`:artifactId` or `groupId:artifactId`), because the Trivy scan and SBOM steps derive filesystem paths from it. When set, the build is scoped with `-pl <module-name> -am` so the module and its upstream reactor dependencies are built (in order) and only this module is deployed. When empty, the full reactor is built and deployed from the reactor root.
         required: false
         type: string
       package-version:
@@ -156,9 +166,10 @@ jobs:
           GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
           GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
           PACKAGE_VERSION: ${{ inputs.package-version }}
+          APP_PATH: ${{ inputs.application-path }}
         run: |
           if [ -n "$PACKAGE_VERSION" ]; then
-            mvn versions:set -B -DnewVersion="$PACKAGE_VERSION"
+            mvn versions:set -B --file "${APP_PATH}pom.xml" -DnewVersion="$PACKAGE_VERSION"
             echo "- \`mvn versions:set\` was executed" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "- \`mvn versions:set\` was not executed" >> "$GITHUB_STEP_SUMMARY"
@@ -170,8 +181,12 @@ jobs:
           GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
           PROFILE: ${{ inputs.maven-profile }}
           MODULE_NAME: ${{ inputs.module-name }}
+          APP_PATH: ${{ inputs.application-path }}
         run: |
-          MAVEN_ARGS=("-B" "clean" "install" "--update-snapshots")
+          # Point Maven at the library's own pom rather than the working
+          # directory. This pom is the reactor root, so '-pl' below stays
+          # relative to it. Defaults to './pom.xml'.
+          MAVEN_ARGS=("-B" "clean" "install" "--update-snapshots" "--file" "${APP_PATH}pom.xml")
 
           if [ -n "$MODULE_NAME" ]; then
             # Multi-module: build only this module and its upstream reactor
@@ -192,9 +207,12 @@ jobs:
         with:
           scan-type: "fs"
           # Scope the scan to the built module (its upstream reactor deps are
-          # resolved from the warm ~/.m2 via the module pom); repo root when
-          # 'module-name' is unset.
-          application-path: ${{ inputs.module-name || './' }}
+          # resolved from the warm ~/.m2 via the module pom); the reactor root
+          # when 'module-name' is unset. 'module-name' is relative to the
+          # reactor root, so it is prefixed with 'application-path' to get a
+          # path from the repository root. Both inputs default such that this
+          # evaluates to './'.
+          application-path: ${{ inputs.application-path }}${{ inputs.module-name }}
           library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
           library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
           library-severity: ${{ inputs.trivy-library-severity }}
@@ -215,8 +233,9 @@ jobs:
           PROFILE: ${{ inputs.maven-profile }}
           DEPLOYMENT_REPO: ${{ inputs.deployment-repository }}
           MODULE_NAME: ${{ inputs.module-name }}
+          APP_PATH: ${{ inputs.application-path }}
         run: |
-          MAVEN_ARGS=("-B" "deploy" "-DskipTests")
+          MAVEN_ARGS=("-B" "deploy" "-DskipTests" "--file" "${APP_PATH}pom.xml")
 
           if [ -n "$MODULE_NAME" ]; then
             # Multi-module: deploy only the selected module, from the reactor
@@ -250,11 +269,20 @@ jobs:
           SBOM_PATH: ${{ inputs.sbom-path }}
           REPO_NAME: ${{ github.event.repository.name }}
           MODULE_NAME: ${{ inputs.module-name }}
+          APP_PATH: ${{ inputs.application-path }}
         run: |
           # Default to the selected module directory (so multi-module SBOMs keep
-          # a per-module artifact id), then the repository root, if 'sbom-path'
-          # is empty
-          RAW_PATH="${SBOM_PATH:-${MODULE_NAME:-.}}"
+          # a per-module artifact id), then the reactor root, if 'sbom-path' is
+          # empty. 'module-name' is relative to the reactor root, so it is
+          # prefixed with 'application-path' to get a path from the repository
+          # root; 'sbom-path' is already relative to the repository root.
+          if [ -n "$SBOM_PATH" ]; then
+            RAW_PATH="$SBOM_PATH"
+          elif [ -n "$MODULE_NAME" ]; then
+            RAW_PATH="${APP_PATH}${MODULE_NAME}"
+          else
+            RAW_PATH="${APP_PATH}"
+          fi
           CLEAN_PATH=$(echo "$RAW_PATH" | sed 's/\/target$//' | sed 's/^\.\///' | sed 's/\/$//')
 
           # Resolve the Artifact ID
