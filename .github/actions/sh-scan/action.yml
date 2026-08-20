@@ -144,6 +144,7 @@ runs:
             scan_for_hashes "$NODE_MODULES_DIR"
 
         elif [[ "$INSTALL_METHOD" == "yarn" ]]; then
+            corepack enable yarn
             yarn install --frozen-lockfile --ignore-scripts
             scan_for_hashes "$NODE_MODULES_DIR"
 
@@ -152,6 +153,7 @@ runs:
             scan_for_hashes "$NODE_MODULES_DIR"
 
         elif [[ "$INSTALL_METHOD" == "pnpm" ]]; then
+            corepack enable pnpm
             pnpm install --frozen-lockfile --ignore-scripts
             scan_for_hashes "$NODE_MODULES_DIR"
 
