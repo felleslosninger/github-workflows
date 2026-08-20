@@ -155,6 +155,16 @@ on:
         default: "."
         required: false
         type: string
+      sh-scan:
+        description: Run Shai-Hulud malicious files scan on node_modules
+        type: boolean
+        required: false
+        default: true
+      sh-scan-install-method:
+        description: Install method for sh-scan (npm | yarn | ci | pnpm)
+        type: string
+        required: false
+        default: 'npm'
 
     outputs:
       image-version:
@@ -295,4 +305,6 @@ jobs:
       trivy-os-severity: ${{ inputs.trivy-os-severity }}
       trivy-version: ${{ inputs.trivy-version }}
       docker-build-context: ${{ inputs.docker-build-context }}
+      sh-scan: ${{ inputs.sh-scan }}
+      sh-scan-install-method: ${{ inputs.sh-scan-install-method }}
     secrets: inherit
