@@ -175,6 +175,7 @@ jobs:
             --volume "${HOME}/.m2:/home/cnb/.m2:rw" \
             --env BP_JVM_VERSION="$JAVA_VERSION" \
             --env BP_MAVEN_POM_FILE="./pom.xml" \
+            --env BP_MAVEN_BUILT_ARTIFACT="target/*-native-image-source-jar/*-runner.jar" \
             --env BP_NATIVE_IMAGE="true" \
             --env LANG="C.UTF-8" \
             --env GH_PACKAGES_READ_USER="$GH_PACKAGES_READ_USER" \
