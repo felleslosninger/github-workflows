@@ -8,8 +8,10 @@
 #
 #   Flow:
 #     1. Verifies PR title
-#     2. Builds and tests from root pom with mvn lifecycle chosen in
-#        inputs (default: install).
+#     2. Builds and tests with the mvn lifecycle chosen in inputs
+#        (default: install). Builds from the repository root pom by default;
+#        set 'application-path' to build a library that lives in a subfolder
+#        of a monorepo instead.
 #     3. Scans with Trivy FS scan to fail fast on library vulnerabilities
 #     4. Uploads build artifact (optional)
 #     5. Auto-merges Dependabot PRs (optional)
@@ -47,7 +49,7 @@ on:
         required: false
         type: string
       application-path:
-        description: Path to the directory to scan with Trivy (also used to locate a module-local .trivyignore), relative to the repository root
+        description: "Path to the library to build, relative to the repository root. Maven is pointed at '<application-path>pom.xml', so this is what makes a library in a monorepo subfolder buildable. Must end with a trailing slash (e.g. 'log-event-lib/'). Also used as the Trivy scan target and to locate a module-local .trivyignore"
         default: "./"
         required: false
         type: string
@@ -171,6 +173,7 @@ jobs:
           LIFECYCLE: ${{ inputs.maven-lifecycle }}
           MAVEN_CLEAN: ${{ inputs.maven-clean }}
           UPDATE_SNAPSHOTS: ${{ inputs.maven-update-snapshots }}
+          APP_PATH: ${{ inputs.application-path }}
         run: |
           case "$LIFECYCLE" in
             test|package|verify|install)
@@ -193,6 +196,11 @@ jobs:
           if [ "$UPDATE_SNAPSHOTS" == "true" ]; then
             ARGS+=("--update-snapshots")
           fi
+
+          # Point Maven at the library's own pom rather than the working
+          # directory, so a library in a monorepo subfolder builds its own
+          # reactor instead of the repository root. Defaults to './pom.xml'.
+          ARGS+=("--file" "${APP_PATH}pom.xml")
 
           # Execute the Maven command
           mvn "${ARGS[@]}"
