@@ -280,10 +280,12 @@ These are applicable to Spring Boot and Quarkus application types.
 > the workflow *strictly* looks for the Dockerfile at `docker/Dockerfile`
 > relative to the build context. Ensure your repository matches this structure.
 
+<!-- -->
+
 > [!NOTE]
-> If you are building a node project with a different package manager then npm, ex. `yarn`,
-> you have to set `sh-scan-install-method` to `yarn`. It is also possible to skip the
-> sh-scan-step by setting `sh-scan` to `false`.
+> If you are building a node project with a different package manager than npm,
+> ex. `yarn`, you have to set `sh-scan-install-method` to `yarn`. It is also
+> possible to skip the sh-scan-step by setting `sh-scan` to `false`.
 
 ### CD repo update version
 

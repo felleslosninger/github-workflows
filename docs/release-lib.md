@@ -118,6 +118,8 @@ will always run.
 > filenames (evaluating to `${APP_PATH}pom.xml`), and the build will fail if the
 > slash is missing.
 
+<!-- -->
+
 > [!TIP]
 > Override this to release a library that lives in a subfolder of a monorepo.
 > Every Maven invocation is pointed at `<application-path>pom.xml`, which becomes

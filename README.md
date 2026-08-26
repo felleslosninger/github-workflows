@@ -117,8 +117,8 @@ Workflows for building and publishing Maven libraries after commits to main
 
 ### Other utility workflows overview
 
-- [check-syntax.yml](.github/workflows/check-syntax.yml): Validates workflow
-  files with actionlint in this repository (local workflow)
+- [lint.yml](.github/workflows/lint.yml): Validates workflow files with
+  actionlint and Markdown docs with markdownlint (local workflow)
 - [on-pr-label.yml](.github/workflows/on-pr-label.yml): Triggers updates to PRs
   on specific labels in app repos ([internal usage
   docs](https://paotvers.io/docs/default/Domain/application-platform/Application/Repository/workflows/on-pr-label/))
