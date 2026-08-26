@@ -204,7 +204,8 @@ jobs:
           GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
           GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
           IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
-        run: mvn versions:set -B -DnewVersion="$IMAGE_TAG"
+          APP_PATH: ${{ inputs.application-path }}
+        run: mvn versions:set -B --file "${APP_PATH}pom.xml" -DnewVersion="$IMAGE_TAG"
 
       - name: Install pack
         env:
