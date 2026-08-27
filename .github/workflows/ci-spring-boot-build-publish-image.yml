@@ -215,12 +215,15 @@ jobs:
           IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
           APP_PATH: ${{ inputs.application-path }}
         run: |
-          if [ "$UPDATE_VERSIONS" == "true" ]; then
-            mvn versions:set -B --file "${APP_PATH}pom.xml" -DnewVersion="$IMAGE_TAG"
-            echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
-          fi
+          {
+            echo "### Maven versions"
+            if [ "$UPDATE_VERSIONS" == "true" ]; then
+              mvn versions:set -B --file "${APP_PATH}pom.xml" -DnewVersion="$IMAGE_TAG"
+              echo "- \`mvn versions\` was executed"
+            else
+              echo "- \`mvn versions\` was not executed"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build image with Maven/Spring Boot (module-name)
         if: inputs.module-name != ''
