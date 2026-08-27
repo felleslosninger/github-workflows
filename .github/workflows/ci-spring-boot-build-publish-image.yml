@@ -289,7 +289,7 @@ jobs:
 
       - name: Push image
         id: push-image
-        uses: felleslosninger/github-workflows/.github/actions/push-image@PF-2573-docker-push-composite-action
+        uses: felleslosninger/github-workflows/.github/actions/docker-push-image@PF-2573-docker-push-composite-action
         with:
           image-name: ${{ steps.image-metadata.outputs.image-name }}
           image-tag: ${{ steps.image-metadata.outputs.image-tag }}
