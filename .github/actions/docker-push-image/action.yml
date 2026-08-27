@@ -22,11 +22,6 @@ runs:
       shell: bash
       run: echo "### Push image" >> "$GITHUB_STEP_SUMMARY"
 
-    - name: Write inputs to summary
-      uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
-      with:
-        json-payload: ${{ toJson(inputs) }}
-
     - name: Push image
       shell: bash
       env:
