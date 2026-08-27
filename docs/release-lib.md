@@ -105,6 +105,27 @@ will always run.
 > When this is overridden, `mvn versions:set` is run dynamically during the
 > build using the overridden package version before packaging the artifact.
 
+##### Application path
+
+| Override | Type | Workflow default |
+| -------- | ---- | ---------------- |
+| `application-path` | `string` | `./` |
+
+> [!NOTE]
+> **Path formatting:** The path is relative to the repository root. If you
+> override this value, you **must include a trailing slash** (e.g.,
+> `log-event-lib/`). The underlying build scripts concatenate this directly with
+> filenames (evaluating to `${APP_PATH}pom.xml`), and the build will fail if the
+> slash is missing.
+
+<!-- -->
+
+> [!TIP]
+> Override this to release a library that lives in a subfolder of a monorepo.
+> Every Maven invocation is pointed at `<application-path>pom.xml`, which becomes
+> the reactor root. See the [**Examples**](#libraries-in-a-monorepo-subfolder)
+> section below.
+
 ##### Maven
 
 | Override | Type | Workflow default |
@@ -119,6 +140,10 @@ will always run.
 > (e.g., `payment/api`), NOT the Maven coordinate form (`:artifactId` or
 > `groupId:artifactId`). The Trivy scanner and SBOM generators derive their
 > filesystem target paths directly from this input.
+>
+> The reactor root is the repository root, or `application-path` when that is
+> set. With `application-path: libs/payments/` and `module-name: api`, the
+> module built and published is `libs/payments/api`.
 
 ##### Trivy
 
@@ -143,7 +168,9 @@ will always run.
 > [!NOTE]
 >
 > - Leaving `sbom-path` empty will default to the `module-name` if provided, or
->   the repository root if not.
+>   the reactor root if not. When `application-path` is set, it is prefixed to
+>   `module-name` (which is relative to the reactor root); `sbom-path`, if you
+>   set it, is always relative to the repository root.
 >
 > - Leaving `sbom-artifact-id` empty will default to the clean `sbom-path`
 >   folder name (for multi-module projects), or the GitHub repository name (for
@@ -187,3 +214,40 @@ jobs:
       module-name: ${{ matrix.module }}
     secrets: inherit
 ```
+
+### Libraries in a monorepo subfolder
+
+When the library does not live at the repository root, set `application-path` to
+its directory. Every Maven invocation is pointed at `<application-path>pom.xml`,
+so the library builds and publishes its own reactor rather than the repository
+root.
+
+```yaml
+name: Release log-event-lib
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  create-release:
+    uses: felleslosninger/github-workflows/.github/workflows/ci-build-publish-lib.yml@main
+    permissions:
+      contents: read
+      packages: write
+    with:
+      # Trailing slash is required
+      application-path: log-event-lib/
+      # Keep the dependency cache scoped to this library
+      cache-path: log-event-lib/pom.xml
+      package-version: ${{ github.event.release.tag_name }}
+      deployment-repository: ${{ github.repository }}
+    secrets: inherit
+```
+
+> [!CAUTION]
+> `on: release` is repository-global. In a monorepo, every GitHub release fires
+> every workflow that listens for it, so this is only safe while the repository
+> publishes a single Maven artifact. If it publishes more than one, gate the job
+> on the release tag.

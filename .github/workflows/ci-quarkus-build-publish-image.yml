@@ -98,7 +98,7 @@ on:
         type: boolean
         default: false
       application-path:
-        description: Path to the application directory to scan with Trivy, relative to the repository root
+        description: Path to the application directory, relative to the repository root. Used as the buildpack build context and to locate a module-local .trivyignore
         default: "./"
         required: false
         type: string
@@ -204,7 +204,8 @@ jobs:
           GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
           GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
           IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
-        run: mvn versions:set -B -DnewVersion="$IMAGE_TAG"
+          APP_PATH: ${{ inputs.application-path }}
+        run: mvn versions:set -B --file "${APP_PATH}pom.xml" -DnewVersion="$IMAGE_TAG"
 
       - name: Install pack
         env:
@@ -232,9 +233,10 @@ jobs:
           IMAGE_PACK: ${{ inputs.image-pack }}
           IMAGE_PACK_TAG: ${{ inputs.image-pack-tag }}
           JAVA_VERSION: ${{ inputs.java-version }}
+          APP_PATH: ${{ inputs.application-path }}
         run: |
           pack build "$IMAGE_NAME:$IMAGE_TAG" \
-            --path . \
+            --path "$APP_PATH" \
             --buildpack docker://paketobuildpacks/quarkus \
             --buildpack docker://paketobuildpacks/java-native-image \
             --builder "paketobuildpacks/$IMAGE_PACK:$IMAGE_PACK_TAG" \
@@ -258,9 +260,10 @@ jobs:
           IMAGE_PACK: ${{ inputs.image-pack }}
           IMAGE_PACK_TAG: ${{ inputs.image-pack-tag }}
           JAVA_VERSION: ${{ inputs.java-version }}
+          APP_PATH: ${{ inputs.application-path }}
         run: |
           pack build "$IMAGE_NAME:$IMAGE_TAG" \
-            --path . \
+            --path "$APP_PATH" \
             --buildpack docker://paketobuildpacks/quarkus \
             --buildpack docker://paketobuildpacks/java \
             --builder "paketobuildpacks/$IMAGE_PACK:$IMAGE_PACK_TAG" \

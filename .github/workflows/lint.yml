@@ -1,0 +1,43 @@
+name: Lint
+run-name: "Markdown and GitHub Action lint"
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions: { }
+
+jobs:
+  actionlint:
+    name: Actionlint
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Run actionlint"
+        uses: felleslosninger/github-actions/run-actionlint@d7888fecafbf48e5845c8a0c76389f71c517ee6d # pin@v0.8.0
+
+  markdownlint:
+    name: Markdownlint
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+      # To report GitHub Actions status checks
+      statuses: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin@v6.0.2
+        with:
+          # super-linter needs the full git history to get the
+          # list of files that changed across commits
+          fetch-depth: 0
+
+      - name: Super-linter
+        uses: super-linter/super-linter/slim@61abc07d755095a68f4987d1c2c3d1d64408f1f9 # pin@v8.5.0
+        env:
+          # To report GitHub Actions status checks
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_MARKDOWN: true
+          FILTER_REGEX_INCLUDE: .*docs/.*
