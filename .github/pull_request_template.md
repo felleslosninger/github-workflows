@@ -15,14 +15,15 @@
 <!-- Please check all boxes that apply. If an item is not applicable, check it and add a note. -->
 
 - [ ] **Documentation:** I have added or updated the relevant documentation
-  (e.g., `README.md`, inline action descriptions) to reflect these changes.
+  (e.g., usage docs, `README.md`, or inline workflow or action descriptions) to
+  reflect these changes.
 - [ ] **Input Propagation:** If I added new `inputs` , I have exposed them in
-  all relevant proxy workflows or caller templates that rely on this action.
+  all relevant proxy workflows or caller templates that rely on this workflow or
+  action.
 - [ ] **Cross-Workflow Relevance:** I have checked if this change (or bug fix)
   applies to other shared workflows/actions in this repository and updated them
   if necessary.
-- [ ] **Testing:** I have tested these changes against a caller repository or
-  via local runners.
+- [ ] **Testing:** I have tested these changes against a caller repository.
 
 ## Testing Details
 <!-- Briefly describe how you tested this change. -->
