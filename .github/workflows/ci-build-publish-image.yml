@@ -175,13 +175,13 @@ on:
         value: ${{ jobs.run-spring-boot-build.outputs.image-digest || jobs.run-quarkus-build.outputs.image-digest || jobs.run-docker-build.outputs.image-digest }}
 
 jobs:
-  inputs-to-summary:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Write inputs to summary
-        uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
-        with:
-          json-payload: ${{ toJson(inputs) }}
+  # inputs-to-summary:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Write inputs to summary
+  #       uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
+  #       with:
+  #         json-payload: ${{ toJson(inputs) }}
 
   input-checks:
     runs-on: ubuntu-latest
@@ -190,6 +190,10 @@ jobs:
       sp-container-registry-client-id: ${{ steps.set-container-registry.outputs.sp-container-registry-client-id }}
 
     steps:
+      - name: Start build/publish image summary
+        shell: bash
+        run: echo "### Build/publish image" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Check for supported application-type
         id: application-type-check
         env:
@@ -218,6 +222,17 @@ jobs:
             echo "Invalid lifecycle type. Supported types are: \`deployment\`, and \`development\`" >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
+
+      - name: Input checks summary
+        shell: bash
+        env:
+          APP_TYPE: ${{ inputs.application-type }}
+          LIFECYCLE: ${{ inputs.lifecycle }}
+        run: |
+          {
+            echo "#### Input checks summary"
+            echo "- :white_check_mark: Starting **$LIFECYCLE**" build for **$APP_TYPE**" app."
+          } >> "$GITHUB_STEP_SUMMARY"
 
   run-spring-boot-build:
     needs: input-checks
