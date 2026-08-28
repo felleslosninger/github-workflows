@@ -175,14 +175,6 @@ on:
         value: ${{ jobs.run-spring-boot-build.outputs.image-digest || jobs.run-quarkus-build.outputs.image-digest || jobs.run-docker-build.outputs.image-digest }}
 
 jobs:
-  # inputs-to-summary:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Write inputs to summary
-  #       uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
-  #       with:
-  #         json-payload: ${{ toJson(inputs) }}
-
   input-checks:
     runs-on: ubuntu-latest
     outputs:
