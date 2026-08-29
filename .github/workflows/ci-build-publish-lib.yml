@@ -139,6 +139,7 @@ jobs:
         uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
         with:
           json-payload: ${{ toJson(inputs) }}
+          title: "Build/publish lib inputs"
 
   build-publish-package:
     runs-on: ubuntu-latest
