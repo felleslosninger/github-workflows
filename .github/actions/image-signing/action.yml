@@ -10,6 +10,10 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Start image signing summary
+      shell: bash
+      run: echo "### Image signing" >> "$GITHUB_STEP_SUMMARY"
+
     - name: Write inputs to summary
       uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
       with:
