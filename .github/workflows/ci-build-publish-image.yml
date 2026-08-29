@@ -223,7 +223,7 @@ jobs:
         run: |
           {
             echo "#### Input checks summary"
-            echo "- :white_check_mark: Starting **$LIFECYCLE**" build for **$APP_TYPE**" app."
+            echo "- :white_check_mark: Starting **$LIFECYCLE** build for **$APP_TYPE** app."
           } >> "$GITHUB_STEP_SUMMARY"
 
   run-spring-boot-build:
