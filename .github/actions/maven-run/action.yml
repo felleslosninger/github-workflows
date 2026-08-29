@@ -1,0 +1,62 @@
+name: Execute Maven Command
+description: Safely builds dynamic Maven arguments for mono-repos and multi-module builds.
+author: Digdir Platform Team
+
+inputs:
+  goals:
+    description: "The Maven lifecycle phases or plugins to execute (e.g., 'clean install', 'deploy', 'spring-boot:build-image')"
+    required: true
+  application-path:
+    default: "./"
+  module-name:
+    default: ""
+  build-dependencies:
+    description: "Whether to build upstream reactor dependencies (-am). Defaults to true if module is specified."
+    default: "true"
+  maven-profile:
+    default: ""
+  update-snapshots:
+    default: "false"
+  extra-args:
+    description: "Additional arguments (e.g., -DskipTests=true)"
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Execute Maven
+      shell: bash
+      env:
+        GOALS: ${{ inputs.goals }}
+        MODULE: ${{ inputs.module-name }}
+        BUILD_DEPS: ${{ inputs.build-dependencies }}
+        PROFILE: ${{ inputs.maven-profile }}
+        APP_PATH: ${{ inputs.application-path }}
+        UPDATE_SNAPSHOTS: ${{ inputs.update-snapshots }}
+        EXTRA: ${{ inputs.extra-args }}
+      run: |
+        set -euo pipefail
+
+        ARGS=("-B" "--file" "${APP_PATH}pom.xml")
+
+        # Read goals into array
+        read -r -a GOAL_ARRAY <<< "$GOALS"
+        ARGS+=("${GOAL_ARRAY[@]}")
+
+        if [ "$UPDATE_SNAPSHOTS" == "true" ]; then
+          ARGS+=("--update-snapshots")
+        fi
+
+        if [ -n "$MODULE" ]; then
+          ARGS+=("-pl" "$MODULE")
+          if [ "$BUILD_DEPS" == "true" ]; then
+            ARGS+=("-am")
+          fi
+        fi
+
+        if [ -n "$PROFILE" ]; then
+          ARGS+=("-P$PROFILE")
+        fi
+
+        echo "Executing: mvn ${ARGS[@]} $EXTRA"
+        eval mvn "${ARGS[@]}" $EXTRA
