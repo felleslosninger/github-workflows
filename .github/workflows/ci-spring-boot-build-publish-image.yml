@@ -216,7 +216,7 @@ jobs:
           APP_PATH: ${{ inputs.application-path }}
         run: |
           {
-            echo "### Maven versions"
+            echo "#### Maven versions"
             if [ "$UPDATE_VERSIONS" == "true" ]; then
               mvn versions:set -B --file "${APP_PATH}pom.xml" -DnewVersion="$IMAGE_TAG"
               echo "- \`mvn versions\` was executed"

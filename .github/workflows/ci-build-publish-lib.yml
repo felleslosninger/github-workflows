@@ -169,7 +169,7 @@ jobs:
           APP_PATH: ${{ inputs.application-path }}
         run: |
           {
-            echo "### Maven versions"
+            echo "#### Maven versions"
             if [ -n "$PACKAGE_VERSION" ]; then
               mvn versions:set -B --file "${APP_PATH}pom.xml" -DnewVersion="$PACKAGE_VERSION"
               echo "- \`mvn versions\` was executed"
