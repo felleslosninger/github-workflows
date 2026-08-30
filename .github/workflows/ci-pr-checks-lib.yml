@@ -155,55 +155,35 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin@v7.0.1
 
-      - name: Set up JDK ${{ inputs.java-version }}
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # pin@v5.7.0
+      - name: Setup Maven environment
+        uses: felleslosninger/github-workflows/.github/actions/setup-maven-env@main
         with:
-          distribution: "${{ inputs.java-distribution }}"
           java-version: ${{ inputs.java-version }}
-          cache: maven
-          cache-dependency-path: ${{ inputs.cache-path }}
-          server-id: github
-          server-username: GH_PACKAGES_READ_USER
-          server-password: GH_PACKAGES_READ_PAT
+          java-distribution: ${{ inputs.java-distribution }}
+          cache-path: ${{ inputs.cache-path }}
+          application-path: ${{ inputs.application-path }}
+          server-username: ${{ secrets.GH_PACKAGES_READ_USER }}
+          server-password: ${{ secrets.GH_PACKAGES_READ_PAT }}
 
-      - name: Run mvn ${{ inputs.maven-lifecycle }}
+      - name: Validate Maven lifecycle
         env:
-          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
-          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
           LIFECYCLE: ${{ inputs.maven-lifecycle }}
-          MAVEN_CLEAN: ${{ inputs.maven-clean }}
-          UPDATE_SNAPSHOTS: ${{ inputs.maven-update-snapshots }}
-          APP_PATH: ${{ inputs.application-path }}
         run: |
           case "$LIFECYCLE" in
             test|package|verify|install)
               ;;
             *)
-              echo "Invalid Maven lifecycle: $LIFECYCLE"
+              echo "::error::Invalid Maven lifecycle for PR check: $LIFECYCLE"
               exit 1
               ;;
           esac
 
-          # Build the Maven command dynamically
-          ARGS=("-B")
-
-          if [ "$MAVEN_CLEAN" == "true" ]; then
-            ARGS+=("clean")
-          fi
-
-          ARGS+=("$LIFECYCLE")
-
-          if [ "$UPDATE_SNAPSHOTS" == "true" ]; then
-            ARGS+=("--update-snapshots")
-          fi
-
-          # Point Maven at the library's own pom rather than the working
-          # directory, so a library in a monorepo subfolder builds its own
-          # reactor instead of the repository root. Defaults to './pom.xml'.
-          ARGS+=("--file" "${APP_PATH}pom.xml")
-
-          # Execute the Maven command
-          mvn "${ARGS[@]}"
+      - name: Run mvn ${{ inputs.maven-lifecycle }}
+        uses: felleslosninger/github-workflows/.github/actions/maven-run@main
+        with:
+          goals: ${{ inputs.maven-clean == true && 'clean ' || '' }}${{ inputs.maven-lifecycle }}
+          application-path: ${{ inputs.application-path }}
+          update-snapshots: ${{ inputs.maven-update-snapshots }}
 
       - name: Run Trivy vulnerability scanner (fs)
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
