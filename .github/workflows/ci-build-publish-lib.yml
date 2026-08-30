@@ -151,7 +151,7 @@ jobs:
           fetch-depth: ${{ inputs.fetch-depth }}
 
       - name: Setup Maven environment
-        uses: felleslosninger/github-workflows/.github/actions/setup-maven-env@main
+        uses: felleslosninger/github-workflows/.github/actions/setup-maven-env@PF-2306-add-maven-composite-actions
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -162,7 +162,7 @@ jobs:
           new-version: ${{ inputs.package-version }}
 
       - name: Maven install
-        uses: felleslosninger/github-workflows/.github/actions/maven-run@main
+        uses: felleslosninger/github-workflows/.github/actions/maven-run@PF-2306-add-maven-composite-actions
         with:
           goals: clean install
           application-path: ${{ inputs.application-path }}
@@ -189,7 +189,7 @@ jobs:
           library-offline-scan: true
 
       - name: Maven deploy
-        uses: felleslosninger/github-workflows/.github/actions/maven-run@main
+        uses: felleslosninger/github-workflows/.github/actions/maven-run@PF-2306-add-maven-composite-actions
         with:
           goals: deploy
           application-path: ${{ inputs.application-path }}

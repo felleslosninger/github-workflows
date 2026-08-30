@@ -140,7 +140,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin@v7.0.1
 
       - name: Setup Maven environment
-        uses: felleslosninger/github-workflows/.github/actions/setup-maven-env@main
+        uses: felleslosninger/github-workflows/.github/actions/setup-maven-env@PF-2306-add-maven-composite-actions
         with:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
@@ -163,7 +163,7 @@ jobs:
           esac
 
       - name: Build Spring Boot image
-        uses: felleslosninger/github-workflows/.github/actions/maven-run@main
+        uses: felleslosninger/github-workflows/.github/actions/maven-run@PF-2306-add-maven-composite-actions
         with:
           goals: ${{ inputs.maven-lifecycle }} spring-boot:build-image
           application-path: ${{ inputs.application-path }}
