@@ -1,6 +1,6 @@
 # Workflow Name: Build and publish Maven library to GitHub packages
 #
-# Owner: Digdir Platform team 
+# Owner: Digdir Platform team
 #
 # Purpose:
 #   This workflow performs a Maven build of a Java library and publishes the
@@ -150,57 +150,25 @@ jobs:
         with:
           fetch-depth: ${{ inputs.fetch-depth }}
 
-      - name: Set up JDK ${{ inputs.java-version }}
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # pin@v5.7.0
+      - name: Setup Maven environment
+        uses: felleslosninger/github-workflows/.github/actions/setup-maven-env@main
         with:
-          distribution: "${{ inputs.java-distribution }}"
           java-version: ${{ inputs.java-version }}
-          cache: maven
-          cache-dependency-path: ${{ inputs.cache-path }}
-          server-id: github
-          server-username: GH_PACKAGES_READ_USER
-          server-password: GH_PACKAGES_READ_PAT
-
-      - name: Set version
-        env:
-          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
-          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
-          PACKAGE_VERSION: ${{ inputs.package-version }}
-          APP_PATH: ${{ inputs.application-path }}
-        run: |
-          if [ -n "$PACKAGE_VERSION" ]; then
-            mvn versions:set -B --file "${APP_PATH}pom.xml" -DnewVersion="$PACKAGE_VERSION"
-            echo "- \`mvn versions:set\` was executed" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "- \`mvn versions:set\` was not executed" >> "$GITHUB_STEP_SUMMARY"
-          fi
+          java-distribution: ${{ inputs.java-distribution }}
+          cache-path: ${{ inputs.cache-path }}
+          application-path: ${{ inputs.application-path }}
+          server-username: ${{ secrets.GH_PACKAGES_READ_USER }}
+          server-password: ${{ secrets.GH_PACKAGES_READ_PAT }}
+          new-version: ${{ inputs.package-version }}
 
       - name: Maven install
-        env:
-          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
-          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
-          PROFILE: ${{ inputs.maven-profile }}
-          MODULE_NAME: ${{ inputs.module-name }}
-          APP_PATH: ${{ inputs.application-path }}
-        run: |
-          # Point Maven at the library's own pom rather than the working
-          # directory. This pom is the reactor root, so '-pl' below stays
-          # relative to it. Defaults to './pom.xml'.
-          MAVEN_ARGS=("-B" "clean" "install" "--update-snapshots" "--file" "${APP_PATH}pom.xml")
-
-          if [ -n "$MODULE_NAME" ]; then
-            # Multi-module: build only this module and its upstream reactor
-            # dependencies (in order). Runs from the reactor root so the
-            # reactor context is intact; a plain 'install' inside the module
-            # directory would not build the sibling modules it depends on.
-            MAVEN_ARGS+=("-pl" "$MODULE_NAME" "-am")
-          fi
-
-          if [ -n "$PROFILE" ]; then
-            MAVEN_ARGS+=("-P$PROFILE")
-          fi
-
-          mvn "${MAVEN_ARGS[@]}"
+        uses: felleslosninger/github-workflows/.github/actions/maven-run@main
+        with:
+          goals: clean install
+          application-path: ${{ inputs.application-path }}
+          module-name: ${{ inputs.module-name }}
+          maven-profile: ${{ inputs.maven-profile }}
+          update-snapshots: "true"
 
       - name: Run Trivy vulnerability scanner (fs)
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
@@ -220,41 +188,21 @@ jobs:
           # Cache is warmed by the preceding 'mvn clean install'
           library-offline-scan: true
 
-      - name: Overwrite m2 settings to publish libs
-        env:
-          PUBLISH_ACTOR: ${{ github.actor }}
-          PUBLISH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p ~/.m2
-          echo "<settings><servers><server><id>github</id><username>${PUBLISH_ACTOR}</username><password>${PUBLISH_TOKEN}</password></server></servers></settings>" > ~/.m2/settings.xml
-
       - name: Maven deploy
+        uses: felleslosninger/github-workflows/.github/actions/maven-run@main
+        with:
+          goals: deploy
+          application-path: ${{ inputs.application-path }}
+          module-name: ${{ inputs.module-name }}
+          build-dependencies: "false"
+          maven-profile: ${{ inputs.maven-profile }}
+          extra-args: >-
+            -DskipTests
+            ${{ inputs.deployment-repository != '' && format('-DaltDeploymentRepository=github::https://maven.pkg.github.com/{0}', inputs.deployment-repository) || '' }}
         env:
-          PROFILE: ${{ inputs.maven-profile }}
-          DEPLOYMENT_REPO: ${{ inputs.deployment-repository }}
-          MODULE_NAME: ${{ inputs.module-name }}
-          APP_PATH: ${{ inputs.application-path }}
-        run: |
-          MAVEN_ARGS=("-B" "deploy" "-DskipTests" "--file" "${APP_PATH}pom.xml")
-
-          if [ -n "$MODULE_NAME" ]; then
-            # Multi-module: deploy only the selected module, from the reactor
-            # root. No '-am' here on purpose — upstream reactor dependencies
-            # were already built into ~/.m2 by the 'Maven install' step and are
-            # published by their own workflow call, so we publish this module
-            # only.
-            MAVEN_ARGS+=("-pl" "$MODULE_NAME")
-          fi
-
-          if [ -n "$PROFILE" ]; then
-            MAVEN_ARGS+=("-P$PROFILE")
-          fi
-
-          if [ -n "$DEPLOYMENT_REPO" ]; then
-            MAVEN_ARGS+=("-DaltDeploymentRepository=github::https://maven.pkg.github.com/$DEPLOYMENT_REPO")
-          fi
-
-          mvn "${MAVEN_ARGS[@]}"
+          # Override username and password to allow publishing package
+          MAVEN_SERVER_USERNAME: ${{ github.actor }}
+          MAVEN_SERVER_PASSWORD: ${{ github.token }}
 
       # This is a temporary step specifically for handling multi-module
       # repositories with Trivy SBOM generation for Maven artifacts. We strip
