@@ -4,18 +4,22 @@ author: Digdir Platform Team
 
 inputs:
   goals:
-    description: "The Maven lifecycle phases or plugins to execute (e.g., 'clean install', 'deploy', 'spring-boot:build-image')"
+    description: "The Maven lifecycle phases or plugins to execute (e.g., 'clean install', 'deploy')"
     required: true
   application-path:
+    description: "Path to the reactor root pom.xml"
     default: "./"
   module-name:
+    description: "Specific module directory to build (-pl <module>)"
     default: ""
   build-dependencies:
     description: "Whether to build upstream reactor dependencies (-am). Defaults to true if module is specified."
     default: "true"
   maven-profile:
+    description: "Specific profile to activate (-P)"
     default: ""
   update-snapshots:
+    description: "Force update of SNAPSHOT dependencies (-U)"
     default: "false"
   extra-args:
     description: "Additional arguments (e.g., -DskipTests=true)"
@@ -39,7 +43,7 @@ runs:
 
         ARGS=("-B" "--file" "${APP_PATH}pom.xml")
 
-        # Read goals into array
+        # Read space-separated goals into an array
         read -r -a GOAL_ARRAY <<< "$GOALS"
         ARGS+=("${GOAL_ARRAY[@]}")
 
@@ -58,5 +62,7 @@ runs:
           ARGS+=("-P$PROFILE")
         fi
 
-        echo "Executing: mvn ${ARGS[@]} $EXTRA"
-        eval mvn "${ARGS[@]}" $EXTRA
+        # printf %q safely quotes the array elements, leaving EXTRA free to expand
+        cmd_base=$(printf '%q ' "${ARGS[@]}")
+        echo "Executing: mvn $cmd_base $EXTRA"
+        eval "mvn $cmd_base $EXTRA"
