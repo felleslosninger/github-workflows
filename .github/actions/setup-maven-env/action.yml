@@ -1,28 +1,28 @@
 name: Setup Maven Environment
-description: Configures JDK, dependency caching, GH Packages read auth, versioning, and optionally publish auth.
+description: Configures JDK, dependency caching, GH Packages auth, and sets project version.
 author: Digdir Platform Team
 
 inputs:
   java-version:
+    description: Java version to set up
     default: "25"
   java-distribution:
+    description: Java distribution
     default: "liberica"
   cache-path:
+    description: Path to pom.xml for cache invalidation
     default: "**/pom.xml"
   application-path:
+    description: Path to the application root
     default: "./"
-  read-user:
+  server-username:
+    description: "Username for the Maven server (defaults to GitHub Packages read access)"
     required: true
-  read-pat:
+  server-password:
+    description: "Password/PAT for the Maven server"
     required: true
   new-version:
     description: "If provided, runs mvn versions:set to update the pom.xml version"
-    default: ""
-  publish-actor:
-    description: "If provided along with publish-token, overwrites settings.xml for deploy"
-    default: ""
-  publish-token:
-    description: "Token for publishing artifacts"
     default: ""
 
 runs:
@@ -36,11 +36,14 @@ runs:
         cache: maven
         cache-dependency-path: ${{ inputs.cache-path }}
         server-id: github
-        server-username: GH_PACKAGES_READ_USER
-        server-password: GH_PACKAGES_READ_PAT
-      env:
-        GH_PACKAGES_READ_USER: ${{ inputs.read-user }}
-        GH_PACKAGES_READ_PAT: ${{ inputs.read-pat }}
+        server-username: MAVEN_SERVER_USERNAME
+        server-password: MAVEN_SERVER_PASSWORD
+
+    - name: Set default Maven credentials
+      shell: bash
+      run: |
+        echo "MAVEN_SERVER_USERNAME=${{ inputs.server-username }}" >> "$GITHUB_ENV"
+        echo "MAVEN_SERVER_PASSWORD=${{ inputs.server-password }}" >> "$GITHUB_ENV"
 
     - name: Update Maven version
       if: inputs.new-version != ''
@@ -49,18 +52,6 @@ runs:
         APP_PATH: ${{ inputs.application-path }}
         NEW_VERSION: ${{ inputs.new-version }}
       run: |
-        echo "### Maven versions" >> "$GITHUB_STEP_SUMMARY"
+        echo "### Maven version update" >> "$GITHUB_STEP_SUMMARY"
         mvn versions:set -B --file "${APP_PATH}pom.xml" -DnewVersion="$NEW_VERSION"
-        echo "- \`mvn versions\` was executed (Set to $NEW_VERSION)" >> "$GITHUB_STEP_SUMMARY"
-
-    - name: Overwrite m2 settings for publishing
-      if: inputs.publish-actor != '' && inputs.publish-token != ''
-      shell: bash
-      env:
-        PUBLISH_ACTOR: ${{ inputs.publish-actor }}
-        PUBLISH_TOKEN: ${{ inputs.publish-token }}
-      run: |
-        mkdir -p ~/.m2
-        echo
-        "<settings><servers><server><id>github</id><username>${PUBLISH_ACTOR}</username><password>${PUBLISH_TOKEN}</password></server></servers></settings>"
-        > ~/.m2/settings.xml
+        echo "- Set version to \`$NEW_VERSION\`" >> "$GITHUB_STEP_SUMMARY"
