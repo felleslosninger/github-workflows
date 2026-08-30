@@ -4,16 +4,16 @@ author: Digdir Platform Team
 
 inputs:
   java-version:
-    description: Java version to set up
+    description: "Java version to set up"
     default: "25"
   java-distribution:
-    description: Java distribution
+    description: "Java distribution to use"
     default: "liberica"
   cache-path:
-    description: Path to pom.xml for cache invalidation
+    description: "Path to pom.xml for cache invalidation"
     default: "**/pom.xml"
   application-path:
-    description: Path to the application root
+    description: "Path to the application root"
     default: "./"
   server-username:
     description: "Username for the Maven server (defaults to GitHub Packages read access)"
@@ -41,9 +41,12 @@ runs:
 
     - name: Set default Maven credentials
       shell: bash
+      env:
+        SERVER_USERNAME: ${{ inputs.server-username }}
+        SERVER_PASSWORD: ${{ inputs.server-password }}
       run: |
-        echo "MAVEN_SERVER_USERNAME=${{ inputs.server-username }}" >> "$GITHUB_ENV"
-        echo "MAVEN_SERVER_PASSWORD=${{ inputs.server-password }}" >> "$GITHUB_ENV"
+        echo "MAVEN_SERVER_USERNAME=$SERVER_USERNAME" >> "$GITHUB_ENV"
+        echo "MAVEN_SERVER_PASSWORD=$SERVER_PASSWORD" >> "$GITHUB_ENV"
 
     - name: Update Maven version
       if: inputs.new-version != ''
