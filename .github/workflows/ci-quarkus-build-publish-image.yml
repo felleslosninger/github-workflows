@@ -289,7 +289,7 @@ jobs:
           trivy-version: ${{ inputs.trivy-version }}
 
       - name: Container Registry login
-        uses: felleslosninger/github-workflows/.github/actions/cr-login@PF-2574-add-multi-cr-login-composite-action
+        uses: felleslosninger/github-workflows/.github/actions/cr-login@main
         with:
           registry: ${{ inputs.container-registry }}
           client-id: ${{ secrets[inputs.sp-container-registry-client-id] }}
