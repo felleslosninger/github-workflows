@@ -31,6 +31,7 @@ runs:
       uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
       with:
         json-payload: ${{ toJson(inputs) }}
+        title: "Validate PR title inputs"
 
     - name: Validate Pull Request Title
       shell: bash

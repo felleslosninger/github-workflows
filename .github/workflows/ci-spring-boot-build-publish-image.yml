@@ -171,6 +171,7 @@ jobs:
         uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
         with:
           json-payload: ${{ toJson(inputs) }}
+          title: "Spring Boot build/publish inputs"
 
   build-publish-image:
     runs-on: ubuntu-latest
@@ -215,6 +216,7 @@ jobs:
           IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
           APP_PATH: ${{ inputs.application-path }}
         run: |
+          echo "### Maven versions" >> "$GITHUB_STEP_SUMMARY"
           if [ "$UPDATE_VERSIONS" == "true" ]; then
             mvn versions:set -B --file "${APP_PATH}pom.xml" -DnewVersion="$IMAGE_TAG"
             echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"

@@ -1,6 +1,6 @@
 # Workflow Name: Build and publish Maven library to GitHub packages
 #
-# Owner: Digdir Platform team 
+# Owner: Digdir Platform team
 #
 # Purpose:
 #   This workflow performs a Maven build of a Java library and publishes the
@@ -139,6 +139,7 @@ jobs:
         uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
         with:
           json-payload: ${{ toJson(inputs) }}
+          title: "Build/publish lib inputs"
 
   build-publish-package:
     runs-on: ubuntu-latest
@@ -168,11 +169,12 @@ jobs:
           PACKAGE_VERSION: ${{ inputs.package-version }}
           APP_PATH: ${{ inputs.application-path }}
         run: |
+          echo "### Maven versions" >> "$GITHUB_STEP_SUMMARY"
           if [ -n "$PACKAGE_VERSION" ]; then
             mvn versions:set -B --file "${APP_PATH}pom.xml" -DnewVersion="$PACKAGE_VERSION"
-            echo "- \`mvn versions:set\` was executed" >> "$GITHUB_STEP_SUMMARY"
+            echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "- \`mvn versions:set\` was not executed" >> "$GITHUB_STEP_SUMMARY"
+            echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Maven install

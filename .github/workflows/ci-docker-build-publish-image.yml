@@ -148,6 +148,7 @@ jobs:
         uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
         with:
           json-payload: ${{ toJson(inputs) }}
+          title: "Docker build/publish inputs"
 
   build-publish-image:
     runs-on: ubuntu-latest
