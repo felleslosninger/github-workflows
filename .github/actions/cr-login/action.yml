@@ -1,0 +1,74 @@
+name: Container Registry login
+description: Logs into a Container Registry (ACR or GHCR) based on the registry name
+author: Digdir Platform Team
+
+inputs:
+  registry:
+    description: "The container registry to log into (e.g., ghcr.io, creiddev, creiddev.azurecr.io)"
+    required: true
+  client-id:
+    description: "Azure Client ID (Required for ACR)"
+    required: false
+  tenant-id:
+    description: "Azure Tenant ID (Required for ACR)"
+    required: false
+  subscription-id:
+    description: "Azure Subscription ID (Required for ACR)"
+    required: false
+  github-token:
+    description: "GitHub Token (Required for GHCR, defaults to github.token)"
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - name: Login to GitHub Container Registry
+      id: ghcr-login
+      if: contains(inputs.registry, 'ghcr.io')
+      uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # pin@v4.6.0
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ inputs.github-token }}
+
+    - name: Login to Azure
+      id: azure-login
+      if: "!contains(inputs.registry, 'ghcr.io')"
+      uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # pin@v3.0.0
+      env:
+        AZURE_CLIENT_ID: ${{ inputs.client-id }}
+        AZURE_TENANT_ID: ${{ inputs.tenant-id}}
+        AZURE_SUBSCRIPTION_ID: ${{ inputs.subscription-id }}
+      with:
+        client-id: ${{ env.AZURE_CLIENT_ID }}
+        tenant-id: ${{ env.AZURE_TENANT_ID }}
+        subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Login to Azure Container Registry
+      id: acr-login
+      if: "!contains(inputs.registry, 'ghcr.io')"
+      shell: bash
+      env:
+        ACR_NAME: ${{ inputs.registry }}
+      run: az acr login --name "$ACR_NAME"
+
+    - name: Write step summary
+      if: always()
+      shell: bash
+      env:
+        REGISTRY: ${{ inputs.registry }}
+      run: |
+        {
+          echo "### Container Registry login"
+
+          echo "#### Result"
+          echo "| Key | Value |"
+          echo "| --- | ----- |"
+          if [ "${{ steps.acr_login.outcome }}" = "success" ] || [ "${{ steps.ghcr_login.outcome }}" = "success" ]; then
+            echo "| login-success | true |"
+          else
+            echo "| login-success | false |"
+          fi
+          echo "| registry | ${REGISTRY} |"
+        } >> "$GITHUB_STEP_SUMMARY"
