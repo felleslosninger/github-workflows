@@ -65,7 +65,7 @@ runs:
           echo "#### Result"
           echo "| Key | Value |"
           echo "| --- | ----- |"
-          if [ "${{ steps.acr_login.outcome }}" = "success" ] || [ "${{ steps.ghcr_login.outcome }}" = "success" ]; then
+          if [ "${{ steps.acr-login.outcome }}" = "success" ] || [ "${{ steps.ghcr-login.outcome }}" = "success" ]; then
             echo "| login-success | true |"
           else
             echo "| login-success | false |"
