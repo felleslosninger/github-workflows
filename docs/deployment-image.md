@@ -272,6 +272,7 @@ These are applicable to Spring Boot and Quarkus application types.
 | Override | Type | Workflow default |
 | -------- | ---- | ---------------- |
 | `add-git-package-token` | `boolean` | `false` |
+| `docker-build-context` | `string` | `.` |
 | `sh-scan-install-method` | `string` | `npm` |
 | `sh-scan` | `boolean` | `true` |
 
@@ -283,6 +284,10 @@ These are applicable to Spring Boot and Quarkus application types.
 <!-- -->
 
 > [!NOTE]
+> `docker-build-context` sets the directory `docker build` uses to resolve
+> `COPY`/`ADD` paths — separate from `application-path`, which only sets where
+> the Dockerfile itself is. Override it if your Dockerfile copies files from
+> outside the repository root.
 > If you are building a node project with a different package manager than npm,
 > ex. `yarn`, you have to set `sh-scan-install-method` to `yarn`. It is also
 > possible to skip the sh-scan-step by setting `sh-scan` to `false`.

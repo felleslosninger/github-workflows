@@ -12,6 +12,9 @@ duplication, and to reduce maintenance for the Platform team
 
 - [acr-login](./.github/actions/acr-login/): This composite action is designed
   to login to Azure Container Registry via federated credentials
+- [docker-push-image](./.github/actions/docker-push-image/): This composite
+  action is designed to push a Docker image to a container registry and extract
+  its digest
 - [image-metadata](./.github/actions/image-metadata): This composite action
   generates Docker image metadata for workflows that need a consistent image
   name and tag
