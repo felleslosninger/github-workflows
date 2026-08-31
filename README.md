@@ -20,6 +20,11 @@ duplication, and to reduce maintenance for the Platform team
   Fulcio CA and Rekor transparency log
 - [json-to-summary](./.github/actions/json-to-summary): This composite action is
   designed to write JSON content to the step summary
+- [maven-run](./.github/actions/maven-run): This composite action is designed to
+  run Maven commands
+- [setup-maven-env](./.github/actions/setup-maven-env): This composite action is
+  designed to set up the Maven environment (JDK, credentials, caching and
+  version handling)
 - [sh-scan](./.github/actions/sh-scan): This composite action is designed to
   scan for indicators of compromise (IOCs) related to Shai-Hulud supply chain
   attacks in NPM
