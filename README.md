@@ -10,8 +10,11 @@ common CI/CD tasks. Workflows are organized by purpose and application type.
 We have a set of composite actions that contain reusable steps to avoid
 duplication, and to reduce maintenance for the Platform team
 
-- [acr-login](./.github/actions/acr-login/): This composite action is designed
-  to login to Azure Container Registry via federated credentials
+- DEPRECATED: [acr-login](./.github/actions/acr-login/): This composite action
+  is designed to login to Azure Container Registry via federated credentials
+- [cr-login](./.github/actions/cr-login/): This composite action is designed
+  to login to Azure Container Registry via federated credentials, or GitHub
+  Container Registry via GitHub token
 - [docker-push-image](./.github/actions/docker-push-image/): This composite
   action is designed to push a Docker image to a container registry and extract
   its digest

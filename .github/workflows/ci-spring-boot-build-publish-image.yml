@@ -271,23 +271,13 @@ jobs:
           os-severity: ${{ inputs.trivy-os-severity }}
           trivy-version: ${{ inputs.trivy-version }}
 
-      # Login to GHCR if container-registry starts with ghcr.io
-      - name: Login to GitHub Container Registry
-        if: contains(inputs.container-registry, 'ghcr.io')
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # pin@v4.6.0
+      - name: Container Registry login
+        uses: felleslosninger/github-workflows/.github/actions/cr-login@main
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: ACR login
-        if: contains(inputs.container-registry, 'azurecr.io')
-        uses: felleslosninger/github-workflows/.github/actions/acr-login@main
-        with:
+          registry: ${{ inputs.container-registry }}
           client-id: ${{ secrets[inputs.sp-container-registry-client-id] }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          acr-name: ${{ inputs.container-registry }}
 
       - name: Push image
         id: push-image

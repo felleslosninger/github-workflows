@@ -288,13 +288,13 @@ jobs:
           os-severity: ${{ inputs.trivy-os-severity }}
           trivy-version: ${{ inputs.trivy-version }}
 
-      - name: ACR login
-        uses: felleslosninger/github-workflows/.github/actions/acr-login@main
+      - name: Container Registry login
+        uses: felleslosninger/github-workflows/.github/actions/cr-login@main
         with:
+          registry: ${{ inputs.container-registry }}
           client-id: ${{ secrets[inputs.sp-container-registry-client-id] }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          acr-name: ${{ inputs.container-registry }}
 
       - name: Push image
         id: push-image

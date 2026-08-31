@@ -2,9 +2,14 @@
 
 Author: **Digdir Platform Team**
 
+> [!IMPORTANT]
+> This action is deprecated and replaced by [cr-login](../cr-login/README.md) to
+> support multiple container registries.
+
 ## Description
 
-This GitHub Action is designed to login to Azure Container Registry via federated credentials
+This GitHub Action is designed to login to Azure Container Registry via
+federated credentials
 
 ## Prerequisites
 
@@ -61,5 +66,3 @@ This action performs two main steps using a composite action defined in
   against the registry name provided by the `acr-name` input (defaults to
   `creiddev`). This ensures subsequent steps in the job can push and pull
   container images from the registry.
-
-
