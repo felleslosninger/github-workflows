@@ -1,0 +1,60 @@
+name: Setup Maven Environment
+description: Configures JDK, dependency caching, GH Packages auth, and sets project version.
+author: Digdir Platform Team
+
+inputs:
+  java-version:
+    description: "Java version to set up"
+    default: "25"
+  java-distribution:
+    description: "Java distribution to use"
+    default: "liberica"
+  cache-path:
+    description: "Path to pom.xml for cache invalidation"
+    default: "**/pom.xml"
+  application-path:
+    description: "Path to the application root"
+    default: "./"
+  server-username:
+    description: "Username for the Maven server (defaults to GitHub Packages read access)"
+    required: true
+  server-password:
+    description: "Password/PAT for the Maven server"
+    required: true
+  new-version:
+    description: "If provided, runs mvn versions:set to update the pom.xml version"
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Set up JDK ${{ inputs.java-version }}
+      uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # pin@v5.7.0
+      with:
+        distribution: ${{ inputs.java-distribution }}
+        java-version: ${{ inputs.java-version }}
+        cache: maven
+        cache-dependency-path: ${{ inputs.cache-path }}
+        server-id: github
+        server-username: MAVEN_SERVER_USERNAME
+        server-password: MAVEN_SERVER_PASSWORD
+
+    - name: Set default Maven credentials
+      shell: bash
+      env:
+        SERVER_USERNAME: ${{ inputs.server-username }}
+        SERVER_PASSWORD: ${{ inputs.server-password }}
+      run: |
+        echo "MAVEN_SERVER_USERNAME=$SERVER_USERNAME" >> "$GITHUB_ENV"
+        echo "MAVEN_SERVER_PASSWORD=$SERVER_PASSWORD" >> "$GITHUB_ENV"
+
+    - name: Update Maven version
+      if: inputs.new-version != ''
+      shell: bash
+      env:
+        APP_PATH: ${{ inputs.application-path }}
+        NEW_VERSION: ${{ inputs.new-version }}
+      run: |
+        echo "### Maven version update" >> "$GITHUB_STEP_SUMMARY"
+        mvn versions:set -B --file "${APP_PATH}pom.xml" -DnewVersion="$NEW_VERSION"
+        echo "- Set version to \`$NEW_VERSION\`" >> "$GITHUB_STEP_SUMMARY"

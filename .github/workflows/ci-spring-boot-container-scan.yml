@@ -139,70 +139,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin@v7.0.1
 
-      - name: Set up JDK ${{ inputs.java-version }}
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # pin@v5.7.0
+      - name: Setup Maven environment
+        uses: felleslosninger/github-workflows/.github/actions/setup-maven-env@PF-2306-add-maven-composite-actions
         with:
-          distribution: "${{ inputs.java-distribution }}"
           java-version: ${{ inputs.java-version }}
-          cache: maven
-          cache-dependency-path: ${{ inputs.cache-path }}
-          server-id: github
-          server-username: GH_PACKAGES_READ_USER
-          server-password: GH_PACKAGES_READ_PAT
+          java-distribution: ${{ inputs.java-distribution }}
+          cache-path: ${{ inputs.cache-path }}
+          application-path: ${{ inputs.application-path }}
+          server-username: ${{ secrets.GH_PACKAGES_READ_USER }}
+          server-password: ${{ secrets.GH_PACKAGES_READ_PAT }}
 
-      - name: Build image with Maven (module-name)
-        if: inputs.module-name != ''
+      - name: Validate Maven lifecycle
         env:
-          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
-          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
           LIFECYCLE: ${{ inputs.maven-lifecycle }}
-          SKIP_TESTS: ${{ inputs.maven-skip-tests }}
-          MODULE_NAME: ${{ inputs.module-name }}
-          IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
-          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
-          IMAGE_PACK: ${{ inputs.image-pack }}
-          IMAGE_PACK_TAG: ${{ inputs.image-pack-tag }}
         run: |
           case "$LIFECYCLE" in
             test|package|verify|install)
               ;;
             *)
-              echo "Invalid Maven lifecycle: $LIFECYCLE"
+              echo "::error::Invalid Maven lifecycle: $LIFECYCLE"
               exit 1
               ;;
           esac
 
-          mvn "$LIFECYCLE" -DskipTests="$SKIP_TESTS" -B spring-boot:build-image \
-            -pl "$MODULE_NAME" -am \
-            -Dspring-boot.build-image.imageName="$IMAGE_NAME:$IMAGE_TAG" \
-            -Dspring-boot.build-image.builder="paketobuildpacks/$IMAGE_PACK:$IMAGE_PACK_TAG"
-
-      - name: Build image with Maven (application-path)
-        if: inputs.module-name == ''
-        env:
-          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
-          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
-          LIFECYCLE: ${{ inputs.maven-lifecycle }}
-          SKIP_TESTS: ${{ inputs.maven-skip-tests }}
-          APP_PATH: ${{ inputs.application-path }}
-          IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
-          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
-          IMAGE_PACK: ${{ inputs.image-pack }}
-          IMAGE_PACK_TAG: ${{ inputs.image-pack-tag }}
-        run: |
-          case "$LIFECYCLE" in
-            test|package|verify|install)
-              ;;
-            *)
-              echo "Invalid Maven lifecycle: $LIFECYCLE"
-              exit 1
-              ;;
-          esac
-
-          mvn "$LIFECYCLE" -DskipTests="$SKIP_TESTS" -B spring-boot:build-image \
-            --file "${APP_PATH}pom.xml" \
-            -Dspring-boot.build-image.imageName="$IMAGE_NAME:$IMAGE_TAG" \
-            -Dspring-boot.build-image.builder="paketobuildpacks/$IMAGE_PACK:$IMAGE_PACK_TAG"
+      - name: Build Spring Boot image
+        uses: felleslosninger/github-workflows/.github/actions/maven-run@PF-2306-add-maven-composite-actions
+        with:
+          goals: ${{ inputs.maven-lifecycle }} spring-boot:build-image
+          application-path: ${{ inputs.application-path }}
+          module-name: ${{ inputs.module-name }}
+          extra-args: >-
+            -DskipTests=${{ inputs.maven-skip-tests }}
+            -Dspring-boot.build-image.imageName="${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}"
+            -Dspring-boot.build-image.builder="paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }}"
 
       - name: Run Trivy vulnerability scanner (image)
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
