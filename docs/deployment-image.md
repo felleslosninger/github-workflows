@@ -538,7 +538,8 @@ that do *not* share a root `pom.xml` or internal dependencies.
 For monorepos, you should create a separate workflow file for each application
 and use the `paths` trigger. This ensures that changes to `Application A` do not
 unnecessarily trigger the build, Trivy scans, and consume GitHub Actions minutes
-for `Application B`.
+for `Application B`. Pass the same `application-path` to both reusable
+workflows so the CD repository receives the application location.
 
 **`.github/workflows/deploy-backend-service.yml`**
 
@@ -572,6 +573,7 @@ jobs:
     needs: build-image
     with:
       application-name: backend-service
+      application-path: "apps/backend-service/"
       product-name: my-product
       image-name: backend-service
       image-version: ${{ needs.build-image.outputs.image-version }}
@@ -613,6 +615,7 @@ jobs:
     needs: build-image
     with:
       application-name: auth-service
+      application-path: "apps/auth-service/"
       product-name: my-product
       image-name: auth-service
       image-version: ${{ needs.build-image.outputs.image-version }}
