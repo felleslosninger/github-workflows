@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Run actionlint"
-        uses: felleslosninger/github-actions/run-actionlint@d7888fecafbf48e5845c8a0c76389f71c517ee6d # pin@v0.8.0
+        uses: felleslosninger/github-actions/run-actionlint@4b6714ff1112cfcb6d2257f3425f5999047b616e # pin@v0.9.0
 
   markdownlint:
     name: Markdownlint
