@@ -243,7 +243,6 @@ These are applicable to Spring Boot and Quarkus application types.
 > `verify` for `@QuarkusIntegrationTest`), because `package` and `install` also
 > run a Quarkus build that the image build does not reuse.
 >
-> [!NOTE]
 > Setting `native` to `true` compiles a GraalVM native image using Paketo
 > buildpacks. Be aware that native compilation is highly resource-intensive and
 > will significantly increase the duration of your PR validation checks.
