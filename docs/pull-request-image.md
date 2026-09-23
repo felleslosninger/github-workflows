@@ -230,8 +230,19 @@ These are applicable to Spring Boot and Quarkus application types.
 
 | Override | Type | Workflow default |
 | -------- | ---- | ---------------- |
+| `maven-lifecycle` | `string` | `install` |
+| `maven-skip-tests` | `boolean` | `true` |
 | `native` | `boolean` | `false` |
 
+> [!NOTE]
+> **Running tests:** Set `maven-skip-tests` to `false` to run your tests on PRs.
+> Unlike Spring Boot, the Quarkus image is built from source inside the Paketo
+> buildpack container, which always skips tests. The tests therefore run as a
+> separate `mvn <maven-lifecycle>` step on the runner before the image build,
+> and the application is compiled twice. Use `maven-lifecycle: test` (or
+> `verify` for `@QuarkusIntegrationTest`), because `package` and `install` also
+> run a Quarkus build that the image build does not reuse.
+>
 > [!NOTE]
 > Setting `native` to `true` compiles a GraalVM native image using Paketo
 > buildpacks. Be aware that native compilation is highly resource-intensive and

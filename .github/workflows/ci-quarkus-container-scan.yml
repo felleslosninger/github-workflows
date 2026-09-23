@@ -17,9 +17,11 @@
 #     1. Set image metadata (name and tag)
 #     2. Checkout repository
 #     3. Set up JDK
-#     4. Build Quarkus image using Paketo buildpacks. The image will either be a
+#     4. Run tests with the mvn lifecycle chosen in inputs (only when
+#        'maven-skip-tests' is false)
+#     5. Build Quarkus image using Paketo buildpacks. The image will either be a
 #        JVM or GraalVM native image based on the 'native' input parameter
-#     5. Run Trivy vulnerability scan on the built image
+#     6. Run Trivy vulnerability scan on the built image
 #
 # Trigger:
 #   Triggered by workflow calls (workflow_call)
@@ -72,6 +74,16 @@ on:
         required: false
         type: boolean
         default: false
+      maven-lifecycle:
+        description: Maven lifecycle phase (test, package, verify, install) for the test step
+        type: string
+        required: false
+        default: "test"
+      maven-skip-tests:
+        description: Skip the test step. Defaults to true, as ci-pr-checks.yml runs tests in its own job before calling this workflow
+        type: boolean
+        required: false
+        default: true
       application-path:
         description: Path to the application directory, relative to the repository root. Used as the buildpack build context and to locate a module-local .trivyignore
         default: "./"
@@ -139,6 +151,26 @@ jobs:
           server-id: github
           server-username: GH_PACKAGES_READ_USER
           server-password: GH_PACKAGES_READ_PAT
+
+      # pack build skips tests, so we run them here
+      - name: Run mvn ${{ inputs.maven-lifecycle }}
+        if: inputs.maven-skip-tests == false
+        env:
+          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
+          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
+          LIFECYCLE: ${{ inputs.maven-lifecycle }}
+          APP_PATH: ${{ inputs.application-path }}
+        run: |
+          case "$LIFECYCLE" in
+            test|package|verify|install)
+              ;;
+            *)
+              echo "Invalid Maven lifecycle: $LIFECYCLE"
+              exit 1
+              ;;
+          esac
+
+          mvn "$LIFECYCLE" -B --file "${APP_PATH}pom.xml"
 
       - name: Install pack
         env:
