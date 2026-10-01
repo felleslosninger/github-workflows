@@ -10,7 +10,7 @@ common CI/CD tasks. Workflows are organized by purpose and application type.
 We have a set of composite actions that contain reusable steps to avoid
 duplication, and to reduce maintenance for the Platform team
 
-- DEPRECATED: [acr-login](./.github/actions/acr-login/): This composite action
+- ARCHIVED: [acr-login](./.github/actions/archived-actions/acr-login/): This composite action
   is designed to login to Azure Container Registry via federated credentials
 - [cr-login](./.github/actions/cr-login/): This composite action is designed
   to login to Azure Container Registry via federated credentials, or GitHub
@@ -137,55 +137,35 @@ Workflows for building and publishing Maven libraries after commits to main
 - [Deployment (dev image)](./docs/deployment-dev-image.md)
 - [On PR label](./docs/on-pr-label.md)
 
-## Deprecated Workflows
+## Archived workflows
 
-### PR Checks (deprecated)
+The deprecated workflows were moved to
+[.github/workflows/archived-workflows/](.github/workflows/archived-workflows/)
+on 1 October 2026. They are not maintained or supported by the Platform team,
+and contain known vulnerabilities.
 
-The following PR checks workflow is deprecated
+GitHub does not resolve reusable workflows in subdirectories of
+`.github/workflows`, so the archived files can no longer be called.
+Callers must migrate to the golden path workflows:
 
-- [ci-pr-checks.yml](.github/workflows/ci-pr-checks.yml)
+| Archived | Migrate to |
+| -------- | ---------- |
+| `ci-pr-checks.yml` | [ci-pr-checks-lib.yml](.github/workflows/ci-pr-checks-lib.yml) (Maven libraries) and/or [ci-pr-checks-image.yml](.github/workflows/ci-pr-checks-image.yml) (containerized applications) |
+| `ci-maven-build.yml`, `ci-maven-build-lib.yml` | [ci-pr-checks-lib.yml](.github/workflows/ci-pr-checks-lib.yml) |
+| `ci-maven-deploy.yml`, `ci-maven-install-deploy-lib.yml` | [ci-build-publish-lib.yml](.github/workflows/ci-build-publish-lib.yml) |
 
-Migrate all PR checks workflows to the new application type-specific workflows
+`test-k6-build-docker.yml` and `test-k6-build-publish-docker.yml` were deleted.
 
-- [ci-pr-checks-lib.yml](.github/workflows/ci-pr-checks-lib.yml) (Maven
-  libraries)
-- [ci-pr-checks-image.yml](.github/workflows/ci-pr-checks-image.yml)
-  (containerized applications)
-
-### Maven workflows (deprecated)
-
-The following Maven PR workflows are deprecated
-
-- [ci-maven-build.yml](.github/workflows/ci-maven-build.yml)
-- [ci-maven-build-lib.yml](.github/workflows/ci-maven-build-lib.yml)
-
-Migrate all library PR checks workflows to the new
-[ci-pr-checks-lib.yml](.github/workflows/ci-pr-checks-lib.yml) workflow.
-
-The following Maven library release workflows are deprecated
-
-- [ci-maven-deploy.yml](.github/workflows/ci-maven-deploy.yml)
-- [ci-maven-install-deploy-lib.yml](.github/workflows/ci-maven-install-deploy-lib.yml)
-
-Migrate all Maven library release workflows to the new
-[ci-build-publish-lib.yml](.github/workflows/ci-build-publish-lib.yml) workflow.
-
-### Custom workflows (deprecated)
-
-The following custom workflows are deprecated
+## Deprecated custom workflows
 
 - [ci-docker-build-publish-integrasjonspunkt.yml](.github/workflows/ci-docker-build-publish-integrasjonspunkt.yml)
-- [ci-docker-build-scan-integrasjonspunkt](.github/workflows/ci-docker-build-scan-integrasjonspunkt)
-- [test-k6-build-docker.yml](.github/workflows/test-k6-build-docker.yml)
-- [test-k6-build-publish-docker.yml](.github/workflows/test-k6-build-publish-docker.yml)
+- [ci-docker-build-scan-integrasjonspunkt.yml](.github/workflows/ci-docker-build-scan-integrasjonspunkt.yml)
 
-These are not maintained by the Platform team, but might still be updated as we
-deprecate things or clean up. Application repositories using these workflows
-should migrate to the `docker` type
-[ci-build-publish-image.yml](.github/workflows/ci-build-publish-image.yml)
-workflow. If these are not migrated to the golden path workflows they must be
-moved out of this repo and into a repo that is supported by the relevant product
-team.
+Still used by an older integrasjonspunkt version, so they stay in
+`.github/workflows` until eFormidling has moved its customers off it. They are
+not maintained or supported by the Platform team. New callers should use the
+`docker` type
+[ci-build-publish-image.yml](.github/workflows/ci-build-publish-image.yml).
 
 ## Development guidelines
 

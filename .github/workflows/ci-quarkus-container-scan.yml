@@ -80,7 +80,7 @@ on:
         required: false
         default: "test"
       maven-skip-tests:
-        description: Skip the test step. Defaults to true, as ci-pr-checks.yml runs tests in its own job before calling this workflow
+        description: Skip the test step. Defaults to true; set to false via ci-pr-checks-image.yml to run unit tests, as the buildpack builds with -DskipTests
         type: boolean
         required: false
         default: true
