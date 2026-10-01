@@ -153,9 +153,19 @@ Callers must migrate to the golden path workflows:
 | `ci-pr-checks.yml` | [ci-pr-checks-lib.yml](.github/workflows/ci-pr-checks-lib.yml) (Maven libraries) and/or [ci-pr-checks-image.yml](.github/workflows/ci-pr-checks-image.yml) (containerized applications) |
 | `ci-maven-build.yml`, `ci-maven-build-lib.yml` | [ci-pr-checks-lib.yml](.github/workflows/ci-pr-checks-lib.yml) |
 | `ci-maven-deploy.yml`, `ci-maven-install-deploy-lib.yml` | [ci-build-publish-lib.yml](.github/workflows/ci-build-publish-lib.yml) |
-| `ci-docker-build-publish-integrasjonspunkt.yml`, `ci-docker-build-scan-integrasjonspunkt.yml` | [ci-build-publish-image.yml](.github/workflows/ci-build-publish-image.yml) (`docker` type) |
 
 `test-k6-build-docker.yml` and `test-k6-build-publish-docker.yml` were deleted.
+
+## Deprecated custom workflows
+
+- [ci-docker-build-publish-integrasjonspunkt.yml](.github/workflows/ci-docker-build-publish-integrasjonspunkt.yml)
+- [ci-docker-build-scan-integrasjonspunkt.yml](.github/workflows/ci-docker-build-scan-integrasjonspunkt.yml)
+
+Still used by an older integrasjonspunkt version, so they stay in
+`.github/workflows` until eFormidling has moved its customers off it. They are
+not maintained or supported by the Platform team. New callers should use the
+`docker` type
+[ci-build-publish-image.yml](.github/workflows/ci-build-publish-image.yml).
 
 ## Development guidelines
 
