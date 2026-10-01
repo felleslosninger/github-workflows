@@ -28,10 +28,10 @@
 # Both teams are listed so that a review from either team can approve changes
 # to these paths.
 /.github/actions/validate-pr-title/                  @felleslosninger/plattform @felleslosninger/pipeline-owners
-/.github/workflows/ci-maven-build.yml                @felleslosninger/plattform @felleslosninger/pipeline-owners
-/.github/workflows/ci-maven-build-lib.yml            @felleslosninger/plattform @felleslosninger/pipeline-owners
-/.github/workflows/ci-maven-deploy.yml               @felleslosninger/plattform @felleslosninger/pipeline-owners
-/.github/workflows/ci-maven-install-deploy-lib.yml   @felleslosninger/plattform @felleslosninger/pipeline-owners
+/.github/workflows/archived-workflows/ci-maven-build.yml                @felleslosninger/plattform @felleslosninger/pipeline-owners
+/.github/workflows/archived-workflows/ci-maven-build-lib.yml            @felleslosninger/plattform @felleslosninger/pipeline-owners
+/.github/workflows/archived-workflows/ci-maven-deploy.yml               @felleslosninger/plattform @felleslosninger/pipeline-owners
+/.github/workflows/archived-workflows/ci-maven-install-deploy-lib.yml   @felleslosninger/plattform @felleslosninger/pipeline-owners
 /.github/workflows/misc-publish-dev-docker.yml       @felleslosninger/plattform @felleslosninger/pipeline-owners
 /.github/workflows/on-pr-label.yml                   @felleslosninger/plattform @felleslosninger/pipeline-owners
 # ---------------------------------------------------------------------------

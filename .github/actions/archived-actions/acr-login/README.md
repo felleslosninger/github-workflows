@@ -3,7 +3,7 @@
 Author: **Digdir Platform Team**
 
 > [!IMPORTANT]
-> This action is deprecated and replaced by [cr-login](../cr-login/README.md) to
+> This action is deprecated and replaced by [cr-login](../../cr-login/README.md) to
 > support multiple container registries.
 
 ## Description
@@ -45,7 +45,7 @@ The `action.yml` inputs are:
 ```yaml
 steps:
   - name: ACR login
-    uses: felleslosninger/github-workflows/.github/actions/acr-login@main
+    uses: felleslosninger/github-workflows/.github/actions/archived-actions/acr-login@main
     with:
       client-id: ${{ secrets.AZURE_CLIENT_ID }}
       tenant-id: ${{ secrets.AZURE_TENANT_ID }}
