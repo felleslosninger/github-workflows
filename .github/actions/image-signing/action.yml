@@ -4,7 +4,7 @@ author: Digdir Platform Team
 
 inputs:
   image:
-    description: Valid image string for signing
+    description: Fully qualified image reference by digest, e.g. registry/name@sha256:<digest>. Must not depend on a locally-built Docker image, so this action can run as an isolated signing step with no access to build-time credentials.
     required: true
 
 runs:
@@ -29,36 +29,29 @@ runs:
       env:
         IMAGE: ${{ inputs.image }}
       run: |
-        # Get digest from image inspection
-        TARGET_IMAGE=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE")
-
-        if [[ -z "$TARGET_IMAGE" ]]; then
-          echo "::error title=Could not resolve repo digest::Could not resolve RepoDigest for $IMAGE. The image might not be pushed to a registry yet."
+        if [[ "$IMAGE" != *"@sha256:"* ]]; then
+          echo "::error title=Image must be referenced by digest::Expected IMAGE in the form name@sha256:<digest>, got: $IMAGE"
           exit 1
         fi
 
         # Extract pure digest
-        IMAGE_DIGEST="${TARGET_IMAGE##*sha256:}"
+        IMAGE_DIGEST="${IMAGE##*sha256:}"
 
-        # Extract subject name from input
-        # Strip potential digest to leave subject name and potential tag
-        SUBJECT_NAME_TAG="${IMAGE%%@*}"
-
-        # Strip tag to leave subject name
-        SUBJECT_NAME="${SUBJECT_NAME_TAG%:*}"
+        # Strip digest to leave subject name
+        SUBJECT_NAME="${IMAGE%%@*}"
 
         # Set outputs
         echo "image-digest=$IMAGE_DIGEST" >> "$GITHUB_OUTPUT"
         echo "subject-name=$SUBJECT_NAME" >> "$GITHUB_OUTPUT"
 
         # Set env. vars
-        echo "TARGET_IMAGE=$TARGET_IMAGE" >> "$GITHUB_ENV"
+        echo "TARGET_IMAGE=$IMAGE" >> "$GITHUB_ENV"
 
         {
           echo "#### Extracted image signing metadata"
           echo "| Key                 | Value |"
           echo "| ------------------- | ----- |"
-          echo "| Target image | $TARGET_IMAGE |"
+          echo "| Target image | $IMAGE |"
           echo "| Digest | $IMAGE_DIGEST |"
           echo "| Subject | $SUBJECT_NAME |"
         } >> "$GITHUB_STEP_SUMMARY"
