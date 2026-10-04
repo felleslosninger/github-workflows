@@ -17,21 +17,30 @@
 #   which can be used in subsequent steps or workflows. If any step fails, a
 #   Slack notification will be sent to the specified channel(s).
 #
+#   Building and pushing/signing run as two separate jobs. The build job never
+#   holds id-token: write, so Maven/Paketo build-time dependencies have no path
+#   to the credential used for registry login or image signing (SLSA Build L3
+#   requires that the signing credential not be accessible to build steps).
+#   The built image crosses the job boundary as a build artifact.
+#
 #   Flow:
-#     1. Set image metadata (name and tag)
-#     2. Checkout repository
-#     3. Set up JDK
-#.    4. Optionally update versions in application.yaml with the generated
-#        image tag
-#     5. Build Spring Boot image using Paketo buildpacks. The image will be
-#        built based on the application path or module name (if provided)
-#     6. Run Trivy vulnerability scan on the built image
-#     7. Login to container registry
-#     8. Push image to container registry
-#     9. Set image digest output
-#     10. Run Trivy SBOM generation
-#     11. Optionally sign the image
-#     12. If any step fails, send Slack notification to specified channel(s)
+#     1. (build-image) Set image metadata (name and tag)
+#     2. (build-image) Checkout repository
+#     3. (build-image) Set up JDK
+#.    4. (build-image) Optionally update versions in application.yaml with the
+#        generated image tag
+#     5. (build-image) Build Spring Boot image using Paketo buildpacks. The
+#        image will be built based on the application path or module name (if
+#        provided)
+#     6. (build-image) Run Trivy vulnerability scan and SBOM generation on the
+#        built image
+#     7. (build-image) Save the image and upload it as a build artifact
+#     8. (push-and-sign-image) Download the image artifact and load it
+#     9. (push-and-sign-image) Login to container registry
+#     10. (push-and-sign-image) Push image to container registry
+#     11. (push-and-sign-image) Set image digest output
+#     12. (push-and-sign-image) Optionally sign the image
+#     13. If any step fails, send Slack notification to specified channel(s)
 #
 # Trigger:
 #   Triggered by workflow calls (workflow_call)
@@ -158,10 +167,10 @@ on:
     outputs:
       image-version:
         description: "Docker image version"
-        value: ${{ jobs.build-publish-image.outputs.image-tag }}
+        value: ${{ jobs.build-image.outputs.image-tag }}
       image-digest:
         description: "Docker image SHA256 digest"
-        value: ${{ jobs.build-publish-image.outputs.image-digest }}
+        value: ${{ jobs.push-and-sign-image.outputs.image-digest }}
 
 jobs:
   inputs-to-summary:
@@ -173,17 +182,18 @@ jobs:
           json-payload: ${{ toJson(inputs) }}
           title: "Spring Boot build/publish inputs"
 
-  build-publish-image:
+  build-image:
     runs-on: ubuntu-latest
 
     outputs:
+      image-name: ${{ steps.image-metadata.outputs.image-name }}
       image-tag: ${{ steps.image-metadata.outputs.image-tag }}
-      image-digest: ${{ steps.push-image.outputs.image-digest }}
 
+    # No id-token/packages permission here: this job runs Maven and Paketo
+    # buildpacks against repository- and dependency-controlled inputs, so it
+    # must never hold the credential used for registry login or signing.
     permissions:
-      id-token: write
       contents: write
-      packages: write
 
     steps:
       - name: Set image metadata
@@ -271,6 +281,55 @@ jobs:
           os-severity: ${{ inputs.trivy-os-severity }}
           trivy-version: ${{ inputs.trivy-version }}
 
+      - name: Run Trivy SBOM generation
+        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@main
+        with:
+          scan-type: image
+          artifact-id: ${{ steps.image-metadata.outputs.image-name }}
+          # Scanned by tag: the registry digest doesn't exist yet, since
+          # pushing happens in a separate, unprivileged-build-free job. The
+          # scanned content is identical either way - push doesn't alter it.
+          image-ref: "${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}"
+          version: ${{ steps.image-metadata.outputs.image-tag }}
+          # This is already done in Trivy vuln scan step
+          skip-setup: true
+
+      - name: Save image for handoff to push-and-sign-image job
+        env:
+          IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
+          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
+        run: docker save "$IMAGE_NAME:$IMAGE_TAG" -o image.tar
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # pin@v7.0.1
+        with:
+          name: image-tar-${{ github.run_id }}
+          path: image.tar
+          retention-days: 1
+
+  push-and-sign-image:
+    runs-on: ubuntu-latest
+    needs: build-image
+
+    outputs:
+      image-digest: ${{ steps.push-image.outputs.image-digest }}
+
+    # Only this job can push to the registry or sign the image. It never
+    # checks out repository code or runs a build tool, so a compromised
+    # build-time dependency in build-image has no path to this credential.
+    permissions:
+      id-token: write
+      packages: write
+
+    steps:
+      - name: Download image artifact
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # pin@v7.0.0
+        with:
+          name: image-tar-${{ github.run_id }}
+
+      - name: Load image
+        run: docker load -i image.tar
+
       - name: Container Registry login
         uses: felleslosninger/github-workflows/.github/actions/cr-login@main
         with:
@@ -283,28 +342,18 @@ jobs:
         id: push-image
         uses: felleslosninger/github-workflows/.github/actions/docker-push-image@main
         with:
-          image-name: ${{ steps.image-metadata.outputs.image-name }}
-          image-tag: ${{ steps.image-metadata.outputs.image-tag }}
-
-      - name: Run Trivy SBOM generation
-        uses: felleslosninger/github-workflows/.github/actions/trivy-sbom@main
-        with:
-          scan-type: image
-          artifact-id: ${{ steps.image-metadata.outputs.image-name }}
-          image-ref: "${{ steps.image-metadata.outputs.image-name }}@${{ steps.push-image.outputs.image-digest }}"
-          version: ${{ steps.image-metadata.outputs.image-tag }}
-          # This is already done in Trivy vuln scan step
-          skip-setup: true
+          image-name: ${{ needs.build-image.outputs.image-name }}
+          image-tag: ${{ needs.build-image.outputs.image-tag }}
 
       - name: Image signing
         if: inputs.image-signing == true
         uses: felleslosninger/github-workflows/.github/actions/image-signing@main
         with:
-          image: ${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}
+          image: ${{ needs.build-image.outputs.image-name }}@${{ steps.push-image.outputs.image-digest }}
 
   notify-on-errors:
     runs-on: ubuntu-latest
-    needs: [build-publish-image]
+    needs: [build-image, push-and-sign-image]
     if: always() && contains(needs.*.result, 'failure')
     strategy:
       matrix:
