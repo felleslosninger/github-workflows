@@ -18,7 +18,8 @@
 #   Flow:
 #     1. Set up QEMU for multi-platform builds
 #     2. Set up Docker Buildx
-#     3. Login to 'crutvikling' Azure Container Registry (ACR)
+#     3. Login to 'crutvikling' Azure Container Registry (ACR) with OIDC
+#        (federated credentials), like the other build/publish workflows
 #     4. Build and push Docker image to ACR with 'latest' tag for both amd64
 #        and arm64 platforms
 #
@@ -50,6 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
     env:
       REPOSITORY-NAME: ${{ github.event.repository.name }}
     steps:
@@ -59,12 +61,13 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # pin@v4.3.0
 
-      - name: Login to crutvikling (Azure container registry)
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # pin@v4.6.0
+      - name: Container Registry login
+        uses: felleslosninger/github-workflows/.github/actions/cr-login@main
         with:
           registry: ${{ vars.CR_DEV_URL }}
-          username: ${{ secrets.CR_DEV_USERNAME }}
-          password: ${{ secrets.CR_DEV_SECRET }}
+          client-id: ${{ secrets.CR_DEV_USERNAME }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Build and push
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # pin@v7.3.0
