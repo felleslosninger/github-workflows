@@ -149,8 +149,8 @@ jobs:
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
           server-id: github
-          server-username: GH_PACKAGES_READ_USER
-          server-password: GH_PACKAGES_READ_PAT
+          server-username-env-var: GH_PACKAGES_READ_USER
+          server-password-env-var: GH_PACKAGES_READ_PAT
 
       # pack build skips tests, so we run them here
       - name: Run mvn ${{ inputs.maven-lifecycle }}

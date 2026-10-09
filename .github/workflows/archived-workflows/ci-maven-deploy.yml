@@ -124,8 +124,8 @@ jobs:
           cache: maven
           cache-dependency-path: ${{ inputs.cache-path }}
           server-id: github
-          server-username: GITHUB_ACTOR
-          server-password: GITHUB_TOKEN
+          server-username-env-var: GITHUB_ACTOR
+          server-password-env-var: GITHUB_TOKEN
 
       - name: Run Trivy vulnerability scanner (fs)
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
