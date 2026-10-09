@@ -12,7 +12,17 @@ where developers have access, allowing them to easily run and test it locally.
 
 ## GitHub workflow permissions
 
-None.
+This is the list of the current workflow permissions used as part of this
+workflow.
+
+| Permission | Purpose |
+| ---------- | ------- |
+| `contents: read` | Needed to check out the repository |
+| `id-token: write` | Needed when using OIDC (federated credentials) to log in to ACR |
+
+> [!IMPORTANT]
+> The calling job must grant these permissions. If it grants fewer, GitHub
+> rejects the whole calling workflow file, not just this job.
 
 ## GitHub secrets
 
@@ -21,7 +31,8 @@ This is the list of the current GitHub secrets used as part of this workflow.
 | Secret | Type | Visibility | Admin action required |
 | ------ | ---- | ---------- | --------------------- |
 | `CR_DEV_USERNAME` | Org. secret | All repositories | No |
-| `CR_DEV_SECRET` | Org. secret | All repositories | No |
+| `AZURE_TENANT_ID` | Org. secret | All repositories | No |
+| `AZURE_SUBSCRIPTION_ID` | Org. secret | All repositories | No |
 | `GH_PACKAGES_READ_USER` | Org. secret | All repositories | No |
 | `GH_PACKAGES_READ_PAT` | Org. secret | All repositories | No |
 
@@ -49,6 +60,9 @@ on:
 
 jobs:
   build-publish-dev-image:
+    permissions:
+      contents: read
+      id-token: write
     uses: felleslosninger/github-workflows/.github/workflows/misc-publish-dev-docker.yml@main
     secrets: inherit
 ```
