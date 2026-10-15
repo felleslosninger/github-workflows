@@ -1,0 +1,56 @@
+name: Push Docker image
+description: Composite action for pushing a Docker image and retrieving its digest
+author: Digdir Platform Team
+
+inputs:
+  image-name:
+    description: The fully qualified image name (including registry)
+    required: true
+  image-tag:
+    description: The image tag to push
+    required: true
+
+outputs:
+  image-digest:
+    description: The digest of the pushed image
+    value: ${{ steps.set-image-digest.outputs.image-digest }}
+
+runs:
+  using: composite
+  steps:
+    - name: Start push image summary
+      shell: bash
+      run: echo "### Push image" >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Push image
+      shell: bash
+      env:
+        IMAGE_NAME: ${{ inputs.image-name }}
+        IMAGE_TAG: ${{ inputs.image-tag }}
+      run: |
+        set -euo pipefail
+
+        docker push "$IMAGE_NAME:$IMAGE_TAG"
+        echo "- Pushed: \`$IMAGE_NAME:$IMAGE_TAG\`" >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Set image digest
+      id: set-image-digest
+      shell: bash
+      env:
+        IMAGE_NAME: ${{ inputs.image-name }}
+        IMAGE_TAG: ${{ inputs.image-tag }}
+      run: |
+        set -euo pipefail
+
+        image_digest=$(docker inspect \
+          --format='{{.RepoDigests}}' "$IMAGE_NAME:$IMAGE_TAG" \
+          | cut -d '@' -f 2 \
+          | cut -d ']' -f 1)
+
+        if [ -z "$image_digest" ]; then
+          echo "::error::Failed to extract image digest for $IMAGE_NAME:$IMAGE_TAG"
+          exit 1
+        fi
+
+        echo "image-digest=$image_digest" >> "$GITHUB_OUTPUT"
+        echo "- Image digest: \`$image_digest\`" >> "$GITHUB_STEP_SUMMARY"

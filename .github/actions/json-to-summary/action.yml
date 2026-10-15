@@ -24,7 +24,7 @@ runs:
         JSON_PAYLOAD: ${{ inputs.json-payload }}
       run: |
         {
-         echo "### $TITLE"
+         echo "#### $TITLE"
           echo "| Key | Value |"
           echo "| --- | ----- |"
 

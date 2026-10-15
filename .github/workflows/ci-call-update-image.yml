@@ -40,6 +40,11 @@ on:
         description: Name of application
         required: true
         type: string
+      application-path:
+        description: Path to application, relative to the repository root
+        default: ''
+        required: false
+        type: string
       product-name:
         description: Name of product
         required: true
@@ -186,6 +191,7 @@ jobs:
         id: log-outputs
         env:
           APPLICATION_NAME: ${{ inputs.application-name }}
+          APPLICATION_PATH: ${{ inputs.application-path }}
           AUTHOR_EMAIL: ${{ steps.set-author-info.outputs.author-email }}
           AUTHOR_NAME: ${{ steps.set-author-info.outputs.author-name }}
           AUTHOR_USERNAME: ${{ steps.set-author-info.outputs.author-username }}
@@ -209,6 +215,7 @@ jobs:
             echo "| Key               | Value              |"
             echo "| ----------------- | ------------------ |"
             echo "| application-name  | $APPLICATION_NAME  |"
+            echo "| application-path  | $APPLICATION_PATH  |"
             echo "| author-email      | $AUTHOR_EMAIL      |"
             echo "| author-name       | $AUTHOR_NAME       |"
             echo "| author-username   | $AUTHOR_USERNAME   |"
@@ -249,6 +256,7 @@ jobs:
             {
               "data": {
                 "application-name": ${{ toJson(inputs.application-name) }},
+                "application-path": ${{ toJson(inputs.application-path) }},
                 "author-email": ${{ toJson(steps.set-author-info.outputs.author-email) }},
                 "author-name": ${{ toJson(steps.set-author-info.outputs.author-name) }},
                 "author-username": ${{ toJson(steps.set-author-info.outputs.author-username) }},

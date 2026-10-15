@@ -272,6 +272,7 @@ These are applicable to Spring Boot and Quarkus application types.
 | Override | Type | Workflow default |
 | -------- | ---- | ---------------- |
 | `add-git-package-token` | `boolean` | `false` |
+| `docker-build-context` | `string` | `.` |
 | `sh-scan-install-method` | `string` | `npm` |
 | `sh-scan` | `boolean` | `true` |
 
@@ -283,6 +284,10 @@ These are applicable to Spring Boot and Quarkus application types.
 <!-- -->
 
 > [!NOTE]
+> `docker-build-context` sets the directory `docker build` uses to resolve
+> `COPY`/`ADD` paths — separate from `application-path`, which only sets where
+> the Dockerfile itself is. Override it if your Dockerfile copies files from
+> outside the repository root.
 > If you are building a node project with a different package manager than npm,
 > ex. `yarn`, you have to set `sh-scan-install-method` to `yarn`. It is also
 > possible to skip the sh-scan-step by setting `sh-scan` to `false`.
@@ -533,7 +538,8 @@ that do *not* share a root `pom.xml` or internal dependencies.
 For monorepos, you should create a separate workflow file for each application
 and use the `paths` trigger. This ensures that changes to `Application A` do not
 unnecessarily trigger the build, Trivy scans, and consume GitHub Actions minutes
-for `Application B`.
+for `Application B`. Pass the same `application-path` to both reusable
+workflows so the CD repository receives the application location.
 
 **`.github/workflows/deploy-backend-service.yml`**
 
@@ -567,6 +573,7 @@ jobs:
     needs: build-image
     with:
       application-name: backend-service
+      application-path: "apps/backend-service/"
       product-name: my-product
       image-name: backend-service
       image-version: ${{ needs.build-image.outputs.image-version }}
@@ -608,6 +615,7 @@ jobs:
     needs: build-image
     with:
       application-name: auth-service
+      application-path: "apps/auth-service/"
       product-name: my-product
       image-name: auth-service
       image-version: ${{ needs.build-image.outputs.image-version }}

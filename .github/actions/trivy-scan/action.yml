@@ -70,6 +70,7 @@ runs:
       uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
       with:
         json-payload: ${{ toJson(inputs) }}
+        title: "Trivy scan inputs"
 
     - name: Validate inputs
       shell: bash

@@ -100,12 +100,12 @@ on:
         required: false
         type: string
       maven-lifecycle:
-        description: Maven lifecycle phase (test, package, verify, install). Only applied for Spring Boot builds
+        description: Maven lifecycle phase (test, package, verify, install). Applied for Spring Boot and Quarkus builds
         type: string
         required: false
         default: "install"
       maven-skip-tests:
-        description: Skip running tests during the image build (-DskipTests). Only applied for Spring Boot builds
+        description: Skip running tests (-DskipTests for Spring Boot; skips the separate test step for Quarkus). Applied for Spring Boot and Quarkus builds
         type: boolean
         required: false
         default: true
@@ -239,6 +239,8 @@ jobs:
       java-version: ${{ inputs.java-version }}
       java-distribution: ${{ inputs.java-distribution }}
       cache-path: ${{ inputs.cache-path }}
+      maven-lifecycle: ${{ inputs.maven-lifecycle }}
+      maven-skip-tests: ${{ inputs.maven-skip-tests }}
       native: ${{ inputs.native }}
       application-path: ${{ inputs.application-path }}
       trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}

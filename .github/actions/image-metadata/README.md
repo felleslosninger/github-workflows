@@ -4,7 +4,8 @@ Author: **Digdir Platform Team**
 
 ## Description
 
-This composite action generates Docker image metadata for workflows that need a consistent image name and tag.
+This composite action generates Docker image metadata for workflows that need a
+consistent image name and tag.
 
 It supports:
 

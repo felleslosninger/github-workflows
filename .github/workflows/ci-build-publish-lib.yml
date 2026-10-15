@@ -139,6 +139,7 @@ jobs:
         uses: felleslosninger/github-workflows/.github/actions/json-to-summary@main
         with:
           json-payload: ${{ toJson(inputs) }}
+          title: "Build/publish lib inputs"
 
   build-publish-package:
     runs-on: ubuntu-latest
@@ -159,7 +160,19 @@ jobs:
           application-path: ${{ inputs.application-path }}
           server-username: ${{ secrets.GH_PACKAGES_READ_USER }}
           server-password: ${{ secrets.GH_PACKAGES_READ_PAT }}
-          new-version: ${{ inputs.package-version }}
+
+      - name: Set version
+        env:
+          PACKAGE_VERSION: ${{ inputs.package-version }}
+          APP_PATH: ${{ inputs.application-path }}
+        run: |
+          echo "### Maven versions" >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "$PACKAGE_VERSION" ]; then
+            mvn versions:set -B --file "${APP_PATH}pom.xml" -DnewVersion="$PACKAGE_VERSION"
+            echo "- \`mvn versions\` was executed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- \`mvn versions\` was not executed" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Maven install
         uses: felleslosninger/github-workflows/.github/actions/maven-run@PF-2306-add-maven-composite-actions
