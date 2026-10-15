@@ -15,7 +15,6 @@ credentials for private artifact resolution (like GitHub Packages).
 | `java-version` | Java version to set up. | false | `"25"` |
 | `java-distribution` | Java distribution to use. | false | `"liberica"` |
 | `cache-path` | Path to `pom.xml` for cache invalidation. | false | `"**/pom.xml"` |
-| `application-path` | Path to the application root. | false | `"./"` |
 | `server-username` | Username for the Maven server (typically GitHub Packages read access). | `true` | |
 | `server-password` | Password/PAT for the Maven server. | `true` | |
 

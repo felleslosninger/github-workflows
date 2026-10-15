@@ -203,7 +203,6 @@ jobs:
           java-version: ${{ inputs.java-version }}
           java-distribution: ${{ inputs.java-distribution }}
           cache-path: ${{ inputs.cache-path }}
-          application-path: ${{ inputs.application-path }}
           server-username: ${{ secrets.GH_PACKAGES_READ_USER }}
           server-password: ${{ secrets.GH_PACKAGES_READ_PAT }}
 

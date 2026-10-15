@@ -12,9 +12,6 @@ inputs:
   cache-path:
     description: "Path to pom.xml for cache invalidation"
     default: "**/pom.xml"
-  application-path:
-    description: "Path to the application root"
-    default: "./"
   server-username:
     description: "Username for the Maven server (defaults to GitHub Packages read access)"
     required: true
