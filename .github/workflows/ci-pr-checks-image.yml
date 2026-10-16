@@ -201,7 +201,7 @@ jobs:
     if: |
       inputs.enable-container-image-scan == true &&
       inputs.application-type == 'spring-boot'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@PF-2306-add-maven-composite-actions
     permissions:
       contents: read
     with:
@@ -229,7 +229,7 @@ jobs:
     if: |
       inputs.enable-container-image-scan == true &&
       inputs.application-type == 'quarkus'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-quarkus-container-scan.yml@PF-2306-add-maven-composite-actions
     permissions:
       contents: read
     with:
