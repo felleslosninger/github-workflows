@@ -141,23 +141,19 @@ jobs:
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin@v7.0.1
 
-      - name: Set up JDK ${{ inputs.java-version }}
-        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # pin@v6.0.0
+      - name: Setup Maven environment
+        uses: felleslosninger/github-workflows/.github/actions/setup-maven-env@PF-2306-add-maven-composite-actions
         with:
-          distribution: "${{ inputs.java-distribution }}"
           java-version: ${{ inputs.java-version }}
-          cache: maven
-          cache-dependency-path: ${{ inputs.cache-path }}
-          server-id: github
-          server-username-env-var: GH_PACKAGES_READ_USER
-          server-password-env-var: GH_PACKAGES_READ_PAT
+          java-distribution: ${{ inputs.java-distribution }}
+          cache-path: ${{ inputs.cache-path }}
+          server-username: ${{ secrets.GH_PACKAGES_READ_USER }}
+          server-password: ${{ secrets.GH_PACKAGES_READ_PAT }}
 
       # pack build skips tests, so we run them here
       - name: Run mvn ${{ inputs.maven-lifecycle }}
         if: inputs.maven-skip-tests == false
         env:
-          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
-          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
           LIFECYCLE: ${{ inputs.maven-lifecycle }}
           APP_PATH: ${{ inputs.application-path }}
         run: |
@@ -190,8 +186,6 @@ jobs:
       - name: Build native image with Maven/Quarkus
         if: inputs.native == true
         env:
-          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
-          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
           IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
           IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
           IMAGE_PACK: ${{ inputs.image-pack }}
@@ -209,15 +203,13 @@ jobs:
             --env BP_MAVEN_POM_FILE="./pom.xml" \
             --env BP_NATIVE_IMAGE="true" \
             --env LANG="C.UTF-8" \
-            --env GH_PACKAGES_READ_USER="$GH_PACKAGES_READ_USER" \
-            --env GH_PACKAGES_READ_PAT="$GH_PACKAGES_READ_PAT" \
+            --env MAVEN_SERVER_USERNAME="$MAVEN_SERVER_USERNAME" \
+            --env MAVEN_SERVER_PASSWORD="$MAVEN_SERVER_PASSWORD" \
             --creation-time now
 
       - name: Build image with Maven/Quarkus
         if: inputs.native == false
         env:
-          GH_PACKAGES_READ_USER: ${{ secrets.GH_PACKAGES_READ_USER }}
-          GH_PACKAGES_READ_PAT: ${{ secrets.GH_PACKAGES_READ_PAT }}
           IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
           IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
           IMAGE_PACK: ${{ inputs.image-pack }}
@@ -233,8 +225,8 @@ jobs:
             --volume "${HOME}/.m2:/home/cnb/.m2:rw" \
             --env BP_JVM_VERSION="$JAVA_VERSION" \
             --env BP_MAVEN_POM_FILE="./pom.xml" \
-            --env GH_PACKAGES_READ_USER="$GH_PACKAGES_READ_USER" \
-            --env GH_PACKAGES_READ_PAT="$GH_PACKAGES_READ_PAT" \
+            --env MAVEN_SERVER_USERNAME="$MAVEN_SERVER_USERNAME" \
+            --env MAVEN_SERVER_PASSWORD="$MAVEN_SERVER_PASSWORD" \
             --creation-time now
 
       - name: Run Trivy vulnerability scanner (image)
