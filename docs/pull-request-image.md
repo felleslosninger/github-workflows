@@ -222,34 +222,35 @@ These are applicable to Spring Boot and Quarkus application types.
 | `test-report-path` | `string` | Not set |
 
 > [!NOTE]
-> **Test reports:** Set `test-report-path` to upload test reports (for example
-> Cucumber HTML, Surefire or Failsafe reports) as the artifact
-> `test-reports-<image-name>` when the Maven build fails. Characters in the image
-> name that are not allowed in artifact names (such as `/` and `:`) are replaced
-> with `-`. Use one path per line:
->
-> ```yaml
-> maven-skip-tests: false
-> test-report-path: |
->   target/cucumber-reports/
->   target/failsafe-reports/
-> ```
->
-> - `maven-skip-tests` must be `false`, otherwise the tests do not run and no
->   reports are generated.
-> - Paths are relative to the repository root, not to `application-path`. If
->   `application-path` is not the root, prefix the paths with it, for example
->   `apps/my-app/target/cucumber-reports/`.
-> - For multi-module projects built with `module-name`, the reports end up in
->   each module's `target` folder. Use a glob such as
->   `**/target/cucumber-reports/`.
-> - If no files match, nothing is uploaded and the step does not fail.
-
-> [!NOTE]
 > **Multi-module projects:** If your application is part of a multi-module Maven
 > project, you should override `module-name` instead of `application-path`. The
 > workflow will automatically append the `-pl <module-name> -am` flags to ensure
 > required internal dependencies are built before generating the image.
+
+##### Test reports
+
+Set `test-report-path` to upload test reports (for example Cucumber HTML,
+Surefire or Failsafe reports) as the artifact `test-reports-<image-name>` when
+the Maven build fails. Characters in the image name that are not allowed in
+artifact names (such as `/` and `:`) are replaced with `-`. Use one path per
+line:
+
+```yaml
+maven-skip-tests: false
+test-report-path: |
+  target/cucumber-reports/
+  target/failsafe-reports/
+```
+
+- `maven-skip-tests` must be `false`, otherwise the tests do not run and no
+  reports are generated.
+- Paths are relative to the repository root, not to `application-path`. If
+  `application-path` is not the root, prefix the paths with it, for example
+  `apps/my-app/target/cucumber-reports/`.
+- For multi-module projects built with `module-name`, the reports end up in
+  each module's `target` folder. Use a glob such as
+  `**/target/cucumber-reports/`.
+- If no files match, nothing is uploaded and the step does not fail.
 
 #### Container image scanning (Quarkus overrides)
 
