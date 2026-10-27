@@ -144,6 +144,11 @@ on:
         type: string
         required: false
         default: ''
+      test-report-path:
+        description: Only for Spring Boot. Path(s) to test reports (e.g. Cucumber, Surefire, Failsafe) to upload as an artifact if the Maven build fails. One path per line, relative to the repository root. Requires maven-skip-tests to be false
+        type: string
+        required: false
+        default: ''
       trivy-library-disable-scan:
         description: Disable Trivy library scan
         type: boolean
@@ -201,7 +206,7 @@ jobs:
     if: |
       inputs.enable-container-image-scan == true &&
       inputs.application-type == 'spring-boot'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@PF-2710
     permissions:
       contents: read
     with:
@@ -215,6 +220,7 @@ jobs:
       maven-skip-tests: ${{ inputs.maven-skip-tests }}
       application-path: ${{ inputs.application-path }}
       module-name: ${{ inputs.module-name }}
+      test-report-path: ${{ inputs.test-report-path }}
       trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
       trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
       trivy-library-severity: ${{ inputs.trivy-library-severity }}
