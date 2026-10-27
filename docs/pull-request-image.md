@@ -224,7 +224,9 @@ These are applicable to Spring Boot and Quarkus application types.
 > [!NOTE]
 > **Test reports:** Set `test-report-path` to upload test reports (for example
 > Cucumber HTML, Surefire or Failsafe reports) as the artifact
-> `test-reports-<image-name>` when the Maven build fails. Use one path per line:
+> `test-reports-<image-name>` when the Maven build fails. Characters in the image
+> name that are not allowed in artifact names (such as `/` and `:`) are replaced
+> with `-`. Use one path per line:
 >
 > ```yaml
 > maven-skip-tests: false
