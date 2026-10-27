@@ -217,7 +217,7 @@ jobs:
           failure() &&
           inputs.test-report-path != ''
         env:
-          IMAGE_NAME: ${{ inputs.image-name }}
+          IMAGE_NAME: ${{ inputs.image-name || github.event.repository.name }}
         run: |
           # Image names may contain characters not allowed in artifact names (e.g. '/' and ':')
           SAFE_NAME=$(printf '%s' "$IMAGE_NAME" | tr -c 'A-Za-z0-9._-' '-')
