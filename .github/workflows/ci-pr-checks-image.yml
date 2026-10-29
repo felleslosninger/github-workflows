@@ -50,6 +50,16 @@ on:
         type: string
         default: 'spring-boot'
         required: false
+      artifact-name:
+        description: Only for Spring Boot. Name of artifact to upload after the image build. If empty, no artifact will be uploaded
+        type: string
+        required: false
+        default: ''
+      artifact-path:
+        description: Only for Spring Boot. Path to the artifact to upload (e.g. Cucumber, Surefire or Failsafe reports), relative to the repository root. Requires maven-skip-tests to be false for test reports
+        type: string
+        required: false
+        default: ''
       auto-merge-types:
         description: "Comma-separated list of update types to auto-merge when 'enable-auto-merge-dependabot' is true. Supported values can be seen in 'update-types' under https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#ignore--"
         type: string
@@ -201,7 +211,7 @@ jobs:
     if: |
       inputs.enable-container-image-scan == true &&
       inputs.application-type == 'spring-boot'
-    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@main
+    uses: felleslosninger/github-workflows/.github/workflows/ci-spring-boot-container-scan.yml@PF-2710
     permissions:
       contents: read
     with:
@@ -215,6 +225,8 @@ jobs:
       maven-skip-tests: ${{ inputs.maven-skip-tests }}
       application-path: ${{ inputs.application-path }}
       module-name: ${{ inputs.module-name }}
+      artifact-name: ${{ inputs.artifact-name }}
+      artifact-path: ${{ inputs.artifact-path }}
       trivy-library-disable-scan: ${{ inputs.trivy-library-disable-scan }}
       trivy-library-ignore-unfixed: ${{ inputs.trivy-library-ignore-unfixed }}
       trivy-library-severity: ${{ inputs.trivy-library-severity }}
