@@ -18,8 +18,8 @@
 #     3. Set up JDK
 #     4. Build Spring Boot image using Paketo buildpacks. The image will be
 #        built based on the application path or module name (if provided)
-#     5. Upload test reports as an artifact if the build fails and
-#        'test-report-path' is set
+#     5. Upload an artifact (e.g. test reports) if 'artifact-name' and
+#        'artifact-path' are set
 #     6. Run Trivy vulnerability scan on the built image
 #
 # Trigger:
@@ -42,6 +42,16 @@ on:
       application-path:
         description: Path to the application directory to scan with Trivy, relative to the repository root
         default: "./"
+        required: false
+        type: string
+      artifact-name:
+        description: Name of artifact to upload after the image build. If empty, no artifact will be uploaded
+        default: ""
+        required: false
+        type: string
+      artifact-path:
+        description: Path to the artifact to upload, relative to the repository root
+        default: ""
         required: false
         type: string
       cache-path:
@@ -88,11 +98,6 @@ on:
         default: ""
         required: false
         type: string
-      test-report-path:
-        description: Path(s) to test reports (e.g. Cucumber, Surefire, Failsafe) to upload as an artifact if the Maven build fails. One path per line, relative to the repository root. If not provided, nothing is uploaded
-        type: string
-        required: false
-        default: ""
       trivy-library-disable-scan:
         description: Disable Trivy library scan
         type: boolean
@@ -211,26 +216,15 @@ jobs:
             -Dspring-boot.build-image.imageName="$IMAGE_NAME:$IMAGE_TAG" \
             -Dspring-boot.build-image.builder="paketobuildpacks/$IMAGE_PACK:$IMAGE_PACK_TAG"
 
-      - name: Set test report artifact name
-        id: test-report-artifact
+      - name: Upload artifact
         if: |
-          failure() &&
-          inputs.test-report-path != ''
-        env:
-          IMAGE_NAME: ${{ inputs.image-name || github.event.repository.name }}
-        run: |
-          # Image names may contain characters not allowed in artifact names (e.g. '/' and ':')
-          SAFE_NAME=$(printf '%s' "$IMAGE_NAME" | tr -c 'A-Za-z0-9._-' '-')
-          echo "name=test-reports-${SAFE_NAME}" >> "$GITHUB_OUTPUT"
-
-      - name: Upload test reports
-        if: |
-          failure() &&
-          inputs.test-report-path != ''
+          !cancelled() &&
+          inputs.artifact-path != '' &&
+          inputs.artifact-name != ''
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # pin@v7.0.2
         with:
-          name: ${{ steps.test-report-artifact.outputs.name }}
-          path: ${{ inputs.test-report-path }}
+          name: ${{ inputs.artifact-name }}
+          path: ${{ inputs.artifact-path }}
           if-no-files-found: ignore
 
       - name: Run Trivy vulnerability scanner (image)
