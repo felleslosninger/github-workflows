@@ -14,7 +14,7 @@ credentials for private artifact resolution (like GitHub Packages).
 | :---- | :---------- | :------- | :------ |
 | `java-version` | Java version to set up. | false | `"25"` |
 | `java-distribution` | Java distribution to use. | false | `"liberica"` |
-| `cache-path` | Path to `pom.xml` for cache invalidation. | false | `"**/pom.xml"` |
+| `cache-path` | `pom.xml` file(s) used to compute the Maven cache key. The cache is invalidated when these change. The cache itself is stored in `~/.m2/repository`. | false | `"**/pom.xml"` |
 | `server-username` | Username for the Maven server (typically GitHub Packages read access). | `true` | |
 | `server-password` | Password/PAT for the Maven server. | `true` | |
 
@@ -46,3 +46,13 @@ global `$GITHUB_ENV`. This makes the read-only credentials the default for all
 subsequent `mvn` steps in the job, while safely allowing deployment steps to
 temporarily override them with write credentials (e.g., `github.token`) using
 step-level `env` blocks.
+
+## Caching
+
+Maven dependencies are cached in `~/.m2/repository` using the built-in cache in
+[`actions/setup-java`](https://github.com/actions/setup-java#caching).
+
+`cache-path` does **not** control where the cache is stored. It points to the
+`pom.xml` file(s) used to compute the cache key (passed to
+`cache-dependency-path`). When any of these files change, a new cache is
+created; otherwise the existing cache is reused.

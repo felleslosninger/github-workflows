@@ -10,7 +10,7 @@ inputs:
     description: "Java distribution to use"
     default: "liberica"
   cache-path:
-    description: "Path to pom.xml for cache invalidation"
+    description: "pom.xml file(s) used to compute the Maven cache key (passed to setup-java's cache-dependency-path). The cache itself is stored in ~/.m2/repository."
     default: "**/pom.xml"
   server-username:
     description: "Username for the Maven server (defaults to GitHub Packages read access)"
