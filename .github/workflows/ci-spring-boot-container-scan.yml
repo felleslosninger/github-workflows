@@ -18,7 +18,9 @@
 #     3. Set up JDK
 #     4. Build Spring Boot image using Paketo buildpacks. The image will be
 #        built based on the application path or module name (if provided)
-#     5. Run Trivy vulnerability scan on the built image
+#     5. Upload an artifact (e.g. test reports) if 'artifact-name' and
+#        'artifact-path' are set
+#     6. Run Trivy vulnerability scan on the built image
 #
 # Trigger:
 #   Triggered by workflow calls (workflow_call)
@@ -40,6 +42,16 @@ on:
       application-path:
         description: Path to the application directory to scan with Trivy, relative to the repository root
         default: "./"
+        required: false
+        type: string
+      artifact-name:
+        description: Name of artifact to upload after the image build. If empty, no artifact will be uploaded
+        default: ""
+        required: false
+        type: string
+      artifact-path:
+        description: Path to the artifact to upload, relative to the repository root
+        default: ""
         required: false
         type: string
       cache-path:
@@ -203,6 +215,17 @@ jobs:
             --file "${APP_PATH}pom.xml" \
             -Dspring-boot.build-image.imageName="$IMAGE_NAME:$IMAGE_TAG" \
             -Dspring-boot.build-image.builder="paketobuildpacks/$IMAGE_PACK:$IMAGE_PACK_TAG"
+
+      - name: Upload artifact
+        if: |
+          !cancelled() &&
+          inputs.artifact-path != '' &&
+          inputs.artifact-name != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # pin@v7.0.2
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: ${{ inputs.artifact-path }}
+          if-no-files-found: ignore
 
       - name: Run Trivy vulnerability scanner (image)
         uses: felleslosninger/github-workflows/.github/actions/trivy-scan@main
