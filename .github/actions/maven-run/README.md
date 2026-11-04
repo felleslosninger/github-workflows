@@ -4,7 +4,7 @@ Author: **Digdir Platform Team**
 
 ## Description
 
-This composite action safely evaluates and executes dynamic Maven arguments. It
+This composite action builds and executes dynamic Maven arguments. It
 handles the complex logic required for building mono-repos, scoping builds to
 specific modules within a reactor, applying profiles, and injecting system
 properties without duplicating verbose Bash scripts across workflows.
