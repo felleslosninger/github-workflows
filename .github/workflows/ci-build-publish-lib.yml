@@ -210,8 +210,9 @@ jobs:
           maven-profile: ${{ inputs.maven-profile }}
           extra-args: >-
             -DskipTests
-            ${{ inputs.deployment-repository != '' && format('-DaltDeploymentRepository=github::https://maven.pkg.github.com/{0}', inputs.deployment-repository) || '' }}
+            ${DEPLOYMENT_REPO:+-DaltDeploymentRepository=github::https://maven.pkg.github.com/$DEPLOYMENT_REPO}
         env:
+          DEPLOYMENT_REPO: ${{ inputs.deployment-repository }}
           # Override username and password to allow publishing package
           MAVEN_SERVER_USERNAME: ${{ github.actor }}
           MAVEN_SERVER_PASSWORD: ${{ github.token }}
