@@ -29,8 +29,7 @@ duplication, and to reduce maintenance for the Platform team
 - [maven-run](./.github/actions/maven-run): This composite action is designed to
   run Maven commands
 - [setup-maven-env](./.github/actions/setup-maven-env): This composite action is
-  designed to set up the Maven environment (JDK, credentials, caching and
-  version handling)
+  designed to set up the Maven environment (JDK, credentials and caching)
 - [sh-scan](./.github/actions/sh-scan): This composite action is designed to
   scan for indicators of compromise (IOCs) related to Shai-Hulud supply chain
   attacks in NPM
