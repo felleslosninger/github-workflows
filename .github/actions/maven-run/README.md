@@ -48,6 +48,10 @@ iteratively construct a safe array of arguments (`ARGS=("-B" "--file"
 
 It natively understands multi-module execution: if `module-name` is provided, it
 automatically appends `-pl "$MODULE"` and (if enabled) `-am` so upstream reactor
-dependencies are built in the correct order. Finally, it uses `eval` to cleanly
-resolve and expand any complex string properties provided in `extra-args` before
-executing the `mvn` command.
+dependencies are built in the correct order. Finally, it runs the command with
+`eval`, so `$VARIABLES` in `extra-args` are expanded.
+
+> [!WARNING]
+> Because `extra-args` goes through `eval`, pass dynamic values (image tags,
+> input values) via the step's `env:` and refer to them as `$VAR`. Never put
+> `${{ }}` expressions directly in `extra-args`, they would run as shell code.
