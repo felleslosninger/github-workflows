@@ -175,14 +175,20 @@ jobs:
 
       - name: Build Spring Boot image
         uses: felleslosninger/github-workflows/.github/actions/maven-run@main
+        env:
+          IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
+          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
+          IMAGE_PACK: ${{ inputs.image-pack }}
+          IMAGE_PACK_TAG: ${{ inputs.image-pack-tag }}
         with:
           goals: ${{ inputs.maven-lifecycle }} spring-boot:build-image
           application-path: ${{ inputs.application-path }}
           module-name: ${{ inputs.module-name }}
+          # Pass values via env: extra-args is eval'ed in maven-run
           extra-args: >-
             -DskipTests=${{ inputs.maven-skip-tests }}
-            -Dspring-boot.build-image.imageName="${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}"
-            -Dspring-boot.build-image.builder="paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }}"
+            -Dspring-boot.build-image.imageName="$IMAGE_NAME:$IMAGE_TAG"
+            -Dspring-boot.build-image.builder="paketobuildpacks/$IMAGE_PACK:$IMAGE_PACK_TAG"
 
       - name: Upload artifact
         if: |
