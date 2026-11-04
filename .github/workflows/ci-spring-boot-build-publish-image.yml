@@ -222,14 +222,21 @@ jobs:
 
       - name: Build Spring Boot image
         uses: felleslosninger/github-workflows/.github/actions/maven-run@main
+        env:
+          IMAGE_NAME: ${{ steps.image-metadata.outputs.image-name }}
+          IMAGE_TAG: ${{ steps.image-metadata.outputs.image-tag }}
+          IMAGE_PACK: ${{ inputs.image-pack }}
+          IMAGE_PACK_TAG: ${{ inputs.image-pack-tag }}
         with:
-          # Uses 'install' so multi-module dependencies are available in the local ~/.m2 cache
-          goals: install spring-boot:build-image
+          # 'install' only for multi-module, so sibling modules land in ~/.m2.
+          # build-image forks 'package', so 'install' on a single module would run tests twice.
+          goals: ${{ inputs.module-name != '' && 'install spring-boot:build-image' || 'spring-boot:build-image' }}
           application-path: ${{ inputs.application-path }}
           module-name: ${{ inputs.module-name }}
+          # Pass values via env: extra-args is eval'ed in maven-run
           extra-args: >-
-            -Dspring-boot.build-image.imageName="${{ steps.image-metadata.outputs.image-name }}:${{ steps.image-metadata.outputs.image-tag }}"
-            -Dspring-boot.build-image.builder="paketobuildpacks/${{ inputs.image-pack }}:${{ inputs.image-pack-tag }}"
+            -Dspring-boot.build-image.imageName="$IMAGE_NAME:$IMAGE_TAG"
+            -Dspring-boot.build-image.builder="paketobuildpacks/$IMAGE_PACK:$IMAGE_PACK_TAG"
             -Dspring-boot.build-image.createdDate=now
 
       - name: Run Trivy vulnerability scanner
