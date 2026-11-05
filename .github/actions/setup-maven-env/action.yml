@@ -1,0 +1,43 @@
+name: Setup Maven Environment
+description: Configures JDK, dependency caching and GH Packages auth.
+author: Digdir Platform Team
+
+inputs:
+  java-version:
+    description: "Java version to set up"
+    default: "25"
+  java-distribution:
+    description: "Java distribution to use"
+    default: "liberica"
+  cache-path:
+    description: "pom.xml file(s) used to compute the Maven cache key (passed to setup-java's cache-dependency-path). The cache itself is stored in ~/.m2/repository."
+    default: "**/pom.xml"
+  server-username:
+    description: "Username for the Maven server (defaults to GitHub Packages read access)"
+    required: true
+  server-password:
+    description: "Password/PAT for the Maven server"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Set up JDK ${{ inputs.java-version }}
+      uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # pin@v6.0.1
+      with:
+        distribution: ${{ inputs.java-distribution }}
+        java-version: ${{ inputs.java-version }}
+        cache: maven
+        cache-dependency-path: ${{ inputs.cache-path }}
+        server-id: github
+        server-username-env-var: MAVEN_SERVER_USERNAME
+        server-password-env-var: MAVEN_SERVER_PASSWORD
+
+    - name: Set default Maven credentials
+      shell: bash
+      env:
+        SERVER_USERNAME: ${{ inputs.server-username }}
+        SERVER_PASSWORD: ${{ inputs.server-password }}
+      run: |
+        echo "MAVEN_SERVER_USERNAME=$SERVER_USERNAME" >> "$GITHUB_ENV"
+        echo "MAVEN_SERVER_PASSWORD=$SERVER_PASSWORD" >> "$GITHUB_ENV"
