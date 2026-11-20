@@ -47,6 +47,27 @@ subsequent `mvn` steps in the job, while safely allowing deployment steps to
 temporarily override them with write credentials (e.g., `github.token`) using
 step-level `env` blocks.
 
+## Server ids
+
+Maven picks credentials by matching a pom's `<repository><id>` against a
+`<server><id>` in `settings.xml`. The action writes one server per GitHub org,
+all using the same credentials:
+
+| Server id | Use it for |
+| :-------- | :--------- |
+| `github` | Packages in the `felleslosninger` org |
+| `github-eudi-wallet-no` | Packages in the `eudi-wallet-no` org |
+
+```xml
+<repository>
+  <id>github-eudi-wallet-no</id>
+  <url>https://maven.pkg.github.com/eudi-wallet-no/eudiw-bevisporten</url>
+</repository>
+```
+
+To support another org, add a `github-<org>` line to `mvn-server-credentials`
+in `action.yml`. Servers no pom references are ignored by Maven.
+
 ## Caching
 
 Maven dependencies are cached in `~/.m2/repository` using the built-in cache in

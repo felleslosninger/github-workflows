@@ -29,9 +29,11 @@ runs:
         java-version: ${{ inputs.java-version }}
         cache: maven
         cache-dependency-path: ${{ inputs.cache-path }}
-        server-id: github
-        server-username-env-var: MAVEN_SERVER_USERNAME
-        server-password-env-var: MAVEN_SERVER_PASSWORD
+        # One <server> per GitHub org a pom reads packages from, all with the same credentials.
+        # Maven matches credentials on the pom's <repository><id>. See README.
+        mvn-server-credentials: |
+          github:MAVEN_SERVER_USERNAME:MAVEN_SERVER_PASSWORD
+          github-eudi-wallet-no:MAVEN_SERVER_USERNAME:MAVEN_SERVER_PASSWORD
 
     - name: Set default Maven credentials
       shell: bash
